@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { captureAttribution, getStoredAttribution } from "@/lib/marketing/attribution";
+import { trackLead } from "@/lib/marketing/track";
 
 const DEBT_BANDS = [
   { label: "$7,500 – $15,000", value: 11000 },
@@ -51,6 +52,7 @@ export default function LeadForm({ compact = false }: { compact?: boolean }) {
       });
       const data = await res.json();
       if (res.ok) {
+        trackLead({ eventId: data.eventId, value: debtAmount ? Math.round(debtAmount * 0.2) : 0 });
         setState("done");
         setMessage(data.message ?? "Thanks — we'll be in touch shortly.");
       } else {

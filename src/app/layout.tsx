@@ -4,6 +4,7 @@ import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { baseMetadata, JsonLd, organizationLd, websiteLd } from "@/lib/solvana/seo";
+import AdPixels from "@/components/analytics/pixels";
 
 export const metadata: Metadata = {
   ...baseMetadata(),
@@ -29,6 +30,7 @@ export default function RootLayout({
         <JsonLd data={[organizationLd(), websiteLd()]} />
       </head>
       <body className="antialiased">
+        <AdPixels />
         <ErrorReporter />
         <Script
           src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts//route-messenger.js"

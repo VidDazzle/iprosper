@@ -1,7 +1,9 @@
+import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { leads } from "@/db/schema";
 import { isServiceableState } from "@/lib/agents/compliance";
+import { sendMetaLeadEvent } from "@/lib/marketing/capi";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -77,10 +79,27 @@ export async function POST(request: NextRequest) {
       })
       .returning({ id: leads.id });
 
+    // Fire the server-side Meta Conversions API "Lead" event (deduplicated with
+    // the browser Pixel via the shared eventId). No-ops if CAPI isn't configured.
+    const eventId = randomUUID();
+    if (serviceable) {
+      await sendMetaLeadEvent({
+        email,
+        phone: phone ?? undefined,
+        clickId: attribution.clickId,
+        eventId,
+        eventSourceUrl: attribution.landingPath ? `https://solvana.ai${attribution.landingPath}` : undefined,
+        clientIp: ip,
+        userAgent: request.headers.get("user-agent"),
+        value: debtAmount ? Math.round(debtAmount * 0.2) : 0,
+      });
+    }
+
     return NextResponse.json(
       {
         success: true,
         leadId: inserted[0]?.id,
+        eventId,
         serviceable,
         message: serviceable
           ? "Thanks — Aria will reach out shortly to see if you qualify."
