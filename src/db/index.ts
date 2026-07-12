@@ -1,5 +1,8 @@
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client';
+// Use the web (fetch-based) libSQL client so the app runs on both Node
+// (Vercel/VPS) and edge/Workers (Cloudflare) runtimes. It talks to remote
+// Turso over HTTPS and pulls in no native addons.
+import { createClient } from '@libsql/client/web';
 import * as schema from '@/db/schema';
 
 // Lazily instantiate the database so importing this module (e.g. during
