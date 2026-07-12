@@ -3,11 +3,10 @@ import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
+import { baseMetadata, JsonLd, organizationLd, websiteLd } from "@/lib/solvana/seo";
 
 export const metadata: Metadata = {
-  title: "Solvana — AI-Powered Debt Settlement | Owe Less. Live More.",
-  description:
-    "Solvana's specialized AI voice agents negotiate with your creditors to settle unsecured debts — credit cards, medical bills, personal loans — for less than you owe. Zero upfront fees. FDIC-insured dedicated account you control.",
+  ...baseMetadata(),
   icons: {
     icon: "/favicon.png", // main favicon
     shortcut: "/favicon.png", // shortcut icon for browsers
@@ -26,6 +25,8 @@ export default function RootLayout({
         {/* Additional manual fallback if needed */}
         <link rel="icon" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/favicon.png" />
+        {/* Site-wide structured data for search + AI answer engines */}
+        <JsonLd data={[organizationLd(), websiteLd()]} />
       </head>
       <body className="antialiased">
         <ErrorReporter />

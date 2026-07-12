@@ -1,6 +1,14 @@
 import Link from "next/link";
+import { Facebook, Instagram, Youtube, Linkedin } from "lucide-react";
 import { SolvanaLogo } from "./nav";
 import { PROGRAM } from "@/lib/solvana/brand";
+
+const SOCIALS = [
+  { href: "https://www.facebook.com/solvana.ai", label: "Facebook", Icon: Facebook },
+  { href: "https://www.instagram.com/solvana.ai", label: "Instagram", Icon: Instagram },
+  { href: "https://www.youtube.com/@solvana.ai", label: "YouTube", Icon: Youtube },
+  { href: "https://www.linkedin.com/company/solvana-ai", label: "LinkedIn", Icon: Linkedin },
+];
 
 export default function SolvanaFooter() {
   return (
@@ -14,6 +22,20 @@ export default function SolvanaFooter() {
               creditors so you can pay less than you owe — with zero upfront
               fees.
             </p>
+            <div className="mt-5 flex gap-3">
+              {SOCIALS.map(({ href, label, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-gray-400 transition-colors hover:border-cyan-400/40 hover:text-cyan-300"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
           </div>
           <div>
             <h4 className="mb-3 text-sm font-semibold text-white">Program</h4>
@@ -21,6 +43,7 @@ export default function SolvanaFooter() {
               <li><Link href="/how-it-works" className="hover:text-cyan-300">How it works</Link></li>
               <li><Link href="/agents" className="hover:text-cyan-300">Meet the AI agents</Link></li>
               <li><Link href="/pricing" className="hover:text-cyan-300">Fees & pricing</Link></li>
+              <li><Link href="/get-started" className="hover:text-cyan-300">Get started</Link></li>
               <li><Link href="/qualify" className="hover:text-cyan-300">Do I qualify?</Link></li>
             </ul>
           </div>

@@ -6,13 +6,16 @@ import Transparency from "@/components/solvana/transparency";
 import ComplianceSection from "@/components/solvana/compliance";
 import FAQ from "@/components/solvana/faq";
 import FinalCTA from "@/components/solvana/cta";
+import { FAQS } from "@/components/solvana/faq";
+import { JsonLd, faqLd, serviceLd, breadcrumbLd, pageMetadata } from "@/lib/solvana/seo";
 import { PROGRAM } from "@/lib/solvana/brand";
 
-export const metadata: Metadata = {
-  title: "How Debt Settlement Works | Solvana",
+export const metadata: Metadata = pageMetadata({
+  title: "How Debt Settlement Works",
   description:
     "Stop payments, save into an FDIC-insured account you control, and let Solvana's AI agents negotiate lump-sum settlements with your creditors. Typical programs run 24–36 months.",
-};
+  path: "/how-it-works",
+});
 
 const TIMELINE = [
   { month: "Day 1", event: "Free eligibility call with Aria; every required disclosure delivered on a recorded line before you sign anything." },
@@ -25,6 +28,16 @@ const TIMELINE = [
 export default function HowItWorksPage() {
   return (
     <div className="bg-[#050810] font-sans text-white">
+      <JsonLd
+        data={[
+          serviceLd(),
+          faqLd(FAQS),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "How it works", path: "/how-it-works" },
+          ]),
+        ]}
+      />
       <SolvanaNav />
 
       <section className="relative overflow-hidden px-6 pb-8 pt-20 text-center">

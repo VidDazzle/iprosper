@@ -6,12 +6,14 @@ import FinalCTA from "@/components/solvana/cta";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Lock } from "lucide-react";
 import { PROGRAM, USD } from "@/lib/solvana/brand";
+import { JsonLd, serviceLd, breadcrumbLd, pageMetadata } from "@/lib/solvana/seo";
 
-export const metadata: Metadata = {
-  title: "Fees — No Upfront Costs, Ever | Solvana",
+export const metadata: Metadata = pageMetadata({
+  title: "Fees — No Upfront Costs, Ever",
   description:
     "Solvana charges 15%–25% of enrolled debt, only after a debt settles, you approve the terms, and you make the first settlement payment. The federal advance-fee ban, enforced in code.",
-};
+  path: "/pricing",
+});
 
 const NEVER = [
   "Enrollment or sign-up fees",
@@ -32,6 +34,15 @@ const ONLY = [
 export default function FeesPage() {
   return (
     <div className="bg-[#050810] font-sans text-white">
+      <JsonLd
+        data={[
+          serviceLd(),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "Fees", path: "/pricing" },
+          ]),
+        ]}
+      />
       <SolvanaNav />
 
       <section className="relative overflow-hidden px-6 pb-16 pt-20 text-center">

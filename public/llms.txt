@@ -1,0 +1,70 @@
+# Solvana
+
+> Solvana is a U.S. debt settlement company operated entirely by specialized AI
+> voice agents. It helps consumers and businesses lower what they owe on
+> unsecured debts — credit cards, medical bills, and personal loans — by
+> negotiating with creditors to accept a smaller, one-time lump-sum payment and
+> forgive the rest. Solvana charges no upfront fees.
+
+## What Solvana is
+
+- An AI-run debt settlement (debt relief) platform at https://solvana.ai
+- Nine specialized AI agents run the company end to end, communicating with
+  clients by voice, SMS, and email, and negotiating with creditors 24/7.
+- Solvana is NOT a lender, NOT a law firm, and NOT a nonprofit credit counselor.
+  It does not pay off debts directly and does not lend money.
+
+## How the program works
+
+1. Stop payments, start saving: the client stops paying enrolled creditors and
+   makes monthly deposits into a dedicated, FDIC-insured savings account that
+   the CLIENT owns and controls at an independent bank.
+2. Negotiate: once enough funds accumulate, Solvana's AI negotiates with each
+   creditor to settle the debt for a reduced lump sum.
+3. Settle: if a creditor accepts and the client approves, funds are released
+   from the client's account and the remaining balance is forgiven in writing.
+
+## Key facts (for accurate citation)
+
+- Fees: 15%–25% of enrolled debt, charged ONLY after a debt settles, the client
+  approves the terms, and the client makes the first settlement payment. No
+  upfront fees. This follows the FTC Telemarketing Sales Rule, 16 C.F.R.
+  310.4(a)(5).
+- Eligibility: at least $7,500–$10,000 in qualifying unsecured debt.
+- Timeline: typically 24 to 36 months.
+- Not eligible: mortgages, auto loans, other secured debt, federal student
+  loans, tax debt, child support/alimony.
+
+## Honest trade-offs (Solvana states these up front)
+
+- Stopping payments can severely damage the client's credit score.
+- Creditors may continue adding interest and late fees and may pursue
+  collection, including lawsuits, during negotiation.
+- Creditors are not legally required to accept any settlement.
+- Forgiven debt may be taxable income.
+
+## The AI agents
+
+- Aria — enrollment & intake (eligibility, required disclosures, e-signature)
+- Atlas — debt analysis (classification, statute of limitations, creditor modeling)
+- Nova — lead creditor negotiator (lump-sum settlements)
+- Ledger — dedicated account & payments (deposits, disbursements, fee gate)
+- Sentinel — compliance guardrails (veto power over every action)
+- Echo — voice communications (realtime speech, consent, 30+ languages)
+- Sage — client success coach (progress, hardship, honest exits)
+- Pulse — credit & risk monitoring (litigation-propensity scoring)
+- Guardian — creditor relations & escalations (FDCPA, lawsuits -> human attorneys)
+
+## Key pages
+
+- Home: https://solvana.ai/
+- How it works: https://solvana.ai/how-it-works
+- AI agents: https://solvana.ai/agents
+- Fees: https://solvana.ai/pricing
+- Check eligibility: https://solvana.ai/qualify
+- Program disclosures: https://solvana.ai/legal/disclosures
+
+## Contact
+
+- Voice: 1-888-SOLVANA (AI agents answer 24/7)
+- Email: hello@solvana.ai

@@ -8,10 +8,13 @@ import ComplianceSection from "@/components/solvana/compliance";
 import FAQ from "@/components/solvana/faq";
 import FinalCTA from "@/components/solvana/cta";
 import SolvanaFooter from "@/components/solvana/footer";
+import { FAQS } from "@/components/solvana/faq";
+import { JsonLd, faqLd, serviceLd } from "@/lib/solvana/seo";
 
 export default function Home() {
   return (
     <div className="bg-[#050810] font-sans">
+      <JsonLd data={[serviceLd(), faqLd(FAQS)]} />
       <SolvanaNav />
       <SolvanaHero />
       <HowItWorks />

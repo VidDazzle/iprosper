@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const FAQS = [
+export const FAQS = [
   {
     q: "Is Solvana really run entirely by AI?",
     a: "Yes — intake, analysis, negotiation, account management, and client support are all handled by specialized AI voice agents, supervised by a compliance agent with veto power over every action. Licensed human attorneys step in for legal matters (like a creditor lawsuit), and you can ask to speak to a human supervisor at any time on any call.",

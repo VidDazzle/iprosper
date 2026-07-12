@@ -6,16 +6,27 @@ import { AGENTS } from "@/lib/agents/registry";
 import { AGENT_ICONS, AGENT_GRADIENTS } from "@/components/solvana/agent-grid";
 import { Badge } from "@/components/ui/badge";
 import { AudioLines, ArrowUpRight, ShieldAlert } from "lucide-react";
+import { JsonLd, serviceLd, breadcrumbLd, pageMetadata } from "@/lib/solvana/seo";
 
-export const metadata: Metadata = {
-  title: "The AI Agent Workforce | Solvana",
+export const metadata: Metadata = pageMetadata({
+  title: "The AI Agent Workforce",
   description:
     "Meet the nine specialized AI agents that run Solvana end to end — enrollment, debt analysis, negotiation, banking, compliance, voice, client success, risk, and escalations.",
-};
+  path: "/agents",
+});
 
 export default function AgentsPage() {
   return (
     <div className="bg-[#050810] font-sans text-white">
+      <JsonLd
+        data={[
+          serviceLd(),
+          breadcrumbLd([
+            { name: "Home", path: "/" },
+            { name: "AI Agents", path: "/agents" },
+          ]),
+        ]}
+      />
       <SolvanaNav />
 
       <section className="relative overflow-hidden px-6 pb-16 pt-20 text-center">

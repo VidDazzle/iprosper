@@ -1,0 +1,23 @@
+CREATE TABLE `leads` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`name` text,
+	`email` text NOT NULL,
+	`phone` text,
+	`debt_amount` integer,
+	`debt_types` text,
+	`pay_status` text,
+	`state_code` text,
+	`contact_consent` integer DEFAULT false NOT NULL,
+	`source` text,
+	`medium` text,
+	`campaign` text,
+	`ad_content` text,
+	`term` text,
+	`referrer` text,
+	`landing_path` text,
+	`click_id` text,
+	`status` text DEFAULT 'new' NOT NULL,
+	`ip_address` text,
+	`user_agent` text,
+	`created_at` text NOT NULL
+);
