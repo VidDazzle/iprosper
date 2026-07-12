@@ -1,29 +1,27 @@
-import Navigation from "@/components/sections/navigation";
-import Hero from "@/components/sections/hero";
-import PartnerLogos from "@/components/sections/partner-logos";
-import RealTimeVoiceAgents from "@/components/sections/real-time-voice-agents";
-import Languages from "@/components/sections/languages";
-import Products from "@/components/sections/products";
-import Testimonials from "@/components/sections/testimonials";
-import Research from "@/components/sections/research";
-import Security from "@/components/sections/security";
-import Mission from "@/components/sections/mission";
-import Footer from "@/components/sections/footer";
+import SolvanaNav from "@/components/solvana/nav";
+import SolvanaHero from "@/components/solvana/hero";
+import HowItWorks from "@/components/solvana/how-it-works";
+import AgentGrid from "@/components/solvana/agent-grid";
+import SavingsCalculator from "@/components/solvana/calculator";
+import Transparency from "@/components/solvana/transparency";
+import ComplianceSection from "@/components/solvana/compliance";
+import FAQ from "@/components/solvana/faq";
+import FinalCTA from "@/components/solvana/cta";
+import SolvanaFooter from "@/components/solvana/footer";
 
 export default function Home() {
   return (
-    <div className="font-sans">
-      <Navigation />
-      <Hero />
-      <PartnerLogos />
-      <RealTimeVoiceAgents />
-      <Languages />
-      <Products />
-      <Testimonials />
-      <Research />
-      <Security />
-      <Mission />
-      <Footer />
+    <div className="bg-[#050810] font-sans">
+      <SolvanaNav />
+      <SolvanaHero />
+      <HowItWorks />
+      <AgentGrid compact />
+      <SavingsCalculator />
+      <Transparency />
+      <ComplianceSection />
+      <FAQ />
+      <FinalCTA />
+      <SolvanaFooter />
     </div>
   );
 }

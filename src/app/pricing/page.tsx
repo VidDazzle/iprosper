@@ -1,288 +1,135 @@
-'use client';
-
-import Navigation from "@/components/sections/navigation";
-import Footer from "@/components/sections/footer";
+import type { Metadata } from "next";
+import Link from "next/link";
+import SolvanaNav from "@/components/solvana/nav";
+import SolvanaFooter from "@/components/solvana/footer";
+import FinalCTA from "@/components/solvana/cta";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ArrowRight } from "lucide-react";
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { CheckCircle2, XCircle, Lock } from "lucide-react";
+import { PROGRAM, USD } from "@/lib/solvana/brand";
 
-const pricingTiers = [
-{
-  name: "Starter",
-  monthlyPrice: 200,
-  annualPrice: 2000,
-  price: "$200",
-  period: "/month",
-  description: "Perfect for solopreneurs",
-  features: [
-  "Up to 200 minutes/month",
-  "AI training",
-  "Email support",
-  "Standard integrations",
-  "Basic analytics",
-  "1 phone number"],
+export const metadata: Metadata = {
+  title: "Fees — No Upfront Costs, Ever | Solvana",
+  description:
+    "Solvana charges 15%–25% of enrolled debt, only after a debt settles, you approve the terms, and you make the first settlement payment. The federal advance-fee ban, enforced in code.",
+};
 
-  popular: false
-},
-{
-  name: "Professional",
-  monthlyPrice: 400,
-  annualPrice: 4000,
-  price: "$400",
-  period: "/month",
-  description: "Ideal for growing teams",
-  features: [
-  "Up to 400 minutes/month",
-  "Advanced AI training",
-  "Priority support",
-  "Premium integrations",
-  "Advanced analytics",
-  "1 phone number",
-  "Custom voice cloning",
-  "CRM integration"],
+const NEVER = [
+  "Enrollment or sign-up fees",
+  "Monthly maintenance or 'service' fees",
+  "Consultation or analysis fees",
+  "Cancellation or exit penalties",
+  "Fees on debts that never settle",
+];
 
-  popular: true
-},
-{
-  name: "Business",
-  monthlyPrice: 1000,
-  annualPrice: 10000,
-  price: "$1,000",
-  period: "/month",
-  description: "For established companies",
-  features: [
-  "Up to 1,000 minutes/month",
-  "Expert AI training",
-  "24/7 chat support",
-  "All premium integrations",
-  "Advanced analytics dashboard",
-  "1 phone numbers",
-  "Custom voice cloning",
-  "Multi-language support",
-  "API access"],
+const ONLY = [
+  "A performance fee of 15%–25% of each enrolled debt",
+  "Charged per debt, only after that debt settles",
+  "Only after you approve the settlement terms",
+  "Only after you make the first settlement payment",
+  "Deducted from your dedicated account with full line-item visibility",
+];
 
-  popular: false
-},
-{
-  name: "Premium",
-  monthlyPrice: 2000,
-  annualPrice: 20000,
-  price: "$2,000",
-  period: "/month",
-  description: "For scaling organizations",
-  features: [
-  "Up to 2,000 minutes/month",
-  "Custom AI model training",
-  "Dedicated account manager",
-  "White-label solutions",
-  "Enterprise analytics",
-  "1 phone numbers",
-  "Advanced voice cloning",
-  "Multi-tenant architecture",
-  "Custom integrations",
-  "SLA guarantee"],
-
-  popular: false
-},
-{
-  name: "Corporate",
-  monthlyPrice: 10000,
-  annualPrice: 100000,
-  price: "$10,000",
-  period: "/month",
-  description: "For large enterprises",
-  features: [
-  "Up to 10,000 minutes/month",
-  "Fully custom AI development",
-  "Priority phone support",
-  "Complete white-labeling",
-  "Real-time analytics suite",
-  "1 phone numbers",
-  "Enterprise voice cloning",
-  "Multi-region deployment",
-  "Custom development",
-  "Compliance reporting",
-  "Dedicated infrastructure"],
-
-  popular: false
-},
-{
-  name: "Enterprise",
-  monthlyPrice: "Custom",
-  annualPrice: "Custom",
-  period: "pricing",
-  description: "For large organizations",
-  features: [
-  "Unlimited Possibilities",
-  "Custom AI development",
-  "Dedicated support team",
-  "All integrations",
-  "Enterprise analytics",
-  "1 Vanity phone numbers",
-  "On-premise deployment",
-  "24/7 phone support",
-  "Global infrastructure",
-  "Custom SLAs",
-  "Regulatory compliance",
-  "White-glove onboarding"],
-
-  popular: false
-}];
-
-
-export default function PricingPage() {
-  const router = useRouter();
-  const [barHeights, setBarHeights] = useState(() =>
-    Array.from({ length: 15 }, () => Math.random() * 60 + 15)
-  );
-
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setBarHeights(Array.from({ length: 15 }, () => Math.random() * 60 + 15));
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
-  const handleGetStarted = () => {
-    router.push('/schedule-demo');
-  };
-
-  const formatPrice = (tier: any) => {
-    if (tier.name === "Enterprise") {
-      return { price: "Custom", period: "pricing" };
-    }
-
-    if (billingCycle === 'monthly') {
-      return {
-        price: `$${tier.monthlyPrice.toLocaleString()}`,
-        period: "/month"
-      };
-    } else {
-      const monthlyEquivalent = Math.round(tier.annualPrice / 12);
-      return {
-        price: `$${monthlyEquivalent.toLocaleString()}`,
-        period: "/month",
-        annualPrice: `$${tier.annualPrice.toLocaleString()}/year`,
-        savings: `Save $${(tier.monthlyPrice * 12 - tier.annualPrice).toLocaleString()}`
-      };
-    }
-  };
-
+export default function FeesPage() {
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
-      <Navigation />
-      
-      <main className="pt-20">
-        <section className="py-20 px-6">
-          <div className="container mx-auto">
-            {/* Smaller Animated Bars */}
-            <div className="flex justify-center items-end space-x-1.5 h-20 mb-12">
-              {Array.from({ length: 15 }).map((_, i) => {
-                const colors = ['#ff6b00', '#ff1744', '#9c27b0', '#0099ff', '#00bcd4', '#ffc107', '#4caf50', '#e91e63'];
-                return (
-                  <div
-                    key={i}
-                    className="transition-all duration-1000 ease-in-out !block"
-                    style={{
-                      width: '6px',
-                      height: `${barHeights[i]}px`,
-                      backgroundColor: colors[i % colors.length],
-                      borderRadius: '3px'
-                    }} />);
+    <div className="bg-[#050810] font-sans text-white">
+      <SolvanaNav />
 
-              })}
-            </div>
-            
-            <h2 className="text-5xl font-semibold text-center mb-4 text-white">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-neutral-400 text-center mb-8">
-              Choose the plan that fits your business needs
-            </p>
+      <section className="relative overflow-hidden px-6 pb-16 pt-20 text-center">
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          <div className="absolute left-1/2 top-[-150px] h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-cyan-500/15 blur-[120px]" />
+        </div>
+        <div className="relative mx-auto max-w-3xl">
+          <h1 className="mb-6 text-5xl font-bold md:text-6xl">
+            You pay{" "}
+            <span className="bg-gradient-to-r from-cyan-400 to-violet-500 bg-clip-text text-transparent">
+              only when we deliver
+            </span>
+          </h1>
+          <p className="text-lg text-gray-300">
+            Federal law prohibits debt settlement companies from charging fees before a
+            debt is actually settled. We go further: the advance-fee ban is enforced by
+            our payment system itself. A fee that hasn&apos;t passed the legal gate cannot
+            physically move.
+          </p>
+        </div>
+      </section>
 
-            {/* Billing Toggle */}
-            <div className="flex justify-center mb-16">
-              <div className="bg-[#2a2a2a] border border-white/10 rounded-full p-1 flex">
-                <button
-                  onClick={() => setBillingCycle('monthly')}
-                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  billingCycle === 'monthly' ?
-                  'bg-white text-black' :
-                  'text-white hover:text-gray-300'}`
-                  }>
-
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setBillingCycle('annual')}
-                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 relative ${
-                  billingCycle === 'annual' ?
-                  'bg-white text-black' :
-                  'text-white hover:text-gray-300'}`
-                  }>
-
-                  Annual
-                  <Badge className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-1 py-0.5">
-                    Save 17%
-                  </Badge>
-                </button>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-              {pricingTiers.map((tier, index) => {
-                const pricing = formatPrice(tier);
-                return (
-                  <Card key={index} className={`relative bg-[#2a2a2a] border-white/10 flex flex-col h-full ${tier.popular ? 'border-blue-500 shadow-lg shadow-blue-500/20' : ''}`}>
-                    {tier.popular &&
-                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
-                        Most Popular
-                      </Badge>
-                    }
-                    <CardContent className="p-8 flex flex-col flex-1">
-                      <div className="text-center mb-8">
-                        <h3 className="text-2xl font-semibold mb-2 text-white">{tier.name}</h3>
-                        <div className="mb-2">
-                          <span className="text-4xl font-bold text-white !whitespace-pre-line">{pricing.price}</span>
-                          <span className="text-neutral-400">{pricing.period}</span>
-                        </div>
-                        {billingCycle === 'annual' && tier.name !== "Enterprise" &&
-                        <div className="text-sm text-neutral-400">
-                            <div>{pricing.annualPrice}</div>
-                            <div className="text-green-400 font-medium">{pricing.savings}</div>
-                          </div>
-                        }
-                        <p className="text-neutral-400">{tier.description}</p>
-                      </div>
-                      <ul className="space-y-3 mb-8 flex-1">
-                        {tier.features.map((feature, featureIndex) =>
-                        <li key={featureIndex} className="flex items-center space-x-2">
-                            <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
-                            <span className="text-white !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line !whitespace-pre-line">{feature}</span>
-                          </li>
-                        )}
-                      </ul>
-                      <Button 
-                        onClick={handleGetStarted}
-                        className={`w-full mt-auto ${tier.popular ? 'bg-blue-500 hover:bg-blue-600' : 'bg-white text-black hover:bg-gray-200'}`}
-                      >
-                        Get Started
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    </CardContent>
-                  </Card>);
-
-              })}
-            </div>
+      <section className="px-6 pb-20">
+        <div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
+          <div className="rounded-3xl border border-rose-400/20 bg-rose-400/5 p-8">
+            <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-rose-300">
+              <XCircle className="h-6 w-6" /> What we never charge
+            </h2>
+            <ul className="space-y-3 text-gray-300">
+              {NEVER.map((x) => (
+                <li key={x} className="flex gap-3">
+                  <XCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-rose-400/70" /> {x}
+                </li>
+              ))}
+            </ul>
           </div>
-        </section>
-      </main>
-      
-      <Footer />
-    </div>);
+          <div className="rounded-3xl border border-cyan-400/25 bg-cyan-400/5 p-8">
+            <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-cyan-300">
+              <CheckCircle2 className="h-6 w-6" /> The only fee that exists
+            </h2>
+            <ul className="space-y-3 text-gray-300">
+              {ONLY.map((x) => (
+                <li key={x} className="flex gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-cyan-400/80" /> {x}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
 
+        <div className="mx-auto mt-10 max-w-5xl rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur md:p-10">
+          <h2 className="mb-4 flex items-center gap-2 text-xl font-bold">
+            <Lock className="h-5 w-5 text-violet-300" /> Worked example
+          </h2>
+          <p className="mb-6 text-sm text-gray-400">
+            Say you enroll {USD.format(20000)} of credit card debt and Nova settles it for{" "}
+            {USD.format(9000)} (45%). At a 20% fee ({USD.format(4000)}), your total cost is{" "}
+            {USD.format(13000)} — {USD.format(7000)} less than you owed, before any
+            creditor-added interest and fees. If a debt never settles, its fee is never
+            charged. Period.
+          </p>
+          <div className="grid gap-4 text-center sm:grid-cols-4">
+            {[
+              ["Enrolled debt", USD.format(20000)],
+              ["Negotiated settlement", USD.format(9000)],
+              ["Solvana fee (20%)", USD.format(4000)],
+              ["You keep", USD.format(7000)],
+            ].map(([label, value], i) => (
+              <div
+                key={label}
+                className={`rounded-xl border p-4 ${i === 3 ? "border-cyan-400/40 bg-cyan-400/10" : "border-white/10 bg-[#03040a]"}`}
+              >
+                <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
+                <p className={`mt-1 text-xl font-bold ${i === 3 ? "text-cyan-300" : "text-white"}`}>
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-xs text-gray-500">
+            Illustrative only. Typical settlements range 40–60% of enrolled balance; fees range{" "}
+            {PROGRAM.feePctLow}%–{PROGRAM.feePctHigh}% depending on your state and debt profile.
+            Results vary and are not guaranteed. Creditors may add interest and fees to enrolled
+            balances, and forgiven debt may be taxable.
+          </p>
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link href="/qualify">
+            <Button className="h-12 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-10 text-lg text-white shadow-[0_0_28px_rgba(139,92,246,0.4)] hover:from-cyan-400 hover:to-violet-500">
+              See my personalized numbers
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      <FinalCTA />
+      <SolvanaFooter />
+    </div>
+  );
 }
