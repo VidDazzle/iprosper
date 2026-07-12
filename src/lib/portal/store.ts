@@ -274,6 +274,62 @@ export async function listNotifications(clientId: string): Promise<NotificationR
   return mem.notifications.filter((n) => n.clientId === clientId);
 }
 
+/* -------------------- admin-wide views (all clients) ---------------------- */
+
+function mapDocument(r: Record<string, unknown>): DocumentRecord {
+  return {
+    id: r.id as number,
+    clientId: r.clientId as string,
+    fileName: r.fileName as string,
+    mimeType: (r.mimeType as string) ?? undefined,
+    sizeBytes: (r.sizeBytes as number) ?? undefined,
+    declaredType: (r.declaredType as string) ?? undefined,
+    analyzedType: (r.analyzedType as string) ?? undefined,
+    analyzedAgent: (r.analyzedAgent as AgentId) ?? undefined,
+    findings: r.findings ? JSON.parse(r.findings as string) : [],
+    recommendedAction: (r.recommendedAction as string) ?? undefined,
+    priority: r.priority as DocumentRecord["priority"],
+    status: r.status as DocumentRecord["status"],
+    createdAt: r.createdAt as string,
+  };
+}
+
+export async function listAllDocuments(): Promise<DocumentRecord[]> {
+  if (hasDb()) {
+    const { db } = await import("@/db");
+    const { clientDocuments } = await import("@/db/schema");
+    const { desc } = await import("drizzle-orm");
+    const rows = await db.select().from(clientDocuments).orderBy(desc(clientDocuments.createdAt));
+    return rows.map(mapDocument);
+  }
+  await ensureDemoSeed();
+  return [...mem.docs];
+}
+
+export async function listAllApprovals(): Promise<ApprovalRecord[]> {
+  if (hasDb()) {
+    const { db } = await import("@/db");
+    const { clientApprovals } = await import("@/db/schema");
+    const { desc } = await import("drizzle-orm");
+    const rows = await db.select().from(clientApprovals).orderBy(desc(clientApprovals.createdAt));
+    return rows.map(mapApproval);
+  }
+  await ensureDemoSeed();
+  return [...mem.approvals];
+}
+
+/** Portfolio-wide counts for the admin overview. */
+export async function portalActivityStats() {
+  const [docs, approvals] = await Promise.all([listAllDocuments(), listAllApprovals()]);
+  return {
+    documents: docs.length,
+    documentsUrgent: docs.filter((d) => d.priority === "urgent").length,
+    approvalsPending: approvals.filter((a) => a.status === "pending").length,
+    approvalsApproved: approvals.filter((a) => a.status === "approved").length,
+    approvalsRejected: approvals.filter((a) => a.status === "rejected").length,
+  };
+}
+
 function mapApproval(r: Record<string, unknown>): ApprovalRecord {
   return {
     id: r.id as number,

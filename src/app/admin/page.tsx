@@ -9,10 +9,16 @@ import {
   depositsOverTime,
   allCaseSummaries,
 } from "@/lib/admin/reports";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { portalActivityStats, listAllApprovals } from "@/lib/portal/store";
+import { getClient } from "@/lib/admin/mock-data";
+import { AlertTriangle, ArrowRight, CheckSquare, FileText, Clock } from "lucide-react";
 
-export default function AdminOverview() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminOverview() {
   const k = portfolioKpis();
+  const portal = await portalActivityStats();
+  const pendingApprovals = (await listAllApprovals()).filter((a) => a.status === "pending").slice(0, 5);
   const funnel = funnelByPhase();
   const byType = debtByType();
   const settlements = settlementsOverTime();
@@ -77,6 +83,39 @@ export default function AdminOverview() {
             />
           </Panel>
         </div>
+      </div>
+
+      {/* Live client activity (portal) */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Panel
+          title="Client approvals awaiting decision"
+          action={
+            <Link href="/admin/approvals" className="inline-flex items-center gap-1 text-xs text-cyan-300 hover:text-cyan-200">
+              All approvals <ArrowRight className="h-3 w-3" />
+            </Link>
+          }
+        >
+          {pendingApprovals.length === 0 ? (
+            <p className="py-4 text-center text-sm text-slate-500">No approvals awaiting a client decision.</p>
+          ) : (
+            <div className="space-y-2">
+              {pendingApprovals.map((a) => {
+                const client = getClient(a.clientId);
+                return (
+                  <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-amber-400/20 bg-amber-400/[0.04] px-4 py-2.5 text-sm">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-white">{a.title}</p>
+                      <Link href={`/admin/clients/${a.clientId}`} className="text-xs text-cyan-300 hover:text-cyan-200">{client?.name ?? a.clientId}</Link>
+                    </div>
+                    <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-amber-300"><Clock className="h-3 w-3" /> pending</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+        <StatCard label="Pending approvals" value={String(portal.approvalsPending)} sub={`${portal.approvalsApproved} approved · ${portal.approvalsRejected} declined`} accent="amber" />
+        <StatCard label="Client documents" value={String(portal.documents)} sub={`${portal.documentsUrgent} urgent`} accent="cyan" />
       </div>
 
       {/* Needs attention */}

@@ -6,21 +6,20 @@ import { StatCard, Panel, PhaseBadge, DebtStatusBadge, money, pct, ProgressBar }
 import { BarChartCard, PALETTE } from "@/components/admin/charts";
 import { getAgent } from "@/lib/agents/registry";
 import { AGENT_ICONS, AGENT_GRADIENTS } from "@/components/solvana/agent-grid";
-import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, PhoneCall, Mail, MessageSquare, Cpu } from "lucide-react";
+import { listDocuments, listApprovals } from "@/lib/portal/store";
+import { ArrowLeft, TrendingUp, TrendingDown, AlertTriangle, PhoneCall, Mail, MessageSquare, Cpu, FileText, CheckCircle2, XCircle, Clock } from "lucide-react";
 import type { AgentActivityEntry } from "@/lib/admin/types";
 
 const CHANNEL_ICON = { voice: PhoneCall, email: Mail, sms: MessageSquare, internal: Cpu };
 
-export function generateStaticParams() {
-  // Pre-render nothing here (dynamic); real deployment would list active clients.
-  return [];
-}
+export const dynamic = "force-dynamic";
 
 export default async function ClientCasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const client = getClient(id);
   if (!client) notFound();
   const c = caseSummary(client);
+  const [documents, approvals] = await Promise.all([listDocuments(id), listApprovals(id)]);
   const creditUp = c.creditDelta >= 0;
 
   // Deposit history for chart.
@@ -191,6 +190,63 @@ export default async function ClientCasePage({ params }: { params: Promise<{ id:
             </ol>
           </Panel>
         </div>
+      </div>
+
+      {/* Live portal data: documents uploaded and approvals */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel title={`Uploaded documents (${documents.length})`}>
+          {documents.length === 0 ? (
+            <p className="py-4 text-center text-sm text-slate-500">No documents uploaded by this client.</p>
+          ) : (
+            <div className="space-y-2">
+              {documents.map((d) => {
+                const agent = d.analyzedAgent ? getAgent(d.analyzedAgent) : null;
+                return (
+                  <div key={d.id} className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-sm font-medium text-white">
+                        <FileText className="h-4 w-4 text-slate-400" /> {d.fileName}
+                      </span>
+                      {d.priority !== "normal" && (
+                        <span className={`text-xs uppercase ${d.priority === "urgent" ? "text-rose-300" : "text-amber-300"}`}>{d.priority}</span>
+                      )}
+                    </div>
+                    {agent && <p className="mt-1 text-xs text-violet-300">Analyzed by {agent.name}</p>}
+                    {d.recommendedAction && <p className="mt-0.5 text-xs text-slate-400">{d.recommendedAction}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title={`Approvals (${approvals.length})`}>
+          {approvals.length === 0 ? (
+            <p className="py-4 text-center text-sm text-slate-500">No approval requests for this client.</p>
+          ) : (
+            <div className="space-y-2">
+              {approvals.map((a) => (
+                <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">{a.title}</p>
+                    <p className="text-xs text-slate-500">
+                      {getAgent(a.agent)?.name}
+                      {a.amount != null && ` · ${money(a.amount)}`}
+                      {a.decidedVia && ` · via ${a.decidedVia}`}
+                    </p>
+                  </div>
+                  {a.status === "pending" ? (
+                    <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-amber-300"><Clock className="h-3 w-3" /> pending</span>
+                  ) : a.status === "approved" ? (
+                    <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-emerald-300"><CheckCircle2 className="h-3 w-3" /> approved</span>
+                  ) : (
+                    <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs text-slate-400"><XCircle className="h-3 w-3" /> {a.status}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
       </div>
     </div>
   );
