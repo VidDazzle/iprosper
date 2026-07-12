@@ -49,8 +49,8 @@ export default function SolvanaNav() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link href="/signin" className="text-sm text-gray-300 transition-colors hover:text-white">
-            Sign in
+          <Link href="/portal/signin" className="text-sm text-gray-300 transition-colors hover:text-white">
+            Client login
           </Link>
           <Link href="/qualify">
             <Button className="rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-6 text-white shadow-[0_0_24px_rgba(139,92,246,0.45)] hover:from-cyan-400 hover:to-violet-500">
@@ -81,8 +81,8 @@ export default function SolvanaNav() {
                 {l.label}
               </Link>
             ))}
-            <Link href="/signin" className="text-gray-300 hover:text-white" onClick={() => setOpen(false)}>
-              Sign in
+            <Link href="/portal/signin" className="text-gray-300 hover:text-white" onClick={() => setOpen(false)}>
+              Client login
             </Link>
             <Link href="/qualify" onClick={() => setOpen(false)}>
               <Button className="w-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 text-white">
