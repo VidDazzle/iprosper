@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SolvanaLogo } from "@/components/solvana/nav";
 import { LayoutDashboard, Users, Megaphone, Bot, BarChart3, ShieldCheck, CheckSquare, FileText } from "lucide-react";
+import { requireAdmin } from "@/lib/admin/session";
+import AdminLogoutButton from "@/components/admin/logout-button";
 
 export const metadata: Metadata = {
   title: "Operations Console | Solvana",
@@ -18,7 +20,9 @@ const NAV = [
   { href: "/admin/leads", label: "Leads & marketing", icon: Megaphone },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const admin = await requireAdmin();
+
   return (
     <div className="min-h-screen bg-[#050810] font-sans text-slate-200">
       <div className="flex">
@@ -42,9 +46,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             ))}
           </nav>
-          <div className="mt-auto rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-emerald-300">
-            <ShieldCheck className="mb-1 h-4 w-4" />
-            Sentinel: all agent actions screened & logged
+          <div className="mt-auto space-y-3">
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-emerald-300">
+              <ShieldCheck className="mb-1 h-4 w-4" />
+              Sentinel: all agent actions screened &amp; logged
+            </div>
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium text-white">{admin.email}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-500">Staff</p>
+              </div>
+              <AdminLogoutButton />
+            </div>
           </div>
         </aside>
 
@@ -57,6 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {n.label}
               </Link>
             ))}
+            <AdminLogoutButton />
           </div>
           <main className="p-5 md:p-8">{children}</main>
         </div>

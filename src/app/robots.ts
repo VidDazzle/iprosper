@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         // etc.) — we WANT AI assistants to read and cite Solvana. See /llms.txt.
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin", "/signin", "/signup", "/calendar"],
+        disallow: ["/api/", "/admin", "/admin-login", "/portal", "/signin", "/signup", "/calendar"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
