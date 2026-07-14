@@ -137,6 +137,27 @@ export const attorneyPartners = sqliteTable('attorney_partners', {
   tier: text('tier').notNull().default('featured'), // listed | featured | spotlight
   setupFeePaid: integer('setup_fee_paid', { mode: 'boolean' }).notNull().default(false),
   status: text('status').notNull().default('pending'), // pending | active | paused | rejected
+  // Chronos booking-calendar add-on
+  calendarEnabled: integer('calendar_enabled', { mode: 'boolean' }).notNull().default(false),
+  calendarProvider: text('calendar_provider'), // google | ics | manual
+  busyIcsUrl: text('busy_ics_url'), // private iCal free/busy feed
+  timezone: text('timezone').default('America/New_York'),
+  availability: text('availability'), // JSON: { days, startHour, endHour, slotMinutes, horizonDays, bufferMinutes }
+  createdAt: text('created_at').notNull(),
+});
+
+/** Consultations booked with an attorney through the Chronos calendar. */
+export const attorneyAppointments = sqliteTable('attorney_appointments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  partnerId: integer('partner_id').notNull(),
+  clientName: text('client_name').notNull(),
+  clientEmail: text('client_email').notNull(),
+  clientPhone: text('client_phone'),
+  topic: text('topic'),
+  startUtc: text('start_utc').notNull(),
+  endUtc: text('end_utc').notNull(),
+  status: text('status').notNull().default('booked'), // booked | completed | cancelled
+  feeAmount: integer('fee_amount'),
   createdAt: text('created_at').notNull(),
 });
 

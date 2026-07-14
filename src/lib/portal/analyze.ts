@@ -40,7 +40,7 @@ export interface DocAnalysis {
 
 const AGENT_NAMES: Record<AgentId, string> = {
   aria: "Aria", atlas: "Atlas", nova: "Nova", ledger: "Ledger", sentinel: "Sentinel",
-  echo: "Echo", sage: "Sage", pulse: "Pulse", guardian: "Guardian", beacon: "Beacon",
+  echo: "Echo", sage: "Sage", pulse: "Pulse", guardian: "Guardian", beacon: "Beacon", chronos: "Chronos",
 };
 
 const SIGNALS: { category: DocCategory; keywords: RegExp }[] = [

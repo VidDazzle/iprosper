@@ -3,8 +3,8 @@ import SolvanaNav from "@/components/solvana/nav";
 import SolvanaFooter from "@/components/solvana/footer";
 import AttorneyApplyForm from "@/components/partners/apply-form";
 import { pageMetadata } from "@/lib/solvana/seo";
-import { TIERS, SETUP_FEE, USD } from "@/lib/partners/pricing";
-import { CheckCircle2, Scale, Radio } from "lucide-react";
+import { TIERS, SETUP_FEE, CALENDAR_ADDON, USD } from "@/lib/partners/pricing";
+import { CheckCircle2, Scale, Radio, CalendarClock } from "lucide-react";
 
 export const metadata: Metadata = pageMetadata({
   title: "Advertise to People Actively Solving Their Debt",
@@ -60,6 +60,21 @@ export default function AttorneysPage() {
                 </ul>
               </div>
             ))}
+          </div>
+
+          {/* Calendar add-on */}
+          <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-teal-400/25 bg-teal-400/[0.04] p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <CalendarClock className="h-8 w-8 flex-shrink-0 text-teal-300" />
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-white">Add-on: the booking calendar <span className="ml-1 text-sm font-normal text-teal-300">+{USD.format(CALENDAR_ADDON.monthly)}/mo · {USD.format(CALENDAR_ADDON.perAppointment)}/booked consult</span></h3>
+                <p className="mt-1 text-sm text-slate-400">
+                  Let clients book consultations on your open time. Chronos, our scheduling agent, syncs your Google,
+                  Outlook, or Apple calendar&rsquo;s free/busy — clients see only your available slots, never your calendar
+                  details — and books the appointment on both sides with calendar invites and reminders. No more phone tag.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Compliance note */}

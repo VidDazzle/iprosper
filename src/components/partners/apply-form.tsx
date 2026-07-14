@@ -19,6 +19,11 @@ export default function AttorneyApplyForm() {
   const [areas, setAreas] = useState<string[]>([]);
   const [tier, setTier] = useState<Tier>("featured");
   const [generateCard, setGenerateCard] = useState(true);
+  const [cal, setCal] = useState({
+    enabled: false, provider: "ics" as "ics" | "google" | "manual", busyIcsUrl: "",
+    timezone: "America/Chicago", startHour: 9, endHour: 17, slotMinutes: 30,
+    days: [1, 2, 3, 4, 5] as number[],
+  });
   const [preview, setPreview] = useState<string | null>(null);
   const [state, setState] = useState<"idle" | "saving" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -45,6 +50,15 @@ export default function AttorneyApplyForm() {
       areas.forEach((a) => fd.append("practiceAreas", a));
       fd.append("tier", tier);
       fd.append("generateCard", String(generateCard));
+      fd.append("calendarEnabled", String(cal.enabled));
+      if (cal.enabled) {
+        fd.append("calendarProvider", cal.provider);
+        fd.append("busyIcsUrl", cal.busyIcsUrl);
+        fd.append("availability", JSON.stringify({
+          days: cal.days, startHour: cal.startHour, endHour: cal.endHour,
+          slotMinutes: cal.slotMinutes, timezone: cal.timezone, horizonDays: 14, bufferMinutes: 15,
+        }));
+      }
       if (photoRef.current?.files?.[0]) fd.append("photo", photoRef.current.files[0]);
       if (cardRef.current?.files?.[0]) fd.append("businessCard", cardRef.current.files[0]);
       const res = await fetch("/api/partners/apply", { method: "POST", body: fd });
@@ -132,6 +146,65 @@ export default function AttorneyApplyForm() {
             <Sparkles className="h-3.5 w-3.5" /> Preview my AI card
           </button>
         </div>
+      </div>
+
+      {/* Calendar add-on (Chronos) */}
+      <div className="rounded-xl border border-white/10 bg-[#03040a] p-5">
+        <label className="flex items-start gap-3">
+          <input type="checkbox" checked={cal.enabled} onChange={(e) => setCal((c) => ({ ...c, enabled: e.target.checked }))} className="mt-1 accent-cyan-400" />
+          <span>
+            <span className="font-medium text-white">Add the booking calendar</span>
+            <span className="ml-2 rounded-full border border-teal-400/30 bg-teal-400/10 px-2 py-0.5 text-[10px] font-medium text-teal-300">+$79/mo · $40/appointment</span>
+            <span className="mt-1 block text-sm text-slate-400">Let clients book consultations on your open time. Chronos syncs your calendar&rsquo;s free/busy so only your available slots show — your calendar details stay private.</span>
+          </span>
+        </label>
+
+        {cal.enabled && (
+          <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-sm text-slate-300">Calendar sync
+                <select value={cal.provider} onChange={(e) => setCal((c) => ({ ...c, provider: e.target.value as typeof c.provider }))} className="mt-1 h-9 w-full rounded-md border border-white/15 bg-[#050810] px-2 text-sm text-white">
+                  <option value="ics">Google / Outlook / Apple (private iCal link)</option>
+                  <option value="google">Google (connect at activation)</option>
+                  <option value="manual">Manual availability only</option>
+                </select>
+              </label>
+              <label className="text-sm text-slate-300">Timezone
+                <Input value={cal.timezone} onChange={(e) => setCal((c) => ({ ...c, timezone: e.target.value }))} className={`${inputCls} mt-1`} placeholder="America/Chicago" />
+              </label>
+            </div>
+            {cal.provider === "ics" && (
+              <label className="block text-sm text-slate-300">Your calendar&rsquo;s private iCal (ICS) URL
+                <Input value={cal.busyIcsUrl} onChange={(e) => setCal((c) => ({ ...c, busyIcsUrl: e.target.value }))} className={`${inputCls} mt-1`} placeholder="https://calendar.google.com/…/basic.ics" />
+                <span className="mt-1 block text-xs text-slate-500">In Google Calendar → Settings → your calendar → &ldquo;Secret address in iCal format.&rdquo; We only read busy times, never event details.</span>
+              </label>
+            )}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="text-sm text-slate-300">Start hour
+                <Input type="number" min={0} max={23} value={cal.startHour} onChange={(e) => setCal((c) => ({ ...c, startHour: Number(e.target.value) }))} className={`${inputCls} mt-1`} />
+              </label>
+              <label className="text-sm text-slate-300">End hour
+                <Input type="number" min={1} max={24} value={cal.endHour} onChange={(e) => setCal((c) => ({ ...c, endHour: Number(e.target.value) }))} className={`${inputCls} mt-1`} />
+              </label>
+              <label className="text-sm text-slate-300">Slot length (min)
+                <select value={cal.slotMinutes} onChange={(e) => setCal((c) => ({ ...c, slotMinutes: Number(e.target.value) }))} className="mt-1 h-9 w-full rounded-md border border-white/15 bg-[#050810] px-2 text-sm text-white">
+                  {[15, 30, 45, 60].map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </label>
+            </div>
+            <div>
+              <span className="mb-1.5 block text-sm text-slate-300">Days you take appointments</span>
+              <div className="flex flex-wrap gap-1.5">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d, i) => (
+                  <button type="button" key={d} onClick={() => setCal((c) => ({ ...c, days: c.days.includes(i) ? c.days.filter((x) => x !== i) : [...c.days, i] }))}
+                    className={`rounded-md border px-3 py-1.5 text-xs ${cal.days.includes(i) ? "border-cyan-400/50 bg-cyan-400/10 text-cyan-200" : "border-white/12 text-slate-400"}`}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {preview && (

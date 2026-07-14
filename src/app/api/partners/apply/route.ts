@@ -57,12 +57,34 @@ export async function POST(request: NextRequest) {
       businessCardGenerated = true;
     }
 
+    // Calendar add-on (Chronos)
+    const calendarEnabled = get("calendarEnabled") === "true";
+    let availability: import("@/lib/partners/scheduling").Availability | undefined;
+    if (calendarEnabled) {
+      try {
+        const parsed = JSON.parse(get("availability") || "{}");
+        availability = {
+          days: Array.isArray(parsed.days) && parsed.days.length ? parsed.days : [1, 2, 3, 4, 5],
+          startHour: Number(parsed.startHour) || 9,
+          endHour: Number(parsed.endHour) || 17,
+          slotMinutes: Number(parsed.slotMinutes) || 30,
+          timezone: parsed.timezone || "America/Chicago",
+          horizonDays: Number(parsed.horizonDays) || 14,
+          bufferMinutes: Number(parsed.bufferMinutes) || 15,
+        };
+      } catch { availability = undefined; }
+    }
+
     const partner = await createPartner({
       firmName, attorneyName, email, phone: get("phone") || undefined, website: get("website") || undefined,
       barNumber: get("barNumber") || undefined, stateCode: get("stateCode") || undefined,
       practiceAreas, bio: get("bio") || undefined,
       photoType: (get("photoType") as "firm" | "self") || undefined, photoUrl,
       businessCardUrl, businessCardGenerated, tier,
+      calendarEnabled,
+      calendarProvider: calendarEnabled ? ((get("calendarProvider") as "google" | "ics" | "manual") || "manual") : undefined,
+      busyIcsUrl: calendarEnabled ? (get("busyIcsUrl") || undefined) : undefined,
+      availability,
     });
 
     return NextResponse.json({

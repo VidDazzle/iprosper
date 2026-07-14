@@ -19,7 +19,8 @@ export type AgentId =
   | "sage" // Client Success & Coaching
   | "pulse" // Credit & Risk Monitoring
   | "guardian" // Creditor Relations & Escalations
-  | "beacon"; // Attorney Partnerships & Advertising
+  | "beacon" // Attorney Partnerships & Advertising
+  | "chronos"; // Scheduling & Appointments
 
 export type Channel = "voice" | "sms" | "email" | "chat" | "internal";
 

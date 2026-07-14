@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, MessageSquare, Bell, Globe, BadgeCheck } from "lucide-react";
+import Link from "next/link";
+import { Phone, MessageSquare, Bell, Globe, BadgeCheck, CalendarClock } from "lucide-react";
 import type { AttorneyPartner } from "@/lib/partners/store";
 
 /** A client-facing attorney advertisement. Contacting logs a per-lead
@@ -57,6 +58,11 @@ export default function AttorneyCard({ partner }: { partner: AttorneyPartner }) 
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
+          {partner.calendarEnabled && (
+            <Link href={`/book/${partner.id}`} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-500 to-cyan-600 px-4 py-2 text-sm font-medium text-white">
+              <CalendarClock className="h-4 w-4" /> Book a consultation
+            </Link>
+          )}
           <button onClick={() => connect("call")} className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-4 py-2 text-sm font-medium text-white">
             <Phone className="h-4 w-4" /> Call
           </button>

@@ -137,6 +137,7 @@ const ACTIVITY_TEMPLATES: Record<AgentId, string[]> = {
   pulse: ["Litigation propensity on Chase account crossed high threshold; alerted Nova.", "Credit file updated; impact report generated."],
   guardian: ["Documented FDCPA violation by collector.", "Client served; briefed referral attorney within 24h."],
   beacon: ["Onboarded a new attorney advertiser; verified bar number.", "Routed a verified client connection to a Spotlight attorney."],
+  chronos: ["Synced attorney calendar free/busy; refreshed open slots.", "Booked a client consultation and sent calendar invites to both sides."],
 };
 
 function makeActivity(r: () => number, phase: ClientPhase): AgentActivityEntry[] {

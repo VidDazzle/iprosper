@@ -35,6 +35,14 @@ export interface TierPlan {
 
 export const SETUP_FEE = 499; // one-time: onboarding + AI-designed profile & business card
 
+/** Optional booking-calendar add-on (Chronos): a flat monthly fee plus a flat
+ *  fee per booked consultation. Both are flat advertising fees — never a share
+ *  of legal fees or a referral fee. */
+export const CALENDAR_ADDON = {
+  monthly: 79,
+  perAppointment: 40,
+} as const;
+
 export const TIERS: TierPlan[] = [
   {
     id: "listed",

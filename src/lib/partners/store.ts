@@ -3,7 +3,8 @@
  * in-memory store so the feature is demonstrable in dev — same signatures.
  */
 
-import { SETUP_FEE, getTier, type Tier } from "./pricing";
+import { SETUP_FEE, CALENDAR_ADDON, getTier, type Tier } from "./pricing";
+import type { Availability } from "./scheduling";
 
 export interface AttorneyPartner {
   id: number;
@@ -23,8 +24,32 @@ export interface AttorneyPartner {
   tier: Tier;
   setupFeePaid: boolean;
   status: "pending" | "active" | "paused" | "rejected";
+  // Chronos calendar add-on
+  calendarEnabled: boolean;
+  calendarProvider?: "google" | "ics" | "manual";
+  busyIcsUrl?: string;
+  availability?: Availability;
   createdAt: string;
 }
+
+export interface AttorneyAppointment {
+  id: number;
+  partnerId: number;
+  clientName: string;
+  clientEmail: string;
+  clientPhone?: string;
+  topic?: string;
+  startUtc: string;
+  endUtc: string;
+  status: "booked" | "completed" | "cancelled";
+  feeAmount: number;
+  createdAt: string;
+}
+
+const DEFAULT_AVAILABILITY: Availability = {
+  days: [1, 2, 3, 4, 5], startHour: 9, endHour: 17, slotMinutes: 30,
+  timezone: "America/Chicago", horizonDays: 14, bufferMinutes: 0,
+};
 
 export interface AttorneyLead {
   id: number;
@@ -41,7 +66,8 @@ export interface AttorneyLead {
 const mem = {
   partners: [] as AttorneyPartner[],
   leads: [] as AttorneyLead[],
-  seq: { partner: 1, lead: 1 },
+  appointments: [] as AttorneyAppointment[],
+  seq: { partner: 1, lead: 1, appt: 1 },
   seeded: false,
 };
 
@@ -62,7 +88,10 @@ function ensureSeed() {
       practiceAreas: ["Credit card debt", "Debt collection defense (FDCPA)", "Chapter 7 bankruptcy"],
       bio: "Consumer debt and bankruptcy attorney with 14 years defending clients against collectors and helping families get a fresh start.",
       photoType: "self", photoUrl: undefined, businessCardGenerated: true,
-      tier: "spotlight", setupFeePaid: true, status: "active", createdAt: now(),
+      tier: "spotlight", setupFeePaid: true, status: "active",
+      calendarEnabled: true, calendarProvider: "ics", busyIcsUrl: undefined,
+      availability: { days: [1, 2, 3, 4, 5], startHour: 9, endHour: 17, slotMinutes: 30, timezone: "America/Chicago", horizonDays: 14, bufferMinutes: 15 },
+      createdAt: now(),
     },
     {
       id: mem.seq.partner++, firmName: "Okafor Legal Group", attorneyName: "David Okafor",
@@ -71,7 +100,10 @@ function ensureSeed() {
       practiceAreas: ["Chapter 13 bankruptcy", "Mortgage / foreclosure", "Auto loan / repossession"],
       bio: "Bankruptcy and foreclosure-defense attorney focused on keeping people in their homes and cars.",
       photoType: "firm", photoUrl: undefined, businessCardGenerated: true,
-      tier: "featured", setupFeePaid: true, status: "active", createdAt: now(),
+      tier: "featured", setupFeePaid: true, status: "active",
+      calendarEnabled: true, calendarProvider: "manual", busyIcsUrl: undefined,
+      availability: { days: [1, 2, 3, 4], startHour: 10, endHour: 16, slotMinutes: 45, timezone: "America/Phoenix", horizonDays: 10, bufferMinutes: 0 },
+      createdAt: now(),
     }
   );
 }
@@ -98,7 +130,11 @@ export async function createPartner(input: Omit<AttorneyPartner, "id" | "created
       practiceAreas: JSON.stringify(input.practiceAreas), bio: input.bio, photoType: input.photoType,
       photoUrl: input.photoUrl, businessCardUrl: input.businessCardUrl,
       businessCardGenerated: record.businessCardGenerated, tier: input.tier,
-      setupFeePaid: false, status: "pending", createdAt: record.createdAt,
+      setupFeePaid: false, status: "pending",
+      calendarEnabled: input.calendarEnabled ?? false, calendarProvider: input.calendarProvider,
+      busyIcsUrl: input.busyIcsUrl, timezone: input.availability?.timezone,
+      availability: input.availability ? JSON.stringify(input.availability) : null,
+      createdAt: record.createdAt,
     }).returning({ id: attorneyPartners.id });
     record.id = inserted[0].id;
     return record;
@@ -115,7 +151,11 @@ function mapPartner(r: any): AttorneyPartner {
     stateCode: r.stateCode ?? undefined, practiceAreas: r.practiceAreas ? JSON.parse(r.practiceAreas) : [],
     bio: r.bio ?? undefined, photoType: r.photoType ?? undefined, photoUrl: r.photoUrl ?? undefined,
     businessCardUrl: r.businessCardUrl ?? undefined, businessCardGenerated: r.businessCardGenerated,
-    tier: r.tier, setupFeePaid: r.setupFeePaid, status: r.status, createdAt: r.createdAt,
+    tier: r.tier, setupFeePaid: r.setupFeePaid, status: r.status,
+    calendarEnabled: Boolean(r.calendarEnabled), calendarProvider: r.calendarProvider ?? undefined,
+    busyIcsUrl: r.busyIcsUrl ?? undefined,
+    availability: r.availability ? JSON.parse(r.availability) : (r.calendarEnabled ? DEFAULT_AVAILABILITY : undefined),
+    createdAt: r.createdAt,
   };
 }
 
@@ -208,19 +248,74 @@ export async function listLeads(): Promise<AttorneyLead[]> {
   return [...mem.leads];
 }
 
-/** Monthly recurring + setup + per-lead revenue snapshot for the admin. */
+/* ------------------------------ appointments ------------------------------ */
+
+export async function createAppointment(input: {
+  partnerId: number; clientName: string; clientEmail: string; clientPhone?: string;
+  topic?: string; startUtc: string; endUtc: string;
+}): Promise<AttorneyAppointment> {
+  const record: AttorneyAppointment = {
+    ...input, id: mem.seq.appt++, status: "booked",
+    feeAmount: CALENDAR_ADDON.perAppointment, createdAt: now(),
+  };
+  if (hasDb()) {
+    const { db } = await import("@/db");
+    const { attorneyAppointments } = await import("@/db/schema");
+    const inserted = await db.insert(attorneyAppointments).values({
+      partnerId: input.partnerId, clientName: input.clientName, clientEmail: input.clientEmail,
+      clientPhone: input.clientPhone, topic: input.topic, startUtc: input.startUtc, endUtc: input.endUtc,
+      status: "booked", feeAmount: record.feeAmount, createdAt: record.createdAt,
+    }).returning({ id: attorneyAppointments.id });
+    record.id = inserted[0].id;
+    return record;
+  }
+  mem.appointments.unshift(record);
+  return record;
+}
+
+export async function listAppointments(): Promise<AttorneyAppointment[]> {
+  if (hasDb()) {
+    const { db } = await import("@/db");
+    const { attorneyAppointments } = await import("@/db/schema");
+    const { desc } = await import("drizzle-orm");
+    const rows = await db.select().from(attorneyAppointments).orderBy(desc(attorneyAppointments.startUtc));
+    return rows.map((r: any) => ({
+      id: r.id, partnerId: r.partnerId, clientName: r.clientName, clientEmail: r.clientEmail,
+      clientPhone: r.clientPhone ?? undefined, topic: r.topic ?? undefined,
+      startUtc: r.startUtc, endUtc: r.endUtc, status: r.status, feeAmount: r.feeAmount ?? 0, createdAt: r.createdAt,
+    }));
+  }
+  ensureSeed();
+  return [...mem.appointments];
+}
+
+/** Booked intervals (epoch ms) for a partner — used to block taken slots. */
+export async function bookedIntervals(partnerId: number): Promise<{ start: number; end: number }[]> {
+  const all = await listAppointments();
+  return all
+    .filter((a) => a.partnerId === partnerId && a.status !== "cancelled")
+    .map((a) => ({ start: Date.parse(a.startUtc), end: Date.parse(a.endUtc) }));
+}
+
+/** Monthly recurring + setup + per-lead + appointment revenue for the admin. */
 export async function partnerRevenue() {
-  const [partners, leads] = await Promise.all([listAllPartners(), listLeads()]);
+  const [partners, leads, appts] = await Promise.all([listAllPartners(), listLeads(), listAppointments()]);
   const active = partners.filter((p) => p.status === "active");
-  const mrr = active.reduce((s, p) => s + getTier(p.tier).monthly, 0);
+  const mrr =
+    active.reduce((s, p) => s + getTier(p.tier).monthly, 0) +
+    active.filter((p) => p.calendarEnabled).length * CALENDAR_ADDON.monthly;
   const setupCollected = partners.filter((p) => p.setupFeePaid).length * SETUP_FEE;
   const leadRevenue = leads.reduce((s, l) => s + l.feeAmount, 0);
+  const appointmentRevenue = appts.reduce((s, a) => s + a.feeAmount, 0);
   return {
     activePartners: active.length,
     totalPartners: partners.length,
+    calendarPartners: active.filter((p) => p.calendarEnabled).length,
     mrr,
     setupCollected,
     leadRevenue,
     leadCount: leads.length,
+    appointmentRevenue,
+    appointmentCount: appts.length,
   };
 }
