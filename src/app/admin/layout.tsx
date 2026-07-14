@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/admin/session";
 import AdminLogoutButton from "@/components/admin/logout-button";
 
 export const metadata: Metadata = {
-  title: "Operations Console | Solvana",
+  title: "Operations Console | X Debt",
   robots: { index: false, follow: false },
 };
 

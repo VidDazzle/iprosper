@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         // Allow all standard crawlers, including AI answer-engine crawlers
         // (GPTBot, OAI-SearchBot, PerplexityBot, Google-Extended, ClaudeBot,
-        // etc.) — we WANT AI assistants to read and cite Solvana. See /llms.txt.
+        // etc.) — we WANT AI assistants to read and cite X Debt. See /llms.txt.
         userAgent: "*",
         allow: "/",
         disallow: ["/api/", "/admin", "/admin-login", "/portal", "/signin", "/signup", "/calendar"],

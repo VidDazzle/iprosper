@@ -3,8 +3,8 @@ import LegalShell from "@/components/solvana/legal-shell";
 import { PROGRAM } from "@/lib/solvana/brand";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | Solvana",
-  description: "Terms governing use of the Solvana website and debt settlement services.",
+  title: "Terms of Service | X Debt",
+  description: "Terms governing use of the X Debt website and debt settlement services.",
 };
 
 export default function TermsPage() {
@@ -13,7 +13,7 @@ export default function TermsPage() {
       <section>
         <h2>1. Agreement</h2>
         <p>
-          These Terms govern your use of the Solvana website and client portal. Debt settlement
+          These Terms govern your use of the X Debt website and client portal. Debt settlement
           services themselves are governed by a separate written Debt Settlement Services
           Agreement (&ldquo;Enrollment Agreement&rdquo;) that you sign electronically after
           receiving all required disclosures. If these Terms conflict with your Enrollment
@@ -23,8 +23,8 @@ export default function TermsPage() {
       <section>
         <h2>2. The service</h2>
         <p>
-          Solvana negotiates settlements of qualifying unsecured debts on behalf of enrolled
-          clients under a limited power of attorney you grant at enrollment. Solvana does not
+          X Debt negotiates settlements of qualifying unsecured debts on behalf of enrolled
+          clients under a limited power of attorney you grant at enrollment. X Debt does not
           pay debts on your behalf, does not extend credit, and does not guarantee any
           settlement outcome, savings amount, or timeline. Typical programs run{" "}
           {PROGRAM.termLowMonths}–{PROGRAM.termHighMonths} months and fees are{" "}
@@ -36,7 +36,7 @@ export default function TermsPage() {
         <h2>3. AI services and recordings</h2>
         <p>
           Services are provided by AI agents, including voice agents. By providing your phone
-          number and consenting during enrollment, you authorize Solvana&apos;s AI agents to
+          number and consenting during enrollment, you authorize X Debt&apos;s AI agents to
           contact you by phone, SMS, and email regarding your program. Consent to marketing
           contact is not a condition of enrollment, and you may revoke communication consent at
           any time (reply STOP, or tell any agent). Calls are recorded where permitted and with
@@ -65,7 +65,7 @@ export default function TermsPage() {
       <section>
         <h2>6. No legal, tax, or credit repair advice</h2>
         <p>
-          Solvana is not a law firm, accounting firm, or credit repair organization. Content on
+          X Debt is not a law firm, accounting firm, or credit repair organization. Content on
           this site is educational, not advice. For legal matters we refer you to independent
           licensed attorneys; engagement is between you and that attorney.
         </p>
@@ -74,7 +74,7 @@ export default function TermsPage() {
         <h2>7. Disclaimers and liability</h2>
         <p>
           The website is provided &ldquo;as is.&rdquo; To the maximum extent permitted by law,
-          Solvana disclaims implied warranties and is not liable for indirect, incidental, or
+          X Debt disclaims implied warranties and is not liable for indirect, incidental, or
           consequential damages arising from website use. Nothing in these Terms limits rights
           you hold under the Telemarketing Sales Rule, state debt settlement statutes, or other
           consumer protection laws that cannot be waived.
@@ -91,7 +91,7 @@ export default function TermsPage() {
       <section>
         <h2>9. Contact</h2>
         <p>
-          Solvana Technologies, Inc. · legal@solvana.ai · 1-888-SOLVANA.
+          VidDazzle LLC · legal@xdebt.ai · 1-888-XDEBT-24.
         </p>
       </section>
     </LegalShell>

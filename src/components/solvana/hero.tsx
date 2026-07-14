@@ -54,35 +54,36 @@ export default function SolvanaHero() {
       <div className="relative mx-auto max-w-5xl">
         <Badge className="mb-6 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1.5 text-cyan-300">
           <Mic className="mr-1.5 h-3.5 w-3.5" />
-          The first debt settlement company run entirely by AI
+          A self-optimizing AI debt platform by VidDazzle LLC
         </Badge>
 
         <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight md:text-7xl">
-          Owe less.{" "}
+          Every debt has an exit.{" "}
           <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 bg-clip-text text-transparent">
-            AI negotiates
+            Our AI finds
           </span>{" "}
-          the rest away.
+          yours.
         </h1>
 
         <p className="mx-auto mb-10 max-w-3xl text-lg text-gray-300 md:text-xl">
-          Solvana&apos;s specialized AI voice agents negotiate with your creditors to accept a
-          smaller, one-time lump-sum payment — and forgive the rest. Credit cards, medical
-          bills, and personal loans. Zero upfront fees: you pay only when a debt settles.
+          X Debt builds you a free, personalized plan to eliminate <em>any</em> debt —
+          mortgages, credit cards, auto and student loans, medical bills, HELOCs, and lines of
+          credit — using strategies most people never hear about. And for qualifying unsecured
+          debt, our AI agents negotiate settlements for less than you owe.
         </p>
 
         <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link href="/qualify">
+          <Link href="/advisor">
             <Button className="h-12 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-8 text-lg font-medium text-white shadow-[0_0_32px_rgba(139,92,246,0.5)] hover:from-cyan-400 hover:to-violet-500">
-              See if you qualify — free
+              Get my free debt plan
             </Button>
           </Link>
-          <Link href="/agents">
+          <Link href="/qualify">
             <Button
               variant="outline"
               className="h-12 rounded-full border-white/20 bg-white/5 px-8 text-lg font-medium text-white backdrop-blur hover:bg-white/10 hover:text-white"
             >
-              Meet the AI agents
+              Settle unsecured debt
             </Button>
           </Link>
         </div>
@@ -105,10 +106,10 @@ export default function SolvanaHero() {
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-gray-400">
           <span className="inline-flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-cyan-300" /> FDIC-insured dedicated account you control
+            <ShieldCheck className="h-4 w-4 text-cyan-300" /> Free plan — no signup, nothing leaves your browser
           </span>
-          <span>No upfront fees — ever</span>
-          <span>FTC Telemarketing Sales Rule compliant</span>
+          <span>Works on every kind of debt</span>
+          <span>No upfront fees on settlement</span>
         </div>
       </div>
     </section>

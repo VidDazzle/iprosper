@@ -19,7 +19,7 @@ export const ADMIN_COOKIE = "solvana_admin";
 const MAX_AGE_SECONDS = 60 * 60 * 8; // 8-hour staff session
 
 // Dev-only fallback credentials (ignored in production).
-const DEV_ADMIN_EMAIL = "admin@solvana.ai";
+const DEV_ADMIN_EMAIL = "admin@xdebt.ai";
 const DEV_ADMIN_PASSWORD = "admin1234";
 
 export interface AdminSession {

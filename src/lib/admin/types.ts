@@ -1,5 +1,5 @@
 /**
- * Domain model for Solvana's operations — the entities the admin console
+ * Domain model for X Debt's operations — the entities the admin console
  * reports on. In production these map to database tables; the admin data
  * layer (reports.ts) is written so the mock source can be swapped for live
  * Drizzle queries without changing the report/UI code.
@@ -34,7 +34,7 @@ export interface EnrolledDebt {
   status: DebtStatus;
   settlementAmount?: number; // agreed settlement, if any
   settlementPct?: number; // settlementAmount / originalBalance
-  feeCharged?: number; // Solvana fee on this debt (post fee-gate only)
+  feeCharged?: number; // X Debt fee on this debt (post fee-gate only)
   settledOn?: string; // ISO date
   litigationRisk: number; // 0–100, from Pulse
 }

@@ -10,7 +10,7 @@ const PILLARS = [
   {
     icon: Landmark,
     title: "Your money, your account",
-    body: "Program deposits sit in a dedicated FDIC-insured account at an independent partner bank. You own it, you control it, and you can withdraw everything at any time without penalty. Solvana never holds your funds.",
+    body: "Program deposits sit in a dedicated FDIC-insured account at an independent partner bank. You own it, you control it, and you can withdraw everything at any time without penalty. X Debt never holds your funds.",
   },
   {
     icon: FileCheck2,
@@ -30,7 +30,7 @@ const PILLARS = [
   {
     icon: Gavel,
     title: "Humans where the law requires",
-    body: "Solvana is not a law firm. If a creditor sues, our Guardian agent connects you with an independent licensed consumer attorney within 24 hours — and novel legal questions always go to supervising counsel, not an algorithm.",
+    body: "X Debt is not a law firm. If a creditor sues, our Guardian agent connects you with an independent licensed consumer attorney within 24 hours — and novel legal questions always go to supervising counsel, not an algorithm.",
   },
 ];
 
@@ -48,7 +48,7 @@ export default function ComplianceSection() {
           </span>
         </h2>
         <p className="mx-auto mb-14 max-w-2xl text-center text-gray-400">
-          Autonomy without guardrails is a liability. Every Solvana agent operates inside a
+          Autonomy without guardrails is a liability. Every X Debt agent operates inside a
           compliance layer with veto power over every call, letter, and fee event.
         </p>
 

@@ -1,5 +1,5 @@
 /**
- * Paid acquisition framework — the debt-relief ad campaigns Solvana runs
+ * Paid acquisition framework — the debt-relief ad campaigns X Debt runs
  * across social and search to capture inquiries.
  *
  * Debt relief advertising is heavily regulated. Every creative here is written
@@ -22,7 +22,7 @@ export type AdFormat = "video" | "image" | "carousel" | "search" | "short";
 
 /** The disclaimer that MUST accompany every debt-relief ad (Sentinel-approved). */
 export const AD_DISCLAIMER =
-  "Solvana negotiates settlements of unsecured debt; it does not lend money or pay creditors directly. Enrollment requires $7,500+ in qualifying unsecured debt. Programs typically take 24–36 months. Fees (15–25% of enrolled debt) are charged only after a debt is settled. Stopping payments may hurt your credit and lead to collections or lawsuits. Creditors are not required to accept settlements. Results vary and are not guaranteed. Not available in all states.";
+  "X Debt negotiates settlements of unsecured debt; it does not lend money or pay creditors directly. Enrollment requires $7,500+ in qualifying unsecured debt. Programs typically take 24–36 months. Fees (15–25% of enrolled debt) are charged only after a debt is settled. Stopping payments may hurt your credit and lead to collections or lawsuits. Creditors are not required to accept settlements. Results vary and are not guaranteed. Not available in all states.";
 
 export interface AdCreative {
   format: AdFormat;
@@ -74,7 +74,7 @@ export const CAMPAIGNS: Campaign[] = [
         format: "video",
         hook: "Buried in credit card debt? An AI just negotiated someone's $28,000 balance down.",
         primaryText:
-          "Solvana's AI agents negotiate with your creditors to settle unsecured debt for less than you owe — credit cards, medical bills, personal loans. No upfront fees; you only pay when a debt settles. See if you qualify in 2 minutes.",
+          "X Debt's AI agents negotiate with your creditors to settle unsecured debt for less than you owe — credit cards, medical bills, personal loans. No upfront fees; you only pay when a debt settles. See if you qualify in 2 minutes.",
         cta: "Check eligibility",
         visualBrief:
           "Futuristic dark UI with cyan/violet glow; a calm AI voice-agent waveform; on-screen counter dropping from $28,000 to $12,600; real-person relief, not stock celebration. Include on-screen disclaimer.",
@@ -104,7 +104,7 @@ export const CAMPAIGNS: Campaign[] = [
           "No upfront fees. You only pay when a debt actually settles. Tap to see if $7,500+ in card, medical, or loan debt qualifies.",
         cta: "See if you qualify",
         visualBrief:
-          "Vertical 9:16, fast cuts, UGC-style talking head + screen recording of the Solvana voice-agent waveform negotiating; captions burned in; disclaimer on final frame.",
+          "Vertical 9:16, fast cuts, UGC-style talking head + screen recording of the X Debt voice-agent waveform negotiating; captions burned in; disclaimer on final frame.",
       },
     ],
   },
@@ -155,7 +155,7 @@ export const CAMPAIGNS: Campaign[] = [
         format: "image",
         hook: "Unsecured business debt weighing on your company?",
         primaryText:
-          "Solvana's AI negotiates settlements on qualifying unsecured business debt — no upfront fees, you pay only when a debt settles. Confidential eligibility check.",
+          "X Debt's AI negotiates settlements on qualifying unsecured business debt — no upfront fees, you pay only when a debt settles. Confidential eligibility check.",
         cta: "See if you qualify",
         visualBrief:
           "Professional dark-mode single image; restrained neon accent; founder-at-desk tone; disclaimer footer.",

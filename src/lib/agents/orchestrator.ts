@@ -51,7 +51,7 @@ export function route(params: {
   const denials: string[] = [];
 
   if (!isServiceableState(params.stateCode)) {
-    denials.push(`Solvana is not licensed to operate in ${params.stateCode}; enrollment and servicing are blocked.`);
+    denials.push(`X Debt is not licensed to operate in ${params.stateCode}; enrollment and servicing are blocked.`);
   }
   if (params.channel === "voice" && !withinCallingHours(params.localHour)) {
     denials.push("Outside TCPA calling hours (8 AM–9 PM client local time).");

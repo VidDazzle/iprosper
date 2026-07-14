@@ -11,7 +11,7 @@ import { JsonLd, serviceLd, breadcrumbLd, pageMetadata } from "@/lib/solvana/seo
 export const metadata: Metadata = pageMetadata({
   title: "Fees — No Upfront Costs, Ever",
   description:
-    "Solvana charges 15%–25% of enrolled debt, only after a debt settles, you approve the terms, and you make the first settlement payment. The federal advance-fee ban, enforced in code.",
+    "X Debt charges 15%–25% of enrolled debt, only after a debt settles, you approve the terms, and you make the first settlement payment. The federal advance-fee ban, enforced in code.",
   path: "/pricing",
 });
 
@@ -108,7 +108,7 @@ export default function FeesPage() {
             {[
               ["Enrolled debt", USD.format(20000)],
               ["Negotiated settlement", USD.format(9000)],
-              ["Solvana fee (20%)", USD.format(4000)],
+              ["X Debt fee (20%)", USD.format(4000)],
               ["You keep", USD.format(7000)],
             ].map(([label, value], i) => (
               <div

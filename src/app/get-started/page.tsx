@@ -42,7 +42,7 @@ export default function GetStartedPage() {
               </span>
             </h1>
             <p className="mb-8 text-lg text-gray-300">
-              Solvana&apos;s AI voice agents negotiate with your creditors to accept a smaller,
+              X Debt&apos;s AI voice agents negotiate with your creditors to accept a smaller,
               one-time lump-sum payment on credit cards, medical bills, and personal loans —
               and forgive the rest. Find out in two minutes if you qualify.
             </p>
@@ -75,7 +75,7 @@ export default function GetStartedPage() {
 
       <section className="border-t border-white/10 bg-[#03040a] px-6 py-8">
         <p className="mx-auto max-w-4xl text-center text-xs leading-relaxed text-gray-500">
-          Solvana negotiates settlements of unsecured debt; it does not lend money or pay
+          X Debt negotiates settlements of unsecured debt; it does not lend money or pay
           creditors directly. Enrollment requires $7,500+ in qualifying unsecured debt. Programs
           typically take 24–36 months. Fees (15–25% of enrolled debt) are charged only after a
           debt is settled. Stopping payments may hurt your credit and lead to collections or

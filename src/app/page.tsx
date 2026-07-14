@@ -1,7 +1,9 @@
 import SolvanaNav from "@/components/solvana/nav";
 import SolvanaHero from "@/components/solvana/hero";
+import FreeAdvisor from "@/components/solvana/free-advisor";
 import HowItWorks from "@/components/solvana/how-it-works";
 import AgentGrid from "@/components/solvana/agent-grid";
+import SelfOptimizing from "@/components/solvana/self-optimizing";
 import SavingsCalculator from "@/components/solvana/calculator";
 import Transparency from "@/components/solvana/transparency";
 import ComplianceSection from "@/components/solvana/compliance";
@@ -17,8 +19,10 @@ export default function Home() {
       <JsonLd data={[serviceLd(), faqLd(FAQS)]} />
       <SolvanaNav />
       <SolvanaHero />
+      <FreeAdvisor />
       <HowItWorks />
       <AgentGrid compact />
+      <SelfOptimizing />
       <SavingsCalculator />
       <Transparency />
       <ComplianceSection />

@@ -12,7 +12,7 @@ import { createApprovalToken } from "./auth";
 import { addNotification, type ApprovalRecord, type PortalUser } from "./store";
 
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://solvana.ai";
+  return process.env.NEXT_PUBLIC_SITE_URL || "https://xdebt.ai";
 }
 
 export function approvalLinks(approvalId: number) {
@@ -34,7 +34,7 @@ async function sendEmail(to: string, subject: string, body: string): Promise<boo
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: "Solvana <notify@solvana.ai>", to, subject, html: body }),
+      body: JSON.stringify({ from: "X Debt <notify@xdebt.ai>", to, subject, html: body }),
     });
     return res.ok;
   } catch {
@@ -89,7 +89,7 @@ export async function sendApprovalRequest(approval: ApprovalRecord, user: Portal
   }
 
   if (user.notifySms && user.phone) {
-    const sms = `Solvana: ${approval.title}. Approve: ${links.approve} · Decline: ${links.reject}. Reply STOP to opt out.`;
+    const sms = `X Debt: ${approval.title}. Approve: ${links.approve} · Decline: ${links.reject}. Reply STOP to opt out.`;
     await sendSms(user.phone, sms);
     channels.push("sms");
   }

@@ -61,7 +61,7 @@ export default function AgentGrid({ compact = false }: { compact?: boolean }) {
           </span>
         </h2>
         <p className="mx-auto mb-14 max-w-2xl text-center text-gray-400">
-          Every task at Solvana is owned by a purpose-built AI agent with its own
+          Every task at X Debt is owned by a purpose-built AI agent with its own
           specialty, voice, and hard-coded compliance guardrails. They hand your
           file to each other in milliseconds — and escalate to licensed human
           attorneys the moment a matter requires one.

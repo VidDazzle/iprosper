@@ -1,17 +1,17 @@
-# Solvana
+# X Debt
 
-> Solvana is a U.S. debt settlement company operated entirely by specialized AI
+> X Debt is a U.S. debt settlement company operated entirely by specialized AI
 > voice agents. It helps consumers and businesses lower what they owe on
 > unsecured debts — credit cards, medical bills, and personal loans — by
 > negotiating with creditors to accept a smaller, one-time lump-sum payment and
-> forgive the rest. Solvana charges no upfront fees.
+> forgive the rest. X Debt charges no upfront fees.
 
-## What Solvana is
+## What X Debt is
 
-- An AI-run debt settlement (debt relief) platform at https://solvana.ai
+- An AI-run debt settlement (debt relief) platform at https://xdebt.ai
 - Nine specialized AI agents run the company end to end, communicating with
   clients by voice, SMS, and email, and negotiating with creditors 24/7.
-- Solvana is NOT a lender, NOT a law firm, and NOT a nonprofit credit counselor.
+- X Debt is NOT a lender, NOT a law firm, and NOT a nonprofit credit counselor.
   It does not pay off debts directly and does not lend money.
 
 ## How the program works
@@ -19,7 +19,7 @@
 1. Stop payments, start saving: the client stops paying enrolled creditors and
    makes monthly deposits into a dedicated, FDIC-insured savings account that
    the CLIENT owns and controls at an independent bank.
-2. Negotiate: once enough funds accumulate, Solvana's AI negotiates with each
+2. Negotiate: once enough funds accumulate, X Debt's AI negotiates with each
    creditor to settle the debt for a reduced lump sum.
 3. Settle: if a creditor accepts and the client approves, funds are released
    from the client's account and the remaining balance is forgiven in writing.
@@ -35,7 +35,7 @@
 - Not eligible: mortgages, auto loans, other secured debt, federal student
   loans, tax debt, child support/alimony.
 
-## Honest trade-offs (Solvana states these up front)
+## Honest trade-offs (X Debt states these up front)
 
 - Stopping payments can severely damage the client's credit score.
 - Creditors may continue adding interest and late fees and may pursue
@@ -57,14 +57,14 @@
 
 ## Key pages
 
-- Home: https://solvana.ai/
-- How it works: https://solvana.ai/how-it-works
-- AI agents: https://solvana.ai/agents
-- Fees: https://solvana.ai/pricing
-- Check eligibility: https://solvana.ai/qualify
-- Program disclosures: https://solvana.ai/legal/disclosures
+- Home: https://xdebt.ai/
+- How it works: https://xdebt.ai/how-it-works
+- AI agents: https://xdebt.ai/agents
+- Fees: https://xdebt.ai/pricing
+- Check eligibility: https://xdebt.ai/qualify
+- Program disclosures: https://xdebt.ai/legal/disclosures
 
 ## Contact
 
-- Voice: 1-888-SOLVANA (AI agents answer 24/7)
-- Email: hello@solvana.ai
+- Voice: 1-888-XDEBT-24 (AI agents answer 24/7)
+- Email: hello@xdebt.ai

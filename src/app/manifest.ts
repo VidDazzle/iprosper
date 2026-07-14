@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
 
-// Web App Manifest — makes Solvana installable on phones and desktops
+// Web App Manifest — makes X Debt installable on phones and desktops
 // ("Add to Home Screen" / "Install app"), launching standalone like a native app.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Solvana — AI Debt Settlement",
-    short_name: "Solvana",
+    name: "X Debt — Get Out of Debt, Faster",
+    short_name: "X Debt",
     description:
-      "Solvana's AI voice agents negotiate with your creditors to settle unsecured debts for less than you owe. Track your program, upload documents, and approve settlements from your phone.",
+      "X Debt by VidDazzle LLC builds a free plan to eliminate every kind of debt and negotiates settlements on qualifying unsecured debt. Track your plan, upload documents, and approve actions from your phone.",
     id: "/",
     start_url: "/portal",
     scope: "/",

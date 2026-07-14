@@ -158,7 +158,7 @@ export default function QualifyPage() {
                     <Button className="h-12 w-full rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-8 text-white sm:w-auto">
                       <PhoneCall className="mr-2 h-4 w-4" /> Talk to Aria now — free
                     </Button>
-                    <span className="text-sm text-gray-400">or call 1-888-SOLVANA, 24/7</span>
+                    <span className="text-sm text-gray-400">or call 1-888-XDEBT-24, 24/7</span>
                   </div>
                 </div>
               ) : (

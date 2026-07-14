@@ -11,7 +11,7 @@ import { JsonLd, serviceLd, breadcrumbLd, pageMetadata } from "@/lib/solvana/seo
 export const metadata: Metadata = pageMetadata({
   title: "The AI Agent Workforce",
   description:
-    "Meet the nine specialized AI agents that run Solvana end to end — enrollment, debt analysis, negotiation, banking, compliance, voice, client success, risk, and escalations.",
+    "Meet the nine specialized AI agents that run X Debt end to end — enrollment, debt analysis, negotiation, banking, compliance, voice, client success, risk, and escalations.",
   path: "/agents",
 });
 

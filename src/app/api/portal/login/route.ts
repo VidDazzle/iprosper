@@ -3,7 +3,7 @@ import { verifyPassword, createSessionToken, SESSION_COOKIE, sessionCookieOption
 import { findUserByEmail, DEMO_CID } from "@/lib/portal/store";
 
 // A demo account so the client experience is walkable without a database.
-const DEMO_EMAIL = "demo@solvana.ai";
+const DEMO_EMAIL = "demo@xdebt.ai";
 const DEMO_PASSWORD = "demo1234";
 
 export async function POST(request: NextRequest) {

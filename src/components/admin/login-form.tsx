@@ -44,7 +44,7 @@ export default function AdminLoginForm() {
     <form onSubmit={submit} className="space-y-4">
       <div>
         <Label htmlFor="email" className="mb-1.5 block text-sm text-slate-300">Staff email</Label>
-        <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="you@solvana.ai" />
+        <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="you@xdebt.ai" />
       </div>
       <div>
         <Label htmlFor="password" className="mb-1.5 block text-sm text-slate-300">Password</Label>

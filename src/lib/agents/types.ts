@@ -1,7 +1,7 @@
 /**
- * Core types for Solvana's autonomous agent workforce.
+ * Core types for X Debt's autonomous agent workforce.
  *
- * Every client-facing task at Solvana is executed by a specialized AI agent.
+ * Every client-facing task at X Debt is executed by a specialized AI agent.
  * Agents communicate with clients over voice (real-time speech-to-speech),
  * SMS, and email, and with each other through typed handoffs managed by the
  * orchestrator. Every agent operates inside hard compliance guardrails

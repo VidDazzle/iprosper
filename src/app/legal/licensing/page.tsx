@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import LegalShell from "@/components/solvana/legal-shell";
 
 export const metadata: Metadata = {
-  title: "State Licensing & Availability | Solvana",
-  description: "Where Solvana is licensed to provide debt settlement services and your state-specific rights.",
+  title: "State Licensing & Availability | X Debt",
+  description: "Where X Debt is licensed to provide debt settlement services and your state-specific rights.",
 };
 
 export default function LicensingPage() {
@@ -20,16 +20,16 @@ export default function LicensingPage() {
         </p>
       </section>
       <section>
-        <h2>Where Solvana operates</h2>
+        <h2>Where X Debt operates</h2>
         <p>
-          Solvana provides services only in states where it is licensed, registered, or where
+          X Debt provides services only in states where it is licensed, registered, or where
           services are otherwise lawful. Our compliance agent checks your state before any
           enrollment conversation begins — if we can&apos;t lawfully serve you, our intake agent
           will say so and point you to alternatives (typically an NFCC-member nonprofit credit
           counselor).
         </p>
         <p className="pt-2">
-          Solvana does not currently enroll residents of states where for-profit debt
+          X Debt does not currently enroll residents of states where for-profit debt
           settlement is prohibited or where our licensing is pending. The live list of
           serviceable states is maintained in our compliance system and confirmed on your
           eligibility call; licensing numbers and bond information for your state appear in

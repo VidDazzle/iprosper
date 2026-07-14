@@ -63,7 +63,7 @@ export function SignInForm() {
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
       </Button>
       <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3 text-center text-xs text-slate-500">
-        Demo account: <span className="text-cyan-300">demo@solvana.ai</span> / <span className="text-cyan-300">demo1234</span>
+        Demo account: <span className="text-cyan-300">demo@xdebt.ai</span> / <span className="text-cyan-300">demo1234</span>
       </div>
       <p className="text-center text-sm text-slate-500">
         New client? <Link href="/portal/signup" className="text-cyan-300 hover:text-cyan-200">Create your account</Link>

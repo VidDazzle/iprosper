@@ -51,7 +51,7 @@ export default function PwaRegister() {
   return (
     <div
       role="dialog"
-      aria-label="Install the Solvana app"
+      aria-label="Install the X Debt app"
       style={{
         position: "fixed",
         left: "50%",
@@ -66,7 +66,7 @@ export default function PwaRegister() {
         <Download className="h-5 w-5 text-white" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-white">Install the Solvana app</p>
+        <p className="text-sm font-semibold text-white">Install the X Debt app</p>
         <p className="text-xs text-slate-400">Track your program and approve settlements from your home screen.</p>
       </div>
       <button

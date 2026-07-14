@@ -7,7 +7,7 @@ import { adminAuthConfigured } from "@/lib/admin/auth";
 import { ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Staff Sign In | Solvana",
+  title: "Staff Sign In | X Debt",
   robots: { index: false, follow: false },
 };
 
@@ -30,7 +30,7 @@ export default async function AdminLoginPage() {
           <AdminLoginForm />
           {!configured && (
             <div className="mt-4 rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-center text-xs text-amber-200/80">
-              Dev mode: <span className="text-amber-200">admin@solvana.ai</span> / <span className="text-amber-200">admin1234</span>.
+              Dev mode: <span className="text-amber-200">admin@xdebt.ai</span> / <span className="text-amber-200">admin1234</span>.
               Set ADMIN_EMAIL and ADMIN_PASSWORD_HASH to secure this in production.
             </div>
           )}

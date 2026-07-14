@@ -80,7 +80,7 @@ function now(): string {
 }
 
 /** Seed a demo account and some activity so the portal is walkable without a DB.
- *  Password for demo@solvana.ai is "demo1234" — see login route. */
+ *  Password for demo@xdebt.ai is "demo1234" — see login route. */
 export async function ensureDemoSeed() {
   if (mem.seeded) return;
   mem.seeded = true;

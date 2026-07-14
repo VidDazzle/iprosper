@@ -4,22 +4,22 @@ import { TSR_REQUIRED_DISCLOSURES, DEDICATED_ACCOUNT_REQUIREMENTS } from "@/lib/
 import { PROGRAM } from "@/lib/solvana/brand";
 
 export const metadata: Metadata = {
-  title: "Program Disclosures | Solvana",
-  description: "Full federal and state-required disclosures for the Solvana debt settlement program.",
+  title: "Program Disclosures | X Debt",
+  description: "Full federal and state-required disclosures for the X Debt debt settlement program.",
 };
 
 export default function DisclosuresPage() {
   return (
     <LegalShell title="Program Disclosures" updated="July 2026">
       <section>
-        <h2>What Solvana does — and does not — do</h2>
+        <h2>What X Debt does — and does not — do</h2>
         <p>
-          Solvana Technologies, Inc. (&ldquo;Solvana&rdquo;) provides debt settlement services:
+          VidDazzle LLC (&ldquo;X Debt&rdquo;) provides debt settlement services:
           we negotiate with your creditors to accept a one-time lump-sum payment that is less
-          than your full balance, in exchange for forgiving the remainder. Solvana{" "}
+          than your full balance, in exchange for forgiving the remainder. X Debt{" "}
           <strong>does not</strong> lend money, make monthly payments to your creditors, pay
           your debts directly, provide credit repair, or provide legal, tax, or bankruptcy
-          advice. Solvana is not a law firm and is not a nonprofit credit counseling agency.
+          advice. X Debt is not a law firm and is not a nonprofit credit counseling agency.
         </p>
       </section>
 
@@ -112,7 +112,7 @@ export default function DisclosuresPage() {
       <section>
         <h2>AI-delivered services</h2>
         <p>
-          Solvana&apos;s services are delivered by artificial-intelligence agents, including
+          X Debt&apos;s services are delivered by artificial-intelligence agents, including
           voice agents that identify themselves as AI at the start of every call. Calls are
           recorded with consent as required by applicable state law. You may request a human
           supervisor at any time during any call, and matters requiring legal judgment are

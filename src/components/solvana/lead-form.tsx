@@ -72,7 +72,7 @@ export default function LeadForm({ compact = false }: { compact?: boolean }) {
         <h3 className="mb-2 text-xl font-semibold text-white">You&apos;re in the queue</h3>
         <p className="text-sm text-gray-300">{message}</p>
         <p className="mt-4 text-xs text-gray-500">
-          Prefer to talk now? Call 1-888-SOLVANA — an AI agent answers 24/7.
+          Prefer to talk now? Call 1-888-XDEBT-24 — an AI agent answers 24/7.
         </p>
       </div>
     );
@@ -146,7 +146,7 @@ export default function LeadForm({ compact = false }: { compact?: boolean }) {
           required={Boolean(phone)}
         />
         <span>
-          I agree to be contacted by Solvana&apos;s AI agents (including by phone, call, and
+          I agree to be contacted by X Debt&apos;s AI agents (including by phone, call, and
           text) at the number I provided about the debt relief program, using automated
           technology. Consent isn&apos;t a condition of any purchase; message/data rates may
           apply; reply STOP to opt out. I&apos;ve read the{" "}

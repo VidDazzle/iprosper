@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { AGENTS } from "@/lib/agents/registry";
 
-/** Public roster of Solvana's AI agent workforce (marketing-safe fields only —
+/** Public roster of X Debt's AI agent workforce (marketing-safe fields only —
  *  system prompts and tool grants stay server-side). */
 export async function GET() {
   const roster = AGENTS.map((a) => ({

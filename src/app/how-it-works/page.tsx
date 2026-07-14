@@ -13,7 +13,7 @@ import { PROGRAM } from "@/lib/solvana/brand";
 export const metadata: Metadata = pageMetadata({
   title: "How Debt Settlement Works",
   description:
-    "Stop payments, save into an FDIC-insured account you control, and let Solvana's AI agents negotiate lump-sum settlements with your creditors. Typical programs run 24–36 months.",
+    "Stop payments, save into an FDIC-insured account you control, and let X Debt's AI agents negotiate lump-sum settlements with your creditors. Typical programs run 24–36 months.",
   path: "/how-it-works",
 });
 

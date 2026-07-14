@@ -27,7 +27,7 @@ export default function FinalCTA() {
             </Button>
           </Link>
           <span className="inline-flex items-center gap-2 text-gray-300">
-            <PhoneCall className="h-4 w-4 text-cyan-300" /> or call 1-888-SOLVANA — an AI agent answers 24/7
+            <PhoneCall className="h-4 w-4 text-cyan-300" /> or call 1-888-XDEBT-24 — an AI agent answers 24/7
           </span>
         </div>
       </div>

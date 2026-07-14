@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import LegalShell from "@/components/solvana/legal-shell";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Solvana",
-  description: "How Solvana collects, uses, and protects your financial information under GLBA and state privacy law.",
+  title: "Privacy Policy | X Debt",
+  description: "How X Debt collects, uses, and protects your financial information under GLBA and state privacy law.",
 };
 
 export default function PrivacyPage() {
@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       <section>
         <h2>Scope</h2>
         <p>
-          As a financial services provider, Solvana handles nonpublic personal information under
+          As a financial services provider, X Debt handles nonpublic personal information under
           the Gramm-Leach-Bliley Act (GLBA), its Safeguards Rule, and applicable state privacy
           laws (including the CCPA/CPRA for California residents). This policy covers the
           website, client portal, and services delivered by our AI agents.
@@ -69,14 +69,14 @@ export default function PrivacyPage() {
           <li>Access, correct, or delete your data (subject to legal retention duties).</li>
           <li>Opt out of any non-essential communications instantly (&ldquo;STOP&rdquo; works with every agent).</li>
           <li>Request the audit log of AI agent actions on your account.</li>
-          <li>California, Colorado, Virginia and other state residents: exercise applicable state privacy rights via privacy@solvana.ai — we do not discriminate for exercising them.</li>
+          <li>California, Colorado, Virginia and other state residents: exercise applicable state privacy rights via privacy@xdebt.ai — we do not discriminate for exercising them.</li>
         </ul>
       </section>
       <section>
         <h2>Retention & contact</h2>
         <p>
           Program records are retained as required by federal and state law (generally 3–7
-          years post-program), then deleted or anonymized. Questions: privacy@solvana.ai.
+          years post-program), then deleted or anonymized. Questions: privacy@xdebt.ai.
         </p>
       </section>
     </LegalShell>

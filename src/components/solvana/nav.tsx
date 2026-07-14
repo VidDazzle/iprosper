@@ -3,24 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const LINKS = [
+  { href: "/advisor", label: "Free Debt Plan" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/agents", label: "AI Agents" },
   { href: "/pricing", label: "Fees" },
-  { href: "/legal/disclosures", label: "Disclosures" },
 ];
 
 export function SolvanaLogo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-600 shadow-[0_0_20px_rgba(34,211,238,0.5)]">
-        <Sparkles className="h-4 w-4 text-white" />
+      <span className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-violet-600 font-black text-white shadow-[0_0_20px_rgba(34,211,238,0.5)]">
+        X
       </span>
       <span className="text-xl font-bold tracking-tight text-white">
-        Solvana
-        <span className="bg-gradient-to-r from-cyan-400 to-violet-500 bg-clip-text text-transparent">.ai</span>
+        X&nbsp;<span className="bg-gradient-to-r from-cyan-400 to-violet-500 bg-clip-text text-transparent">Debt</span>
       </span>
     </span>
   );
@@ -32,7 +31,7 @@ export default function SolvanaNav() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#050810]/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" aria-label="Solvana home">
+        <Link href="/" aria-label="X Debt home">
           <SolvanaLogo />
         </Link>
 

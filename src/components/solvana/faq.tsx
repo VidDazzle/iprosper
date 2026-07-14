@@ -7,12 +7,12 @@ import {
 
 export const FAQS = [
   {
-    q: "Is Solvana really run entirely by AI?",
+    q: "Is X Debt really run entirely by AI?",
     a: "Yes — intake, analysis, negotiation, account management, and client support are all handled by specialized AI voice agents, supervised by a compliance agent with veto power over every action. Licensed human attorneys step in for legal matters (like a creditor lawsuit), and you can ask to speak to a human supervisor at any time on any call.",
   },
   {
     q: "Do you pay off my debts for me?",
-    a: "No. Solvana is not a lender and does not pay your debts directly. You save money monthly in a dedicated FDIC-insured account that you own. When enough accumulates, our AI negotiates with each creditor to accept a smaller one-time lump-sum payment from that account and forgive the rest.",
+    a: "No. X Debt is not a lender and does not pay your debts directly. You save money monthly in a dedicated FDIC-insured account that you own. When enough accumulates, our AI negotiates with each creditor to accept a smaller one-time lump-sum payment from that account and forgive the rest.",
   },
   {
     q: "How much does it cost?",

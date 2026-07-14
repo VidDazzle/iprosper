@@ -4,9 +4,9 @@ import { SolvanaLogo } from "./nav";
 import { PROGRAM } from "@/lib/solvana/brand";
 
 const SOCIALS = [
-  { href: "https://www.facebook.com/solvana.ai", label: "Facebook", Icon: Facebook },
-  { href: "https://www.instagram.com/solvana.ai", label: "Instagram", Icon: Instagram },
-  { href: "https://www.youtube.com/@solvana.ai", label: "YouTube", Icon: Youtube },
+  { href: "https://www.facebook.com/xdebt.ai", label: "Facebook", Icon: Facebook },
+  { href: "https://www.instagram.com/xdebt.ai", label: "Instagram", Icon: Instagram },
+  { href: "https://www.youtube.com/@xdebt.ai", label: "YouTube", Icon: Youtube },
   { href: "https://www.linkedin.com/company/solvana-ai", label: "LinkedIn", Icon: Linkedin },
 ];
 
@@ -18,9 +18,9 @@ export default function SolvanaFooter() {
           <div>
             <SolvanaLogo />
             <p className="mt-4 text-sm leading-relaxed">
-              The AI-native debt settlement platform. We negotiate with your
-              creditors so you can pay less than you owe — with zero upfront
-              fees.
+              A self-optimizing AI platform to get out of debt faster. Free plans for
+              every kind of debt, plus AI-negotiated settlements on qualifying unsecured
+              debt. By VidDazzle LLC.
             </p>
             <div className="mt-5 flex gap-3">
               {SOCIALS.map(({ href, label, Icon }) => (
@@ -40,6 +40,7 @@ export default function SolvanaFooter() {
           <div>
             <h4 className="mb-3 text-sm font-semibold text-white">Program</h4>
             <ul className="space-y-2 text-sm">
+              <li><Link href="/advisor" className="hover:text-cyan-300">Free debt plan</Link></li>
               <li><Link href="/how-it-works" className="hover:text-cyan-300">How it works</Link></li>
               <li><Link href="/agents" className="hover:text-cyan-300">Meet the AI agents</Link></li>
               <li><Link href="/pricing" className="hover:text-cyan-300">Fees & pricing</Link></li>
@@ -59,9 +60,9 @@ export default function SolvanaFooter() {
           <div>
             <h4 className="mb-3 text-sm font-semibold text-white">Contact</h4>
             <ul className="space-y-2 text-sm">
-              <li>Voice: 1-888-SOLVANA (AI agents, 24/7)</li>
-              <li>hello@solvana.ai</li>
-              <li>Client portal: app.solvana.ai</li>
+              <li>Voice: 1-888-XDEBT-24 (AI agents, 24/7)</li>
+              <li>hello@xdebt.ai</li>
+              <li>Client portal: app.xdebt.ai</li>
             </ul>
           </div>
         </div>
@@ -69,7 +70,7 @@ export default function SolvanaFooter() {
         <div className="mt-12 space-y-4 border-t border-white/10 pt-8 text-xs leading-relaxed text-gray-500">
           <p>
             <strong className="text-gray-400">Important program disclosures.</strong>{" "}
-            Solvana negotiates settlements of unsecured debt on your behalf. Solvana does not
+            X Debt negotiates settlements of unsecured debt on your behalf. X Debt does not
             lend money, does not make monthly payments to your creditors, and does not assume
             your debts. Enrollment requires a minimum of ${PROGRAM.minDebt.toLocaleString()} in
             qualifying unsecured debt. Programs typically take {PROGRAM.termLowMonths} to{" "}
@@ -89,14 +90,18 @@ export default function SolvanaFooter() {
           </p>
           <p>
             Funds you save accumulate in a dedicated account that you own and control at an
-            independent, FDIC-insured institution unaffiliated with Solvana. You may withdraw
-            your funds at any time without penalty. Solvana is not a law firm and does not
-            provide legal, tax, or bankruptcy advice. Solvana does not settle secured debts
+            independent, FDIC-insured institution unaffiliated with X Debt. You may withdraw
+            your funds at any time without penalty. X Debt is not a law firm and does not
+            provide legal, tax, or bankruptcy advice. X Debt does not settle secured debts
             (such as mortgages or auto loans) or federal student loans. Services are not
             available in all states; see{" "}
             <Link href="/legal/licensing" className="underline hover:text-cyan-300">state licensing</Link>.
           </p>
-          <p>© {new Date().getFullYear()} Solvana Technologies, Inc. All rights reserved.</p>
+          <p>
+            The free Debt Reduction Advisor is educational and is not financial, tax, or legal
+            advice. © {new Date().getFullYear()} VidDazzle LLC. X Debt is a product of VidDazzle
+            LLC. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

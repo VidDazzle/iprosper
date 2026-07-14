@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Solvana",
+    title: "X Debt",
   },
   icons: {
     icon: "/favicon.png",

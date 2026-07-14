@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         phone: phone ?? undefined,
         clickId: attribution.clickId,
         eventId,
-        eventSourceUrl: attribution.landingPath ? `https://solvana.ai${attribution.landingPath}` : undefined,
+        eventSourceUrl: attribution.landingPath ? `https://xdebt.ai${attribution.landingPath}` : undefined,
         clientIp: ip,
         userAgent: request.headers.get("user-agent"),
         value: debtAmount ? Math.round(debtAmount * 0.2) : 0,

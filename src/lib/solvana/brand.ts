@@ -1,15 +1,19 @@
 /**
- * Solvana brand + program constants.
+ * X Debt brand + program constants.
  * Single source of truth for program terms quoted across the site,
  * the agent framework, and the legal pages.
  */
 
 export const BRAND = {
-  name: "Solvana",
-  domain: "solvana.ai",
-  tagline: "Settle smarter. Owe less.",
+  name: "X Debt",
+  company: "VidDazzle LLC",
+  legalName: "X Debt by VidDazzle LLC",
+  domain: "xdebt.ai",
+  email: "hello@xdebt.ai",
+  phone: "1-888-XDEBT-24",
+  tagline: "Every debt has an exit. Our AI finds yours.",
   description:
-    "Solvana is a fully AI-operated debt settlement platform. Specialized AI voice agents analyze your unsecured debt, build your savings plan, and negotiate with your creditors to accept less than you owe — with zero upfront fees.",
+    "X Debt by VidDazzle LLC is a self-healing, self-learning, self-optimizing AI platform that helps you eliminate every kind of debt — mortgages, credit cards, auto and student loans, medical bills, HELOCs, and personal lines of credit. Get a free personalized payoff plan using strategies most people never hear about, and — for qualifying unsecured debt — let our AI agents negotiate settlements for less than you owe.",
 } as const;
 
 export const PROGRAM = {
