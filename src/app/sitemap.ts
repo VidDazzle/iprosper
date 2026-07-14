@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/get-started", priority: 0.9, freq: "weekly" },
     { path: "/legal/disclosures", priority: 0.5, freq: "yearly" },
     { path: "/legal/advocate-disclosure", priority: 0.5, freq: "yearly" },
+    { path: "/legal/advertiser-agreement", priority: 0.5, freq: "yearly" },
     { path: "/legal/terms", priority: 0.4, freq: "yearly" },
     { path: "/legal/privacy", priority: 0.4, freq: "yearly" },
     { path: "/legal/licensing", priority: 0.5, freq: "yearly" },

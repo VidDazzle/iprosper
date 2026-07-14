@@ -4,8 +4,10 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2, Sparkles, Upload } from "lucide-react";
+import Link from "next/link";
+import { Loader2, CheckCircle2, Sparkles, Upload, ShieldCheck } from "lucide-react";
 import { PRACTICE_AREAS, TIERS, type Tier } from "@/lib/partners/pricing";
+import { ADVERTISER_ACKS, ADVERTISER_AGREEMENT_VERSION } from "@/lib/partners/advertiser-agreement";
 
 const inputCls = "border-white/15 bg-[#03040a] text-white placeholder:text-slate-600";
 
@@ -25,8 +27,11 @@ export default function AttorneyApplyForm() {
     days: [1, 2, 3, 4, 5] as number[],
   });
   const [preview, setPreview] = useState<string | null>(null);
+  const [acks, setAcks] = useState<Record<string, boolean>>({});
   const [state, setState] = useState<"idle" | "saving" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
+
+  const allAcksChecked = ADVERTISER_ACKS.every((a) => acks[a.id]);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -43,11 +48,14 @@ export default function AttorneyApplyForm() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (!allAcksChecked) { setState("error"); setMessage("Please agree to the background check and advertiser terms to apply."); return; }
     setState("saving"); setMessage("");
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       areas.forEach((a) => fd.append("practiceAreas", a));
+      ADVERTISER_ACKS.forEach((a) => { if (acks[a.id]) fd.append("agreementAcks", a.id); });
+      fd.append("agreementVersion", ADVERTISER_AGREEMENT_VERSION);
       fd.append("tier", tier);
       fd.append("generateCard", String(generateCard));
       fd.append("calendarEnabled", String(cal.enabled));
@@ -219,13 +227,32 @@ export default function AttorneyApplyForm() {
         </div>
       )}
 
+      {/* Advertiser agreement: background check + VidDazzle sole discretion */}
+      <div className="rounded-xl border border-amber-400/25 bg-amber-400/[0.05] p-5">
+        <h3 className="mb-1 flex items-center gap-2 font-semibold text-white"><ShieldCheck className="h-4 w-4 text-amber-300" /> Background check &amp; advertiser agreement</h3>
+        <p className="mb-4 text-sm text-slate-400">
+          Before any attorney or company can advertise on a VidDazzle LLC site, you must agree to a professional business
+          background check. VidDazzle LLC approves, denies, and removes advertising at its sole discretion. Read the full{" "}
+          <Link href="/legal/advertiser-agreement" target="_blank" className="text-cyan-300 hover:text-cyan-200">Advertiser Agreement</Link>.
+        </p>
+        <div className="space-y-2.5">
+          {ADVERTISER_ACKS.map((a) => (
+            <label key={a.id} className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-[#03040a] p-3 text-sm text-slate-300 hover:border-amber-400/30">
+              <input type="checkbox" checked={!!acks[a.id]} onChange={(e) => setAcks((c) => ({ ...c, [a.id]: e.target.checked }))}
+                className="mt-0.5 h-4 w-4 flex-shrink-0 accent-amber-500" />
+              <span>{a.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {state === "error" && <p className="text-sm text-rose-400">{message}</p>}
 
       <div className="flex flex-wrap items-center gap-4">
-        <Button type="submit" disabled={state === "saving"} className="h-11 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-8 text-white hover:from-cyan-400 hover:to-violet-500">
+        <Button type="submit" disabled={state === "saving" || !allAcksChecked} className="h-11 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 px-8 text-white hover:from-cyan-400 hover:to-violet-500 disabled:opacity-40">
           {state === "saving" ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</> : <><Upload className="mr-2 h-4 w-4" /> Apply to advertise</>}
         </Button>
-        <p className="text-xs text-slate-500">Beacon verifies your bar number before any listing goes live.</p>
+        <p className="text-xs text-slate-500">{allAcksChecked ? "Beacon verifies your bar number and VidDazzle completes a background check before any listing goes live." : "Agree to the background check and terms above to continue."}</p>
       </div>
     </form>
   );

@@ -138,6 +138,11 @@ export const attorneyPartners = sqliteTable('attorney_partners', {
   setupFeePaid: integer('setup_fee_paid', { mode: 'boolean' }).notNull().default(false),
   status: text('status').notNull().default('pending'), // pending | active | paused | rejected
   passwordHash: text('password_hash'), // attorney dashboard login (scrypt salt:hash)
+  // Advertiser agreement: background-check consent + sole-discretion acknowledgment,
+  // required before advertising. VidDazzle LLC approves/denies/removes at its sole discretion.
+  backgroundCheckConsent: integer('background_check_consent', { mode: 'boolean' }).notNull().default(false),
+  advertiserAgreementVersion: text('advertiser_agreement_version'),
+  advertiserAgreedAt: text('advertiser_agreed_at'),
   // Chronos booking-calendar add-on
   calendarEnabled: integer('calendar_enabled', { mode: 'boolean' }).notNull().default(false),
   calendarProvider: text('calendar_provider'), // google | ics | manual

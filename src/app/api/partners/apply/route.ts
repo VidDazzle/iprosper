@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPartner } from "@/lib/partners/store";
 import { generateBusinessCardSvg, svgToDataUrl } from "@/lib/partners/businesscard";
 import { evaluateLeadBilling, type Tier, type LeadBillingModel } from "@/lib/partners/pricing";
+import { ADVERTISER_AGREEMENT_VERSION, allAdvertiserAcksAccepted } from "@/lib/partners/advertiser-agreement";
 import { hashPassword } from "@/lib/portal/auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,6 +26,16 @@ export async function POST(request: NextRequest) {
     const email = get("email").toLowerCase();
     if (!firmName || !attorneyName) return NextResponse.json({ error: "Firm and attorney name are required." }, { status: 400 });
     if (!EMAIL_RE.test(email)) return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+
+    // Advertiser gate: consent to the professional background check and acknowledge
+    // VidDazzle LLC's sole discretion to approve, deny, or remove advertising.
+    const acks = form.getAll("agreementAcks").map((v) => String(v));
+    if (!allAdvertiserAcksAccepted(acks)) {
+      return NextResponse.json(
+        { error: "You must agree to the background check and the advertiser terms to apply." },
+        { status: 400 }
+      );
+    }
 
     // Beacon compliance gate: only flat per-lead advertising billing is allowed.
     const requested = (get("billingModel") || "per_lead") as LeadBillingModel;
@@ -85,6 +96,9 @@ export async function POST(request: NextRequest) {
       practiceAreas, bio: get("bio") || undefined, passwordHash,
       photoType: (get("photoType") as "firm" | "self") || undefined, photoUrl,
       businessCardUrl, businessCardGenerated, tier,
+      backgroundCheckConsent: true,
+      advertiserAgreementVersion: ADVERTISER_AGREEMENT_VERSION,
+      advertiserAgreedAt: new Date().toISOString(),
       calendarEnabled,
       calendarProvider: calendarEnabled ? ((get("calendarProvider") as "google" | "ics" | "manual") || "manual") : undefined,
       busyIcsUrl: calendarEnabled ? (get("busyIcsUrl") || undefined) : undefined,
@@ -96,7 +110,7 @@ export async function POST(request: NextRequest) {
       partnerId: partner.id,
       billing: { applied: billing, requestedRuling: ruling },
       message:
-        "Application received. Beacon will verify your bar number and reach out to activate your listing. Advertising is billed with flat fees only — never a share of your legal fees.",
+        "Application received. Before any listing goes live, Beacon verifies your bar number and VidDazzle LLC completes a professional business background check. VidDazzle LLC approves advertising at its sole discretion. Advertising is billed with flat fees only — never a share of your legal fees.",
     }, { status: 201 });
   } catch (e) {
     console.error("partner apply error", e);

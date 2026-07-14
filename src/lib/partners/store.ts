@@ -25,6 +25,10 @@ export interface AttorneyPartner {
   setupFeePaid: boolean;
   status: "pending" | "active" | "paused" | "rejected";
   passwordHash?: string;
+  // Advertiser agreement: background-check consent + sole-discretion acknowledgment
+  backgroundCheckConsent: boolean;
+  advertiserAgreementVersion?: string;
+  advertiserAgreedAt?: string;
   // Chronos calendar add-on
   calendarEnabled: boolean;
   calendarProvider?: "google" | "ics" | "manual";
@@ -91,6 +95,7 @@ function ensureSeed() {
       bio: "Consumer debt and bankruptcy attorney with 14 years defending clients against collectors and helping families get a fresh start.",
       photoType: "self", photoUrl: undefined, businessCardGenerated: true,
       tier: "spotlight", setupFeePaid: true, status: "active",
+      backgroundCheckConsent: true, advertiserAgreementVersion: "2026-07-14", advertiserAgreedAt: now(),
       calendarEnabled: true, calendarProvider: "ics", busyIcsUrl: undefined,
       availability: { days: [1, 2, 3, 4, 5], startHour: 9, endHour: 17, slotMinutes: 30, timezone: "America/Chicago", horizonDays: 14, bufferMinutes: 15 },
       createdAt: now(),
@@ -103,6 +108,7 @@ function ensureSeed() {
       bio: "Bankruptcy and foreclosure-defense attorney focused on keeping people in their homes and cars.",
       photoType: "firm", photoUrl: undefined, businessCardGenerated: true,
       tier: "featured", setupFeePaid: true, status: "active",
+      backgroundCheckConsent: true, advertiserAgreementVersion: "2026-07-14", advertiserAgreedAt: now(),
       calendarEnabled: true, calendarProvider: "manual", busyIcsUrl: undefined,
       availability: { days: [1, 2, 3, 4], startHour: 10, endHour: 16, slotMinutes: 45, timezone: "America/Phoenix", horizonDays: 10, bufferMinutes: 0 },
       createdAt: now(),
@@ -133,6 +139,9 @@ export async function createPartner(input: Omit<AttorneyPartner, "id" | "created
       photoUrl: input.photoUrl, businessCardUrl: input.businessCardUrl,
       businessCardGenerated: record.businessCardGenerated, tier: input.tier,
       setupFeePaid: false, status: "pending", passwordHash: input.passwordHash,
+      backgroundCheckConsent: input.backgroundCheckConsent ?? false,
+      advertiserAgreementVersion: input.advertiserAgreementVersion,
+      advertiserAgreedAt: input.advertiserAgreedAt,
       calendarEnabled: input.calendarEnabled ?? false, calendarProvider: input.calendarProvider,
       busyIcsUrl: input.busyIcsUrl, timezone: input.availability?.timezone,
       availability: input.availability ? JSON.stringify(input.availability) : null,
@@ -154,6 +163,9 @@ function mapPartner(r: any): AttorneyPartner {
     bio: r.bio ?? undefined, photoType: r.photoType ?? undefined, photoUrl: r.photoUrl ?? undefined,
     businessCardUrl: r.businessCardUrl ?? undefined, businessCardGenerated: r.businessCardGenerated,
     tier: r.tier, setupFeePaid: r.setupFeePaid, status: r.status, passwordHash: r.passwordHash ?? undefined,
+    backgroundCheckConsent: Boolean(r.backgroundCheckConsent),
+    advertiserAgreementVersion: r.advertiserAgreementVersion ?? undefined,
+    advertiserAgreedAt: r.advertiserAgreedAt ?? undefined,
     calendarEnabled: Boolean(r.calendarEnabled), calendarProvider: r.calendarProvider ?? undefined,
     busyIcsUrl: r.busyIcsUrl ?? undefined,
     availability: r.availability ? JSON.parse(r.availability) : (r.calendarEnabled ? DEFAULT_AVAILABILITY : undefined),

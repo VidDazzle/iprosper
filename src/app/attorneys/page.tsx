@@ -5,7 +5,7 @@ import AttorneyApplyForm from "@/components/partners/apply-form";
 import { pageMetadata } from "@/lib/solvana/seo";
 import Link from "next/link";
 import { TIERS, SETUP_FEE, CALENDAR_ADDON, FREE_REFERRALS, USD } from "@/lib/partners/pricing";
-import { CheckCircle2, Scale, Radio, CalendarClock, Gift } from "lucide-react";
+import { CheckCircle2, Scale, Radio, CalendarClock, Gift, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = pageMetadata({
   title: "Advertise to People Actively Solving Their Debt",
@@ -97,6 +97,18 @@ export default function AttorneysPage() {
               You&rsquo;re responsible for compliance with your own state bar&rsquo;s advertising rules.
             </p>
           </div>
+
+          {/* Background check + sole discretion */}
+          <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-5">
+            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-white"><ShieldCheck className="h-4 w-4 text-amber-300" /> Background check &amp; approval</h3>
+            <p className="text-sm leading-relaxed text-slate-400">
+              Before any attorney or company can advertise on a VidDazzle LLC site, you must agree to a{" "}
+              <strong className="text-slate-200">professional business background check</strong>. VidDazzle LLC reserves the
+              right, at its <strong className="text-slate-200">sole discretion</strong>, to approve or deny advertising and
+              to remove an advertiser at any time, without notice and without explanation. See the full{" "}
+              <Link href="/legal/advertiser-agreement" className="text-cyan-300 hover:text-cyan-200">Advertiser Agreement</Link>.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -104,7 +116,7 @@ export default function AttorneysPage() {
       <section className="px-6 pb-24">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-2 text-2xl font-bold text-white">Apply to advertise</h2>
-          <p className="mb-6 text-sm text-slate-400">Beacon will verify your bar number and reach out to activate your listing — usually within one business day.</p>
+          <p className="mb-6 text-sm text-slate-400">Beacon verifies your bar number and VidDazzle LLC completes a professional background check before any listing goes live. Advertising is approved at VidDazzle LLC&rsquo;s sole discretion.</p>
           <AttorneyApplyForm />
         </div>
       </section>

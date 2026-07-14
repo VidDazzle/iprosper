@@ -58,6 +58,7 @@ export default function SolvanaFooter() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/legal/disclosures" className="hover:text-cyan-300">Program disclosures</Link></li>
               <li><Link href="/legal/advocate-disclosure" className="hover:text-cyan-300">Advocate disclosure &amp; release</Link></li>
+              <li><Link href="/legal/advertiser-agreement" className="hover:text-cyan-300">Advertiser agreement</Link></li>
               <li><Link href="/legal/terms" className="hover:text-cyan-300">Terms of service</Link></li>
               <li><Link href="/legal/privacy" className="hover:text-cyan-300">Privacy policy</Link></li>
               <li><Link href="/legal/licensing" className="hover:text-cyan-300">State licensing</Link></li>
