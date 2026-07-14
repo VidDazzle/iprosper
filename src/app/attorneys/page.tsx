@@ -105,7 +105,7 @@ export default function AttorneysPage() {
               Before any attorney or company can advertise on a VidDazzle LLC site, you must agree to a{" "}
               <strong className="text-slate-200">professional business background check</strong>. VidDazzle LLC reserves the
               right, at its <strong className="text-slate-200">sole discretion</strong>, to approve or deny advertising and
-              to remove an advertiser at any time, without notice and without explanation. See the full{" "}
+              to remove an advertiser at any time, without notice. See the full{" "}
               <Link href="/legal/advertiser-agreement" className="text-cyan-300 hover:text-cyan-200">Advertiser Agreement</Link>.
             </p>
           </div>
