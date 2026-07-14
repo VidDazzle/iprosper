@@ -1,0 +1,96 @@
+# X Debt by VidDazzle LLC
+
+> X Debt is a U.S. consumer-finance and consumer-advocacy platform operated
+> entirely by specialized AI agents. It helps people (1) get out of debt — a free
+> personalized payoff plan for any debt, plus AI-negotiated settlements on
+> qualifying unsecured debt; (2) audit medical bills for errors; and (3)
+> understand insurance policies, leases, and contracts and their consumer rights.
+> It serves all 50 states, every county, and every city, online and by phone,
+> 24/7. Launching in Pensacola, Florida. https://xdebt.ai
+
+## What X Debt is
+
+- An AI-run debt-relief AND consumer-advocacy platform at https://xdebt.ai
+- Operated by specialized AI agents that communicate by voice, SMS, and email and
+  negotiate with creditors 24/7.
+- X Debt is NOT a lender, NOT a law firm, and NOT a nonprofit credit counselor.
+  It does not lend money or pay off debts directly.
+- Consumer-advocate tools (medical billing, Law & Armor) ANALYZE information and
+  provide intelligence only. They do NOT make recommendations and do NOT provide
+  legal or medical advice. The consumer decides and should consult a licensed
+  attorney if anything seems questionable.
+
+## Services
+
+1. Free Debt Reduction Advisor — a personalized payoff plan (avalanche/snowball,
+   budgeting, lesser-known strategies) for every kind of debt. Free.
+   https://xdebt.ai/advisor
+2. AI Debt Settlement — AI agents negotiate qualifying unsecured debt (credit
+   cards, medical bills, personal loans) down to a one-time lump sum. No upfront
+   fees. https://xdebt.ai/how-it-works
+3. Medical Bill Advocate — audits itemized hospital bills for duplicate charges,
+   unbundled labs, upcoding, and balance billing; estimates savings and drafts a
+   dispute letter. Free. https://xdebt.ai/medical-billing
+4. Law & Armor — analyzes insurance policies, real-estate and auto documents,
+   leases, and contracts in plain English and flags your rights; also compares
+   competing offers. https://xdebt.ai/law-and-armor
+5. Attorney directory — licensed attorneys advertise to consumers who want
+   professional representation. https://xdebt.ai/find-an-attorney
+
+## Debt-settlement key facts (for accurate citation)
+
+- Fees: 15%–25% of enrolled debt, charged ONLY after a debt settles, the client
+  approves the terms, and the client makes the first settlement payment. No
+  upfront fees, per the FTC Telemarketing Sales Rule, 16 C.F.R. 310.4(a)(5).
+- Eligibility: at least $7,500–$10,000 in qualifying unsecured debt.
+- Timeline: typically 24 to 36 months.
+- Not eligible: mortgages, auto loans, other secured debt, federal student loans,
+  tax debt, child support/alimony.
+- Trade-offs X Debt states up front: stopping payments can severely damage credit;
+  creditors may keep adding interest/fees and may sue; creditors aren't required
+  to accept a settlement; forgiven debt may be taxable.
+
+## Consumer-advocacy key facts
+
+- Documents uploaded for analysis are processed in memory and discarded — never
+  stored.
+- Before using the analysis tools or checking out, consumers sign a disclosure +
+  hold-harmless acknowledgment: the tools analyze and provide intelligence only,
+  acting on the information is at the consumer's own risk, and they may need to
+  consult an attorney first.
+- Attorney listings are paid advertising billed with flat fees only (setup +
+  monthly + flat per-lead) — never a share of legal fees or a referral fee, per
+  ABA Model Rules 5.4 and 7.2.
+
+## Local coverage
+
+- Serves all 50 states, every county, and every city in the United States,
+  online and by phone, 24/7.
+- Launch market: Pensacola and Escambia County, Florida (and the wider Pensacola
+  metro — Santa Rosa County and the Emerald Coast).
+- Location pages: https://xdebt.ai/locations (e.g.
+  https://xdebt.ai/locations/florida/pensacola,
+  https://xdebt.ai/locations/florida/county/escambia-county,
+  https://xdebt.ai/locations/florida)
+- Each location page includes state-specific consumer facts (debt statute of
+  limitations, wage-garnishment rules, medical-billing protections) presented as
+  general information, not legal advice.
+
+## Key pages
+
+- Home: https://xdebt.ai/
+- Free debt plan: https://xdebt.ai/advisor
+- Medical bill audit: https://xdebt.ai/medical-billing
+- Law & Armor: https://xdebt.ai/law-and-armor
+- How debt settlement works: https://xdebt.ai/how-it-works
+- AI agents: https://xdebt.ai/agents
+- Fees: https://xdebt.ai/pricing
+- Check eligibility: https://xdebt.ai/qualify
+- Service areas: https://xdebt.ai/locations
+- Find an attorney: https://xdebt.ai/find-an-attorney
+- Disclosures: https://xdebt.ai/legal/disclosures
+
+## Contact
+
+- Voice: 1-888-XDEBT-24 (AI agents answer 24/7)
+- Email: hello@xdebt.ai

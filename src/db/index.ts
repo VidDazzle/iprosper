@@ -1,12 +1,31 @@
-import { drizzle } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client';
+import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
+// Use the web (fetch-based) libSQL client so the app runs on both Node
+// (Vercel/VPS) and edge/Workers (Cloudflare) runtimes. It talks to remote
+// Turso over HTTPS and pulls in no native addons.
+import { createClient } from '@libsql/client/web';
 import * as schema from '@/db/schema';
 
-const client = createClient({
-  url: process.env.TURSO_CONNECTION_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
+// Lazily instantiate the database so importing this module (e.g. during
+// Next.js build-time page-data collection) does not require TURSO_* env vars.
+// The client is created on first actual query at runtime.
+let _db: LibSQLDatabase<typeof schema> | null = null;
+
+function getDb(): LibSQLDatabase<typeof schema> {
+  if (!_db) {
+    const client = createClient({
+      url: process.env.TURSO_CONNECTION_URL!,
+      authToken: process.env.TURSO_AUTH_TOKEN!,
+    });
+    _db = drizzle(client, { schema });
+  }
+  return _db;
+}
+
+export const db = new Proxy({} as LibSQLDatabase<typeof schema>, {
+  get(_target, prop) {
+    const instance = getDb();
+    return Reflect.get(instance, prop, instance);
+  },
 });
 
-export const db = drizzle(client, { schema });
-
-export type Database = typeof db;
+export type Database = LibSQLDatabase<typeof schema>;

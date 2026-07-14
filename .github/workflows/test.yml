@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Unit tests
+        run: npm run test
+      - name: Production build
+        run: npm run build
+        env:
+          # No live services needed — the DB client and integrations lazily
+          # degrade when their env vars are absent.
+          SESSION_SECRET: ci-build-secret

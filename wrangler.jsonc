@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "solvana",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-25",
+  // nodejs_compat is required: the app uses node:crypto (scrypt/HMAC) for auth.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  }
+  // Environment variables/secrets (SESSION_SECRET, TURSO_*, ADMIN_*, pixel keys)
+  // are set in the Cloudflare dashboard or via `wrangler secret put`, not here.
+}
