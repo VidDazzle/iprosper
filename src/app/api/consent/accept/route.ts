@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You must check every box to accept the disclosure." }, { status: 400 });
     }
 
-    const rec = recordConsent({
+    const rec = await recordConsent({
       name,
       version: AGREEMENT_VERSION,
       scope,

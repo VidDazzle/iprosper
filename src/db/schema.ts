@@ -175,6 +175,23 @@ export const attorneyAppointments = sqliteTable('attorney_appointments', {
   createdAt: text('created_at').notNull(),
 });
 
+/**
+ * Signed consumer-advocate disclosures. The durable audit trail of who accepted
+ * the disclosure + hold-harmless release, which version, and when — proof that a
+ * consumer consented before using the analysis tools. We store only the fact of
+ * consent, never the analyzed documents.
+ */
+export const consentRecords = sqliteTable('consent_records', {
+  id: text('id').primaryKey(), // csn_...
+  name: text('name').notNull(), // typed e-signature (full legal name)
+  version: text('version').notNull(), // agreement version signed
+  scope: text('scope').notNull().default('advocate'),
+  acks: text('acks').notNull(), // JSON string[] of acknowledged clause ids
+  userAgent: text('user_agent'),
+  ip: text('ip'),
+  acceptedAt: text('accepted_at').notNull(),
+});
+
 /** Verified client connections routed to an attorney — the per-lead billing log. */
 export const attorneyLeads = sqliteTable('attorney_leads', {
   id: integer('id').primaryKey({ autoIncrement: true }),
