@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         // etc.) — we WANT AI assistants to read and cite X Debt. See /llms.txt.
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin", "/admin-login", "/portal", "/signin", "/signup", "/calendar"],
+        disallow: ["/api/", "/admin", "/admin-login", "/portal", "/partner", "/signin", "/signup", "/calendar"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

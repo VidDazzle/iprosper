@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveSubscription } from "@/lib/notify/subscriptions";
 import { getSession } from "@/lib/portal/session";
+import { getAttorneySession } from "@/lib/partners/session";
 
 /** Expose the VAPID public key so the browser can create a subscription. */
 export async function GET() {
@@ -20,8 +21,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid subscription." }, { status: 400 });
     }
 
-    let subject: string | null = body.subject ?? null;
-    if (!subject) {
+    let subject: string | null = null;
+    if (typeof body.subject === "string" && body.subject.startsWith("attorney:")) {
+      // Attorney subjects require a matching attorney session.
+      const att = await getAttorneySession();
+      if (att && `attorney:${att.pid}` === body.subject) subject = body.subject;
+    } else {
       const session = await getSession();
       if (session) subject = `client:${session.cid}`;
     }

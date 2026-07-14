@@ -3,8 +3,9 @@ import SolvanaNav from "@/components/solvana/nav";
 import SolvanaFooter from "@/components/solvana/footer";
 import AttorneyApplyForm from "@/components/partners/apply-form";
 import { pageMetadata } from "@/lib/solvana/seo";
-import { TIERS, SETUP_FEE, CALENDAR_ADDON, USD } from "@/lib/partners/pricing";
-import { CheckCircle2, Scale, Radio, CalendarClock } from "lucide-react";
+import Link from "next/link";
+import { TIERS, SETUP_FEE, CALENDAR_ADDON, FREE_REFERRALS, USD } from "@/lib/partners/pricing";
+import { CheckCircle2, Scale, Radio, CalendarClock, Gift } from "lucide-react";
 
 export const metadata: Metadata = pageMetadata({
   title: "Advertise to People Actively Solving Their Debt",
@@ -35,6 +36,12 @@ export default function AttorneysPage() {
             foreclosure, and bankruptcy. Advertise your practice to them — and let{" "}
             <span className="text-white">Beacon</span>, our AI partnerships agent, onboard you, design your
             card, and route qualified connections to your phone.
+          </p>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-200">
+            <Gift className="h-4 w-4" /> Your first {FREE_REFERRALS} client referrals are free — try the platform on us.
+          </div>
+          <p className="mt-4 text-sm text-slate-500">
+            Already advertising? <Link href="/attorneys/login" className="text-cyan-300 hover:text-cyan-200">Sign in to your dashboard</Link>
           </p>
         </div>
       </section>

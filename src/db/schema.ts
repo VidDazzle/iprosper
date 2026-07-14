@@ -137,6 +137,7 @@ export const attorneyPartners = sqliteTable('attorney_partners', {
   tier: text('tier').notNull().default('featured'), // listed | featured | spotlight
   setupFeePaid: integer('setup_fee_paid', { mode: 'boolean' }).notNull().default(false),
   status: text('status').notNull().default('pending'), // pending | active | paused | rejected
+  passwordHash: text('password_hash'), // attorney dashboard login (scrypt salt:hash)
   // Chronos booking-calendar add-on
   calendarEnabled: integer('calendar_enabled', { mode: 'boolean' }).notNull().default(false),
   calendarProvider: text('calendar_provider'), // google | ics | manual

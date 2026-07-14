@@ -35,6 +35,10 @@ export interface TierPlan {
 
 export const SETUP_FEE = 499; // one-time: onboarding + AI-designed profile & business card
 
+/** Signup incentive: an attorney's first N referrals (client connections) are
+ *  free — it offsets setup and lets them try the platform risk-free. */
+export const FREE_REFERRALS = 2;
+
 /** Optional booking-calendar add-on (Chronos): a flat monthly fee plus a flat
  *  fee per booked consultation. Both are flat advertising fees — never a share
  *  of legal fees or a referral fee. */

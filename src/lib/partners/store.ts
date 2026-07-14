@@ -3,7 +3,7 @@
  * in-memory store so the feature is demonstrable in dev — same signatures.
  */
 
-import { SETUP_FEE, CALENDAR_ADDON, getTier, type Tier } from "./pricing";
+import { SETUP_FEE, CALENDAR_ADDON, FREE_REFERRALS, getTier, type Tier } from "./pricing";
 import type { Availability } from "./scheduling";
 
 export interface AttorneyPartner {
@@ -24,6 +24,7 @@ export interface AttorneyPartner {
   tier: Tier;
   setupFeePaid: boolean;
   status: "pending" | "active" | "paused" | "rejected";
+  passwordHash?: string;
   // Chronos calendar add-on
   calendarEnabled: boolean;
   calendarProvider?: "google" | "ics" | "manual";
@@ -59,6 +60,7 @@ export interface AttorneyLead {
   practiceArea?: string;
   billingModel: "per_lead";
   feeAmount: number;
+  complimentary: boolean; // one of the first free referrals
   status: "delivered" | "contacted" | "invoiced";
   createdAt: string;
 }
@@ -130,7 +132,7 @@ export async function createPartner(input: Omit<AttorneyPartner, "id" | "created
       practiceAreas: JSON.stringify(input.practiceAreas), bio: input.bio, photoType: input.photoType,
       photoUrl: input.photoUrl, businessCardUrl: input.businessCardUrl,
       businessCardGenerated: record.businessCardGenerated, tier: input.tier,
-      setupFeePaid: false, status: "pending",
+      setupFeePaid: false, status: "pending", passwordHash: input.passwordHash,
       calendarEnabled: input.calendarEnabled ?? false, calendarProvider: input.calendarProvider,
       busyIcsUrl: input.busyIcsUrl, timezone: input.availability?.timezone,
       availability: input.availability ? JSON.stringify(input.availability) : null,
@@ -151,7 +153,7 @@ function mapPartner(r: any): AttorneyPartner {
     stateCode: r.stateCode ?? undefined, practiceAreas: r.practiceAreas ? JSON.parse(r.practiceAreas) : [],
     bio: r.bio ?? undefined, photoType: r.photoType ?? undefined, photoUrl: r.photoUrl ?? undefined,
     businessCardUrl: r.businessCardUrl ?? undefined, businessCardGenerated: r.businessCardGenerated,
-    tier: r.tier, setupFeePaid: r.setupFeePaid, status: r.status,
+    tier: r.tier, setupFeePaid: r.setupFeePaid, status: r.status, passwordHash: r.passwordHash ?? undefined,
     calendarEnabled: Boolean(r.calendarEnabled), calendarProvider: r.calendarProvider ?? undefined,
     busyIcsUrl: r.busyIcsUrl ?? undefined,
     availability: r.availability ? JSON.parse(r.availability) : (r.calendarEnabled ? DEFAULT_AVAILABILITY : undefined),
@@ -211,11 +213,14 @@ export async function recordLead(input: {
 }): Promise<AttorneyLead | undefined> {
   const partner = await getPartner(input.partnerId);
   if (!partner) return undefined;
-  const feeAmount = getTier(partner.tier).perLeadFee;
+  // First FREE_REFERRALS client connections are complimentary (signup incentive).
+  const priorLeads = (await listLeads()).filter((l) => l.partnerId === input.partnerId).length;
+  const complimentary = priorLeads < FREE_REFERRALS;
+  const feeAmount = complimentary ? 0 : getTier(partner.tier).perLeadFee;
   const record: AttorneyLead = {
     id: mem.seq.lead++, partnerId: input.partnerId, clientRef: input.clientRef,
     channel: input.channel, practiceArea: input.practiceArea, billingModel: "per_lead",
-    feeAmount, status: "delivered", createdAt: now(),
+    feeAmount, complimentary, status: "delivered", createdAt: now(),
   };
   if (hasDb()) {
     const { db } = await import("@/db");
@@ -241,11 +246,32 @@ export async function listLeads(): Promise<AttorneyLead[]> {
     return rows.map((r: any) => ({
       id: r.id, partnerId: r.partnerId, clientRef: r.clientRef ?? undefined, channel: r.channel,
       practiceArea: r.practiceArea ?? undefined, billingModel: "per_lead" as const,
-      feeAmount: r.feeAmount ?? 0, status: r.status, createdAt: r.createdAt,
+      feeAmount: r.feeAmount ?? 0, complimentary: (r.feeAmount ?? 0) === 0, status: r.status, createdAt: r.createdAt,
     }));
   }
   ensureSeed();
   return [...mem.leads];
+}
+
+export async function leadsForPartner(partnerId: number): Promise<AttorneyLead[]> {
+  return (await listLeads()).filter((l) => l.partnerId === partnerId);
+}
+
+export async function appointmentsForPartner(partnerId: number): Promise<AttorneyAppointment[]> {
+  return (await listAppointments()).filter((a) => a.partnerId === partnerId);
+}
+
+export async function findPartnerByEmail(email: string): Promise<AttorneyPartner | undefined> {
+  const em = email.toLowerCase();
+  if (hasDb()) {
+    const { db } = await import("@/db");
+    const { attorneyPartners } = await import("@/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const rows = await db.select().from(attorneyPartners).where(eq(attorneyPartners.email, em)).limit(1);
+    return rows[0] ? mapPartner(rows[0]) : undefined;
+  }
+  ensureSeed();
+  return mem.partners.find((p) => p.email.toLowerCase() === em);
 }
 
 /* ------------------------------ appointments ------------------------------ */

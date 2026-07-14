@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPartner } from "@/lib/partners/store";
 import { generateBusinessCardSvg, svgToDataUrl } from "@/lib/partners/businesscard";
 import { evaluateLeadBilling, type Tier, type LeadBillingModel } from "@/lib/partners/pricing";
+import { hashPassword } from "@/lib/portal/auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BYTES = 3 * 1024 * 1024; // 3 MB per image
@@ -75,10 +76,13 @@ export async function POST(request: NextRequest) {
       } catch { availability = undefined; }
     }
 
+    const password = get("password");
+    const passwordHash = password.length >= 8 ? await hashPassword(password) : undefined;
+
     const partner = await createPartner({
       firmName, attorneyName, email, phone: get("phone") || undefined, website: get("website") || undefined,
       barNumber: get("barNumber") || undefined, stateCode: get("stateCode") || undefined,
-      practiceAreas, bio: get("bio") || undefined,
+      practiceAreas, bio: get("bio") || undefined, passwordHash,
       photoType: (get("photoType") as "firm" | "self") || undefined, photoUrl,
       businessCardUrl, businessCardGenerated, tier,
       calendarEnabled,

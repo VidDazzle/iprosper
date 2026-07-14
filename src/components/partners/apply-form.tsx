@@ -14,7 +14,7 @@ export default function AttorneyApplyForm() {
   const cardRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     firmName: "", attorneyName: "", email: "", phone: "", website: "",
-    barNumber: "", stateCode: "", bio: "", photoType: "self" as "self" | "firm",
+    barNumber: "", stateCode: "", bio: "", password: "", photoType: "self" as "self" | "firm",
   });
   const [areas, setAreas] = useState<string[]>([]);
   const [tier, setTier] = useState<Tier>("featured");
@@ -97,6 +97,10 @@ export default function AttorneyApplyForm() {
       <Field label="Short bio">
         <textarea value={form.bio} onChange={set("bio")} rows={3} maxLength={400}
           className={`w-full rounded-md border px-3 py-2 text-sm ${inputCls}`} placeholder="Tell clients about your practice and how you help with debt or bankruptcy." />
+      </Field>
+
+      <Field label="Dashboard password">
+        <Input type="password" value={form.password} onChange={set("password")} className={inputCls} placeholder="At least 8 characters — to manage your listing, leads & calendar" />
       </Field>
 
       <div>
