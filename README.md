@@ -60,7 +60,39 @@ npm run build
 ```
 
 Key routes: `/` (landing) · `/how-it-works` · `/agents` · `/pricing` (fees) ·
-`/qualify` (eligibility + savings estimator) · `/api/agents` (public roster).
+`/qualify` (eligibility + savings estimator) · `/portal` (client app) ·
+`/admin` (staff console) · `/api/agents` (public roster) · `/api/health`.
+
+## Installable app (PWA)
+
+Solvana installs to a phone or desktop home screen and launches standalone.
+It ships a web manifest (`src/app/manifest.ts`), branded icons
+(`public/icons/`), an offline fallback, and a service worker (`public/sw.js`)
+that caches static assets and never caches API/auth/portal responses. An
+"Install app" prompt appears when the browser reports installability.
+
+## Deployment
+
+Runs on any Next.js host. Two paths are wired up:
+
+**Cloudflare Workers** (cheapest always-on) via OpenNext:
+
+```bash
+npm run cf:preview   # build + run locally on the workerd runtime
+npm run cf:deploy    # build + deploy (after `npx wrangler login`)
+```
+
+`wrangler.jsonc` sets `nodejs_compat` (required — auth uses `node:crypto`).
+Push-to-deploy is available via `.github/workflows/deploy-cloudflare.yml` once
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repo secrets are set.
+
+**Vercel** works zero-config from `vercel.json`.
+
+**Database:** set `TURSO_CONNECTION_URL` + `TURSO_AUTH_TOKEN` and run
+`bash scripts/setup-turso.sh` to create the DB and apply migrations. Without
+them the app uses an in-memory store (fine for demos; resets on restart).
+
+**Required env:** `SESSION_SECRET` (portal + admin auth). See `.env.example`.
 
 ---
 

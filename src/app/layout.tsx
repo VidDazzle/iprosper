@@ -1,18 +1,30 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { baseMetadata, JsonLd, organizationLd, websiteLd } from "@/lib/solvana/seo";
 import AdPixels from "@/components/analytics/pixels";
+import PwaRegister from "@/components/pwa/register";
 
 export const metadata: Metadata = {
   ...baseMetadata(),
-  icons: {
-    icon: "/favicon.png", // main favicon
-    shortcut: "/favicon.png", // shortcut icon for browsers
-    apple: "/favicon.png", // Apple touch icon
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Solvana",
   },
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#050810",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -43,6 +55,7 @@ export default function RootLayout({
           data-custom-data='{"appName": "YourApp", "version": "1.0.0", "greeting": "hi"}'
         />
         {children}
+        <PwaRegister />
         <VisualEditsMessenger />
       </body>
     </html>

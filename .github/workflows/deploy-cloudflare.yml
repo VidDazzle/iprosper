@@ -1,0 +1,36 @@
+name: Deploy to Cloudflare Workers
+
+# Push-to-deploy: builds the OpenNext bundle and deploys it to Cloudflare.
+# One-time setup — add these repo secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   (Workers Scripts:Edit permission)
+#   CLOUDFLARE_ACCOUNT_ID
+# App runtime env vars (SESSION_SECRET, TURSO_*, ADMIN_*, etc.) are set on the
+# Worker itself in the Cloudflare dashboard or via `wrangler secret put`.
+
+on:
+  push:
+    branches:
+      - main
+      - claude/ai-debt-settlement-saas-in4snv
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency: deploy-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & deploy (OpenNext → Workers)
+        run: npx opennextjs-cloudflare build && npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
