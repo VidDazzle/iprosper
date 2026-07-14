@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 const LINKS = [
   { href: "/advisor", label: "Free Debt Plan" },
   { href: "/law-and-armor", label: "Law & Armor" },
+  { href: "/medical-billing", label: "Medical Bills" },
   { href: "/agents", label: "AI Agents" },
   { href: "/pricing", label: "Fees" },
 ];

@@ -119,6 +119,9 @@ export const PRACTICE_AREAS = [
   "Real estate / property",
   "Landlord–tenant",
   "Contract review",
+  // Healthcare & medical billing (Medical Billing Advocate)
+  "Medical billing & debt disputes",
+  "Health insurance / ERISA",
 ] as const;
 
 /** Lead-billing model. Only "per_lead" (flat advertising fee) is allowed. */
