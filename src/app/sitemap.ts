@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/solvana/seo";
+import { locationSitemapUrls } from "@/lib/geo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -21,10 +22,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/legal/privacy", priority: 0.4, freq: "yearly" },
     { path: "/legal/licensing", priority: 0.5, freq: "yearly" },
   ];
-  return routes.map((r) => ({
+
+  const core = routes.map((r) => ({
     url: `${SITE_URL}${r.path}`,
     lastModified: now,
     changeFrequency: r.freq,
     priority: r.priority,
   }));
+
+  // Local-SEO location tree (states, counties, cities). Well under the 50,000-URL
+  // per-sitemap limit even at full national coverage; switch to generateSitemaps
+  // chunking if the dataset grows past that.
+  const locations: MetadataRoute.Sitemap = locationSitemapUrls().map((u) => ({
+    url: `${SITE_URL}${u.path}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: u.priority,
+  }));
+
+  return [...core, ...locations];
 }

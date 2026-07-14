@@ -46,6 +46,7 @@ export default function SolvanaFooter() {
               <li><Link href="/find-an-attorney" className="hover:text-cyan-300">Find an attorney</Link></li>
               <li><Link href="/attorneys" className="hover:text-cyan-300">Advertise (attorneys)</Link></li>
               <li><Link href="/how-it-works" className="hover:text-cyan-300">How it works</Link></li>
+              <li><Link href="/locations" className="hover:text-cyan-300">Service areas</Link></li>
               <li><Link href="/agents" className="hover:text-cyan-300">Meet the AI agents</Link></li>
               <li><Link href="/pricing" className="hover:text-cyan-300">Fees & pricing</Link></li>
               <li><Link href="/get-started" className="hover:text-cyan-300">Get started</Link></li>
