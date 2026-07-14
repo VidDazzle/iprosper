@@ -165,7 +165,7 @@ export default function HealthBillAuditor() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <ListCard title="Your rights" items={report.rights} />
-            <ListCard title="What to do next" items={report.nextSteps} />
+            <ListCard title="Options to consider" items={report.nextSteps} />
           </div>
 
           <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-5 text-sm text-amber-100">

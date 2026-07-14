@@ -6,6 +6,7 @@ import LawArmorTools from "@/components/lawarmor/tools";
 import { JsonLd, pageMetadata } from "@/lib/solvana/seo";
 import { LAWARMOR_AGENTS } from "@/lib/lawarmor/agents";
 import { ANALYSIS_FEE, USD } from "@/lib/lawarmor/pricing";
+import { ADVOCATE_STANCE, ADVOCATE_STANCE_SHORT } from "@/lib/advocacy";
 import { ShieldCheck, UploadCloud, Trash2, FileText, Scale } from "lucide-react";
 
 export const metadata: Metadata = pageMetadata({
@@ -37,7 +38,7 @@ export default function LawArmorPage() {
 
       {/* Disclaimer bar — always visible */}
       <div className="border-b border-amber-400/20 bg-amber-400/[0.06] px-6 py-2 text-center text-xs text-amber-200">
-        Law &amp; Armor is a consumer-education tool. We are not attorneys and this is <strong>not legal advice</strong>.
+        {ADVOCATE_STANCE_SHORT}
       </div>
 
       <section className="relative overflow-hidden px-6 pb-10 pt-14 text-center">
@@ -131,7 +132,7 @@ export default function LawArmorPage() {
       {/* Full disclaimer */}
       <section className="border-t border-white/10 bg-[#03040a] px-6 py-10">
         <div className="mx-auto max-w-4xl text-xs leading-relaxed text-slate-500">
-          <p className="mb-3"><strong className="text-slate-400">Important.</strong> Law &amp; Armor is an educational consumer-advocacy tool provided by VidDazzle LLC. It is <strong>not a law firm</strong>, does <strong>not provide legal advice</strong>, and using it does not create an attorney–client relationship. The analysis is general information to help you understand a document and is not a substitute for advice from a licensed attorney about your specific situation. Laws vary by state and change over time.</p>
+          <p className="mb-3"><strong className="text-slate-400">Important.</strong> Law &amp; Armor is a consumer-advocacy tool provided by VidDazzle LLC. It is <strong>not a law firm</strong>. {ADVOCATE_STANCE} Using it does not create an attorney–client relationship. The analysis is information to help you understand a document and is not a substitute for advice from a licensed attorney about your specific situation. Laws vary by state and change over time.</p>
           <p>Your uploaded document is analyzed and then discarded; we do not retain the file. Do not rely on this analysis for legal decisions. If you have a dispute or deadline, consult a licensed attorney promptly.</p>
         </div>
       </section>

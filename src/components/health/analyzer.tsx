@@ -106,7 +106,7 @@ export default function HealthAnalyzer() {
           <Section icon={Lightbulb} color="text-cyan-300" title="Key points to understand" items={result.keyPoints} />
           <Section icon={AlertTriangle} color="text-amber-300" title="Watch-outs & red flags" items={result.watchOuts} />
           <Section icon={Scale} color="text-emerald-300" title="Rights you may have" items={result.rights} />
-          <Section icon={ListChecks} color="text-sky-300" title="What to do next" items={result.nextSteps} />
+          <Section icon={ListChecks} color="text-sky-300" title="Options to consider" items={result.nextSteps} />
           <Section icon={HelpCircle} color="text-violet-300" title="Questions to ask" items={result.questions} />
 
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
@@ -116,8 +116,9 @@ export default function HealthAnalyzer() {
 
           <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-5">
             <p className="text-sm text-amber-100">
-              <strong>This is not legal or medical advice</strong>, and we are not a law firm. This report helps you
-              understand your bill. For advice about your specific situation, talk to a licensed attorney —
+              <strong>This is intelligence, not a recommendation or legal or medical advice.</strong> We analyze your bill
+              and give you the information; the decision is yours. If anything seems questionable, consult a licensed
+              attorney —
               <Link href="/find-an-attorney" className="ml-1 text-cyan-300 hover:text-cyan-200">find one who handles {result.attorneyAreas[0]?.toLowerCase() ?? "your issue"} →</Link>
             </p>
           </div>

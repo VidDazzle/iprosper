@@ -13,6 +13,8 @@
  * the user enters and is discarded with the response.
  */
 
+import { ADVOCATE_STANCE } from "@/lib/advocacy";
+
 export interface BillLine {
   code?: string;        // CPT / HCPCS / revenue code (optional)
   description: string;
@@ -225,7 +227,9 @@ export function auditBill(linesInput: BillLine[], context: BillContext = {}): Au
     ],
     disputeSummary: buildDisputeSummary(flags, totalCharged),
     disclaimer:
-      "This audit is educational consumer information, not legal or medical advice and not an accusation of fraud. Flags are items to verify and question; the estimated figures are for discussion and the provider may be able to substantiate a charge. For advice about your situation, talk to one of our licensed attorney affiliates. Your bill data was analyzed and discarded — nothing was stored.",
+      "This audit is analysis — not an accusation of fraud. Flagged items are things that may be worth questioning, and the figures are estimates for discussion (the provider may be able to substantiate a charge). " +
+      ADVOCATE_STANCE +
+      " Your bill data was analyzed and discarded — nothing was stored.",
   };
 }
 

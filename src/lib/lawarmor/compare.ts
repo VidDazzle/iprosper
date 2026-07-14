@@ -9,6 +9,8 @@
  * terms and why — it never tells the customer which one to choose.
  */
 
+import { ADVOCATE_STANCE } from "@/lib/advocacy";
+
 export type CompareDir = "higher" | "lower";
 
 export interface CompareMetric {
@@ -171,6 +173,7 @@ export function compare(profileId: string, options: CompareOption[]): CompareRes
     metrics: profile.metrics,
     matrix,
     disclaimer:
-      "This is an objective comparison of the terms you entered — unbiased consumer information, not a recommendation and not legal advice. Scores reflect only the measures shown and the weights we assign them; the right choice depends on your priorities. We never tell you which to choose. For advice, talk to one of our licensed attorney affiliates.",
+      "This is an objective comparison of the terms you entered. Scores reflect only the measures shown and the weights we assign them; which option is right depends on your priorities, and we never tell you which to choose. " +
+      ADVOCATE_STANCE,
   };
 }

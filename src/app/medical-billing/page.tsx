@@ -6,6 +6,7 @@ import HealthTools from "@/components/health/tools";
 import { JsonLd, pageMetadata } from "@/lib/solvana/seo";
 import { HEALTH_AGENTS } from "@/lib/health/agents";
 import { ANALYSIS_FEE, USD } from "@/lib/health/pricing";
+import { ADVOCATE_STANCE, ADVOCATE_STANCE_SHORT } from "@/lib/advocacy";
 import { HeartPulse, UploadCloud, Search, Trash2, Receipt, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = pageMetadata({
@@ -37,7 +38,7 @@ export default function MedicalBillingPage() {
 
       {/* Disclaimer bar — always visible */}
       <div className="border-b border-amber-400/20 bg-amber-400/[0.06] px-6 py-2 text-center text-xs text-amber-200">
-        A consumer-education tool for understanding medical bills. We are not attorneys or medical providers and this is <strong>not legal or medical advice</strong>.
+        {ADVOCATE_STANCE_SHORT}
       </div>
 
       <section className="relative overflow-hidden px-6 pb-10 pt-14 text-center">
@@ -156,7 +157,7 @@ export default function MedicalBillingPage() {
       {/* Full disclaimer */}
       <section className="border-t border-white/10 bg-[#03040a] px-6 py-10">
         <div className="mx-auto max-w-4xl text-xs leading-relaxed text-slate-500">
-          <p className="mb-3"><strong className="text-slate-400">Important.</strong> This medical-billing tool is an educational consumer-advocacy service provided by VidDazzle LLC. It is <strong>not a law firm, not a medical provider, and not an insurer</strong>. It does <strong>not provide legal, medical, or insurance advice</strong>, and using it does not create an attorney–client or provider–patient relationship. The analysis is general information to help you understand and question a bill; it is not a determination that any charge is or is not correct, and the provider may be able to substantiate a charge. Estimated dollar figures are for discussion only. Federal and state billing laws vary and change over time.</p>
+          <p className="mb-3"><strong className="text-slate-400">Important.</strong> This medical-billing tool is a consumer-advocacy service provided by VidDazzle LLC. It is <strong>not a law firm, not a medical provider, and not an insurer</strong>. {ADVOCATE_STANCE} Using it does not create an attorney–client or provider–patient relationship. The analysis is information to help you understand and question a bill; it is not a determination that any charge is or is not correct, and the provider may be able to substantiate a charge. Estimated dollar figures are for discussion only. Federal and state billing laws vary and change over time.</p>
           <p>Your uploaded document and the numbers you enter are analyzed and then discarded; we do not retain them. Do not rely on this analysis for legal or medical decisions. If you have a denial, a deadline, or a bill in collections, consult a licensed professional promptly.</p>
         </div>
       </section>
