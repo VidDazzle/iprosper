@@ -4,12 +4,13 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { UploadCloud, Loader2, Gauge, Quote, AlertTriangle, HelpCircle, Scale, Trash2, ShieldQuestion } from "lucide-react";
+import { UploadCloud, Loader2, Gauge, Quote, AlertTriangle, HelpCircle, Scale, Trash2, ShieldQuestion, ClipboardCopy, Check, ListChecks } from "lucide-react";
 import { COVERAGE_DOMAINS, type ProbabilityBand } from "@/lib/lawarmor/coverage";
 
 interface Result {
   domainLabel: string; agent: string; band: ProbabilityBand; bandLabel: string; headline: string;
   supporting: string[]; concerns: string[]; reasons: string[]; followUps: string[]; disclaimer: string;
+  actions?: { questions: string[]; letter: string };
 }
 
 const BAND_UI: Record<ProbabilityBand, { ring: string; text: string; bar: string; pct: string }> = {
@@ -29,6 +30,11 @@ export default function LawArmorCoverageChecker() {
   const [state, setState] = useState<"idle" | "working" | "done" | "error">("idle");
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  async function copyLetter(text: string) {
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { /* clipboard unavailable */ }
+  }
 
   async function run(e?: React.FormEvent) {
     e?.preventDefault();
@@ -129,6 +135,24 @@ export default function LawArmorCoverageChecker() {
                 placeholder="Add the details (why, when, where, how)…"
                 className="w-full rounded-md border border-white/15 bg-[#03040a] px-3 py-2 text-sm text-white placeholder:text-slate-600" />
               <Button onClick={() => run()} className="mt-3 h-9 rounded-full bg-white/10 px-5 text-sm text-white hover:bg-white/20">Re-check with these details</Button>
+            </div>
+          )}
+
+          {result.actions && (
+            <div className="rounded-2xl border border-cyan-400/25 bg-white/[0.03] p-5">
+              <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-cyan-300"><ListChecks className="h-4 w-4" /> If you want to act on this — your choice</h3>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Questions to ask your insurer / administrator</p>
+              <ul className="mb-4 space-y-2">
+                {result.actions.questions.map((q) => <li key={q} className="flex gap-2 text-sm text-slate-300"><span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-cyan-400" />{q}</li>)}
+              </ul>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Request-for-determination letter</p>
+                <button onClick={() => copyLetter(result.actions!.letter)} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:border-cyan-400/40 hover:text-cyan-200">
+                  {copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : <><ClipboardCopy className="h-3.5 w-3.5" /> Copy</>}
+                </button>
+              </div>
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-[#03040a] p-4 text-xs leading-relaxed text-slate-300">{result.actions.letter}</pre>
+              <p className="mt-2 text-xs text-slate-600">This is a template you may choose to use — it asks the insurer for their decision. It is not a demand and not legal advice.</p>
             </div>
           )}
 

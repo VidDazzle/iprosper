@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeCoverage, type CoverageResult, type ProbabilityBand } from "@/lib/lawarmor/coverage";
+import { analyzeCoverage, buildCoverageActions, type CoverageResult, type ProbabilityBand } from "@/lib/lawarmor/coverage";
 import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
 import { aiConfigured, analyzeJson } from "@/lib/ai/claude";
 import { rateLimited } from "@/lib/ratelimit";
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
     // label, disclaimer) the LLM enrichment fills in around.
     const base = analyzeCoverage({ domain, question, policyText });
     let result: CoverageResult = base;
+    let usedAi = false;
 
     if (aiConfigured()) {
       const userText =
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
         schema: COVERAGE_SCHEMA as unknown as Record<string, unknown>,
       });
       if (llm && ["high", "medium", "low", "insufficient"].includes(llm.band)) {
+        usedAi = true;
         result = {
           ...base,
           band: llm.band,
@@ -117,7 +119,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, discarded: true, engine: aiConfigured() && result !== base ? "ai" : "deterministic", result });
+    // Consumer-chosen next steps (questions + request-for-determination letter),
+    // built from the finalized result.
+    result = { ...result, actions: buildCoverageActions(result, question) };
+
+    return NextResponse.json({ success: true, discarded: true, engine: usedAi ? "ai" : "deterministic", result });
   } catch (e) {
     console.error("lawarmor coverage error", e);
     return NextResponse.json({ error: "Coverage check failed. Please try again." }, { status: 500 });

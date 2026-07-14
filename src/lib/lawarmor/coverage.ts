@@ -27,6 +27,11 @@ export type CoverageDomain =
 
 export type ProbabilityBand = "high" | "medium" | "low" | "insufficient";
 
+export interface CoverageActions {
+  questions: string[]; // questions the consumer can ask their insurer/administrator
+  letter: string;      // a ready-to-send request for a written coverage determination
+}
+
 export interface CoverageResult {
   domain: CoverageDomain;
   domainLabel: string;
@@ -39,6 +44,7 @@ export interface CoverageResult {
   reasons: string[];      // plain-English reasoning
   followUps: string[];    // why/when/where/how questions when info is thin
   disclaimer: string;
+  actions?: CoverageActions; // optional: consumer-chosen next-step outputs
 }
 
 interface DomainCfg {
@@ -237,6 +243,38 @@ export function analyzeCoverage(input: {
     followUps,
     disclaimer: COVERAGE_DISCLAIMER,
   };
+}
+
+/**
+ * Turn a coverage assessment into consumer-chosen next steps: questions to ask,
+ * and a template letter requesting a WRITTEN coverage determination. This does
+ * not act for the consumer and is not advice — it's a tool they may choose to
+ * use. Only the insurer/administrator can decide coverage.
+ */
+export function buildCoverageActions(result: CoverageResult, question: string): CoverageActions {
+  const questions = [
+    `Is my loss — "${question.trim().slice(0, 140)}" — covered under my ${result.domainLabel.toLowerCase()}? Please answer in writing.`,
+    "Which specific provision, endorsement, or section of my policy applies, and what does it say?",
+    "Are any exclusions being applied to my claim? If so, which ones, and why?",
+    "What is my deductible for this loss, and what documentation do you need from me?",
+    "What are the deadlines to file, to submit proof of loss, and to appeal a denial?",
+    "If you deny any part of this, please provide the denial in writing with the specific policy language you relied on.",
+  ];
+
+  const support = result.supporting.length
+    ? `\n\nI believe the following language in my document may apply:\n${result.supporting.map((s) => `- “${s}”`).join("\n")}`
+    : "";
+
+  const letter =
+    `To my insurer / administrator:\n\n` +
+    `I am requesting a written coverage determination for the following loss under my ${result.domainLabel.toLowerCase()}:\n\n` +
+    `"${question.trim()}"\n` +
+    support +
+    `\n\nPlease confirm in writing whether this loss is covered, cite the exact policy/warranty provisions and any exclusions you are relying on, state my deductible and what documentation you need, and provide all applicable deadlines. If you deny any part of the claim, please issue the denial in writing with the specific language relied upon.\n\n` +
+    `I am requesting this determination in good faith and reserve all rights. Thank you.\n\n` +
+    `— [Your name] · [Policy / claim number] · [Date]`;
+
+  return { questions, letter };
 }
 
 export const COVERAGE_DOMAINS: { value: CoverageDomain; label: string }[] = [
