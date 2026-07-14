@@ -41,6 +41,8 @@ export default function SolvanaFooter() {
             <h4 className="mb-3 text-sm font-semibold text-white">Program</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/advisor" className="hover:text-cyan-300">Free debt plan</Link></li>
+              <li><Link href="/find-an-attorney" className="hover:text-cyan-300">Find an attorney</Link></li>
+              <li><Link href="/attorneys" className="hover:text-cyan-300">Advertise (attorneys)</Link></li>
               <li><Link href="/how-it-works" className="hover:text-cyan-300">How it works</Link></li>
               <li><Link href="/agents" className="hover:text-cyan-300">Meet the AI agents</Link></li>
               <li><Link href="/pricing" className="hover:text-cyan-300">Fees & pricing</Link></li>

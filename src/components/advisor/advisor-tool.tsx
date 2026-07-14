@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Plus, Trash2, Sparkles, Lightbulb, TrendingDown, CheckCircle2, ArrowRight } from "lucide-react";
-import { buildPlan, formatDuration, type DebtInput, type DebtType, type Strategy } from "@/lib/advisor/payoff";
+import { Plus, Trash2, Sparkles, Lightbulb, TrendingDown, CheckCircle2, ArrowRight, PiggyBank } from "lucide-react";
+import { buildPlan, simulatePayoff, formatDuration, type DebtInput, type DebtType, type Strategy } from "@/lib/advisor/payoff";
 import { DEBT_TYPE_LABELS, strategiesForTypes, UNIVERSAL_STRATEGIES } from "@/lib/advisor/strategies";
+import { EXPENSE_CATEGORIES, seedBudget, totalExpenses, foundMoney, type Budget } from "@/lib/advisor/budget";
 
 const usd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 const uid = () => Math.random().toString(36).slice(2, 9);
-
 const TYPE_OPTIONS = Object.entries(DEBT_TYPE_LABELS) as [DebtType, string][];
 
 const STARTER: DebtInput[] = [
@@ -25,42 +25,51 @@ const inputCls = "h-9 border-white/15 bg-[#03040a] text-white placeholder:text-s
 export default function AdvisorTool() {
   const [debts, setDebts] = useState<DebtInput[]>(STARTER);
   const [income, setIncome] = useState(4800);
-  const [expenses, setExpenses] = useState(3900);
+  const [budget, setBudget] = useState<Budget>(() => seedBudget(4800));
   const [strategy, setStrategy] = useState<Strategy | null>(null);
+
+  const expenses = totalExpenses(budget);
   const disposable = Math.max(0, income - expenses);
   const [extra, setExtra] = useState(disposable);
+  const activeDebts = debts.filter((d) => d.balance > 0);
 
   const result = useMemo(
     () =>
       buildPlan({
-        debts: debts.filter((d) => d.balance > 0),
+        debts: activeDebts,
         monthlyIncome: income,
         monthlyExpenses: expenses,
         extraToDebt: Math.min(extra, disposable),
         strategy: strategy ?? undefined,
       }),
-    [debts, income, expenses, extra, strategy, disposable]
+    [activeDebts, income, expenses, extra, strategy, disposable]
   );
 
   const activeStrategy = strategy ?? result.recommendedStrategy;
   const totalDebt = debts.reduce((s, d) => s + (d.balance || 0), 0);
   const tips = strategiesForTypes(debts.map((d) => d.type));
+  const found = foundMoney(budget);
+
+  // "Found money" what-if: redirect half of discretionary spending to debt.
+  const boosted = useMemo(() => {
+    if (!activeDebts.length || found.redirectable <= 0) return null;
+    const base = simulatePayoff(activeDebts, Math.min(extra, disposable), activeStrategy);
+    const withBoost = simulatePayoff(activeDebts, Math.min(extra, disposable) + found.redirectable, activeStrategy);
+    if (!base.feasible || !withBoost.feasible) return null;
+    return {
+      monthsSooner: Math.max(0, base.months - withBoost.months),
+      interestSaved: Math.max(0, base.totalInterest - withBoost.totalInterest),
+    };
+  }, [activeDebts, extra, disposable, activeStrategy, found.redirectable]);
 
   function update(id: string, patch: Partial<DebtInput>) {
     setDebts((cur) => cur.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   }
-  function addDebt() {
-    setDebts((cur) => [...cur, { id: uid(), name: "", type: "credit_card", balance: 0, apr: 0, minPayment: 0 }]);
-  }
-  function removeDebt(id: string) {
-    setDebts((cur) => cur.filter((d) => d.id !== id));
-  }
-
   const num = (v: string) => (v === "" ? 0 : Math.max(0, Number(v) || 0));
 
   return (
     <div className="space-y-6">
-      {/* Debts */}
+      {/* 1. Debts */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">1. Your debts</h2>
@@ -71,44 +80,77 @@ export default function AdvisorTool() {
         </div>
         <div className="space-y-2">
           {debts.map((d) => (
-            <div key={d.id} className="grid grid-cols-2 gap-2 md:grid-cols-none md:items-center" style={{ gridTemplateColumns: undefined }}>
-              <div className="grid grid-cols-2 gap-2 md:hidden">
-                <span className="col-span-2 text-xs text-slate-500">Debt</span>
-              </div>
-              <div className="contents md:grid md:gap-3" style={{ gridTemplateColumns: "1.4fr 1.4fr 1fr .8fr 1fr auto" }}>
-                <Input value={d.name} onChange={(e) => update(d.id, { name: e.target.value })} placeholder="e.g. Chase card" className={inputCls} />
-                <select value={d.type} onChange={(e) => update(d.id, { type: e.target.value as DebtType })} className="h-9 rounded-md border border-white/15 bg-[#03040a] px-2 text-sm text-white">
-                  {TYPE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-                <Input type="number" value={d.balance || ""} onChange={(e) => update(d.id, { balance: num(e.target.value) })} placeholder="0" className={inputCls} />
-                <Input type="number" value={d.apr || ""} onChange={(e) => update(d.id, { apr: num(e.target.value) })} placeholder="0" className={inputCls} />
-                <Input type="number" value={d.minPayment || ""} onChange={(e) => update(d.id, { minPayment: num(e.target.value) })} placeholder="0" className={inputCls} />
-                <button onClick={() => removeDebt(d.id)} aria-label="Remove debt" className="flex h-9 w-9 items-center justify-center justify-self-end rounded-md text-slate-500 hover:text-rose-300">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
+            <div key={d.id} className="md:grid md:gap-3 md:items-center grid grid-cols-2 gap-2" style={{ gridTemplateColumns: "1.4fr 1.4fr 1fr .8fr 1fr auto" }}>
+              <Input value={d.name} onChange={(e) => update(d.id, { name: e.target.value })} placeholder="e.g. Chase card" className={inputCls} />
+              <select value={d.type} onChange={(e) => update(d.id, { type: e.target.value as DebtType })} className="h-9 rounded-md border border-white/15 bg-[#03040a] px-2 text-sm text-white">
+                {TYPE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+              <Input type="number" value={d.balance || ""} onChange={(e) => update(d.id, { balance: num(e.target.value) })} placeholder="0" className={inputCls} />
+              <Input type="number" value={d.apr || ""} onChange={(e) => update(d.id, { apr: num(e.target.value) })} placeholder="0" className={inputCls} />
+              <Input type="number" value={d.minPayment || ""} onChange={(e) => update(d.id, { minPayment: num(e.target.value) })} placeholder="0" className={inputCls} />
+              <button onClick={() => setDebts((c) => c.filter((x) => x.id !== d.id))} aria-label="Remove debt" className="flex h-9 w-9 items-center justify-center justify-self-end rounded-md text-slate-500 hover:text-rose-300">
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
           ))}
         </div>
-        <button onClick={addDebt} className="mt-3 inline-flex items-center gap-1.5 text-sm text-cyan-300 hover:text-cyan-200">
+        <button onClick={() => setDebts((c) => [...c, { id: uid(), name: "", type: "credit_card", balance: 0, apr: 0, minPayment: 0 }])} className="mt-3 inline-flex items-center gap-1.5 text-sm text-cyan-300 hover:text-cyan-200">
           <Plus className="h-4 w-4" /> Add a debt
         </button>
       </section>
 
-      {/* Budget */}
+      {/* 2. Budget builder */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="mb-4 text-lg font-semibold text-white">2. Your monthly budget</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <label className="text-sm text-slate-400">Take-home income
-            <Input type="number" value={income || ""} onChange={(e) => setIncome(num(e.target.value))} className={`${inputCls} mt-1.5`} />
-          </label>
-          <label className="text-sm text-slate-400">Living expenses (excl. debt)
-            <Input type="number" value={expenses || ""} onChange={(e) => setExpenses(num(e.target.value))} className={`${inputCls} mt-1.5`} />
-          </label>
-          <div className="text-sm text-slate-400">Free for debt payoff
-            <div className="mt-1.5 flex h-9 items-center rounded-md border border-cyan-400/30 bg-cyan-400/5 px-3 font-semibold text-cyan-300">{usd(disposable)}</div>
+        <h2 className="mb-1 text-lg font-semibold text-white">2. Build your budget</h2>
+        <p className="mb-4 text-sm text-slate-400">Every dollar you free up here goes straight to getting you debt-free faster.</p>
+
+        <label className="mb-5 block text-sm text-slate-400">
+          Monthly take-home income
+          <Input type="number" value={income || ""} onChange={(e) => { const v = num(e.target.value); setIncome(v); }} className={`${inputCls} mt-1.5 max-w-xs`} />
+        </label>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {EXPENSE_CATEGORIES.map((c) => (
+            <label key={c.key} className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#03040a] px-3 py-2">
+              <span className="text-sm text-slate-300">
+                {c.label}
+                {c.discretionary && <span className="ml-1.5 rounded bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-medium uppercase text-amber-300">flexible</span>}
+              </span>
+              <span className="flex items-center gap-1 text-slate-400">
+                <span className="text-xs">$</span>
+                <Input type="number" value={budget[c.key] || ""} onChange={(e) => setBudget((b) => ({ ...b, [c.key]: num(e.target.value) }))} className="h-8 w-24 border-white/15 bg-transparent text-right text-white" />
+              </span>
+            </label>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-white/10 bg-[#03040a] p-4">
+            <p className="text-xs uppercase tracking-wide text-slate-500">Total expenses</p>
+            <p className="mt-1 text-xl font-bold text-white">{usd(expenses)}</p>
+          </div>
+          <div className={`rounded-xl border p-4 ${disposable > 0 ? "border-cyan-400/30 bg-cyan-400/5" : "border-rose-400/30 bg-rose-400/5"}`}>
+            <p className="text-xs uppercase tracking-wide text-slate-500">Free for debt payoff</p>
+            <p className={`mt-1 text-xl font-bold ${disposable > 0 ? "text-cyan-300" : "text-rose-300"}`}>{usd(disposable)}</p>
+          </div>
+          <div className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4">
+            <p className="text-xs uppercase tracking-wide text-amber-300/80">Flexible spending</p>
+            <p className="mt-1 text-xl font-bold text-amber-200">{usd(found.discretionary)}</p>
           </div>
         </div>
+
+        {boosted && boosted.monthsSooner > 0 && (
+          <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-4">
+            <PiggyBank className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-300" />
+            <p className="text-sm text-emerald-100">
+              <span className="font-semibold">Found money:</span> redirecting just half of your flexible spending
+              ({usd(found.redirectable)}/mo) to debt would make you debt-free{" "}
+              <span className="font-semibold">{formatDuration(boosted.monthsSooner)} sooner</span> and save{" "}
+              <span className="font-semibold">{usd(boosted.interestSaved)}</span> in interest.
+            </p>
+          </div>
+        )}
+
         <div className="mt-5">
           <div className="mb-2 flex justify-between text-sm text-slate-400">
             <span>Extra toward debt each month</span>
@@ -118,7 +160,7 @@ export default function AdvisorTool() {
         </div>
       </section>
 
-      {/* Strategy toggle */}
+      {/* 3. Strategy */}
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <h2 className="mb-1 text-lg font-semibold text-white">3. Your payoff method</h2>
         <p className="mb-4 text-sm text-slate-400">{result.recommendationReason}</p>
@@ -132,12 +174,12 @@ export default function AdvisorTool() {
         </div>
       </section>
 
-      {/* Results */}
+      {/* 4. Results */}
       <section className="rounded-2xl border border-cyan-400/25 bg-gradient-to-b from-cyan-500/10 to-transparent p-6">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white"><Sparkles className="h-5 w-5 text-cyan-300" /> Your free payoff plan</h2>
         {!result.plan.feasible ? (
           <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4 text-sm text-amber-200">
-            Your minimum payments barely cover the interest, so this debt never gets paid off on this budget. That&rsquo;s exactly when settlement or restructuring can help — see the options below, or add more to your monthly payoff amount.
+            On this budget your payments barely cover the interest, so the debt never clears. That&rsquo;s exactly when settlement or restructuring helps — see the options below, free up more in your budget, or talk to a debt attorney.
           </div>
         ) : (
           <>
@@ -163,7 +205,7 @@ export default function AdvisorTool() {
         )}
       </section>
 
-      {/* Personalized strategies */}
+      {/* 5. Strategies */}
       <section>
         <h2 className="mb-1 flex items-center gap-2 text-xl font-bold text-white"><Lightbulb className="h-5 w-5 text-amber-300" /> Strategies for your debts</h2>
         <p className="mb-5 text-sm text-slate-400">Tactics tuned to what you owe. <span className="text-amber-300">★</span> marks the ones most people have never heard of.</p>
@@ -195,19 +237,21 @@ export default function AdvisorTool() {
         </div>
       </section>
 
-      {/* Bridge to settlement */}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <div className="flex flex-wrap items-center gap-4">
-          <TrendingDown className="h-8 w-8 flex-shrink-0 text-cyan-300" />
-          <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-white">Overwhelmed by unsecured debt?</h3>
-            <p className="text-sm text-slate-400">If you have $7,500+ in credit cards, medical bills, or personal loans and can&rsquo;t keep up, our AI agents may be able to settle it for less than you owe. The plan above is always free.</p>
-          </div>
-          <Link href="/qualify" className="flex-shrink-0">
-            <Button className="rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 text-white">See if you qualify <ArrowRight className="ml-1 h-4 w-4" /></Button>
-          </Link>
-        </div>
-      </section>
+      {/* 6. Bridges */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <TrendingDown className="mb-2 h-7 w-7 text-cyan-300" />
+          <h3 className="font-semibold text-white">Drowning in unsecured debt?</h3>
+          <p className="mb-4 text-sm text-slate-400">$7,500+ in cards, medical bills, or loans you can&rsquo;t keep up with? Our AI agents may settle it for less than you owe.</p>
+          <Link href="/qualify"><Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white/5 hover:text-white">See if you qualify</Button></Link>
+        </section>
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <Sparkles className="mb-2 h-7 w-7 text-violet-300" />
+          <h3 className="font-semibold text-white">Need legal help or thinking bankruptcy?</h3>
+          <p className="mb-4 text-sm text-slate-400">Connect with a vetted debt or bankruptcy attorney in your state for a free consultation.</p>
+          <Link href="/find-an-attorney"><Button variant="outline" className="rounded-full border-white/20 bg-transparent text-white hover:bg-white/5 hover:text-white">Find an attorney</Button></Link>
+        </section>
+      </div>
 
       <p className="flex items-start gap-2 text-xs leading-relaxed text-slate-500">
         <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />

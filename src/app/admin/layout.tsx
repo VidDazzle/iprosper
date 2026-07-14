@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SolvanaLogo } from "@/components/solvana/nav";
-import { LayoutDashboard, Users, Megaphone, Bot, BarChart3, ShieldCheck, CheckSquare, FileText } from "lucide-react";
+import { LayoutDashboard, Users, Megaphone, Bot, BarChart3, ShieldCheck, CheckSquare, FileText, Scale } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/session";
 import AdminLogoutButton from "@/components/admin/logout-button";
 
@@ -15,6 +15,7 @@ const NAV = [
   { href: "/admin/clients", label: "Client cases", icon: Users },
   { href: "/admin/approvals", label: "Approvals", icon: CheckSquare },
   { href: "/admin/documents", label: "Documents", icon: FileText },
+  { href: "/admin/partners", label: "Attorney ads", icon: Scale },
   { href: "/admin/reports", label: "Analytics", icon: BarChart3 },
   { href: "/admin/agents", label: "AI agents", icon: Bot },
   { href: "/admin/leads", label: "Leads & marketing", icon: Megaphone },

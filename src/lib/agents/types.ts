@@ -18,7 +18,8 @@ export type AgentId =
   | "echo" // Voice Communications
   | "sage" // Client Success & Coaching
   | "pulse" // Credit & Risk Monitoring
-  | "guardian"; // Creditor Relations & Escalations
+  | "guardian" // Creditor Relations & Escalations
+  | "beacon"; // Attorney Partnerships & Advertising
 
 export type Channel = "voice" | "sms" | "email" | "chat" | "internal";
 

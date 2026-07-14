@@ -112,3 +112,44 @@ export const clientNotifications = sqliteTable('client_notifications', {
   read: integer('read', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
 });
+
+/**
+ * Attorney advertisers. Managed by the Beacon agent. Advertising is billed with
+ * flat fees only (setup + monthly + flat per-lead) — never a share of legal
+ * fees or a referral fee, per ABA Rules 5.4 and 7.2.
+ */
+export const attorneyPartners = sqliteTable('attorney_partners', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  firmName: text('firm_name').notNull(),
+  attorneyName: text('attorney_name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  website: text('website'),
+  barNumber: text('bar_number'),
+  stateCode: text('state_code'),
+  practiceAreas: text('practice_areas'), // JSON string[]
+  bio: text('bio'),
+  // Media stored as data URLs (concept build; production uses R2/S3 URLs).
+  photoType: text('photo_type'), // firm | self
+  photoUrl: text('photo_url'),
+  businessCardUrl: text('business_card_url'), // uploaded card OR generated SVG data URL
+  businessCardGenerated: integer('business_card_generated', { mode: 'boolean' }).notNull().default(false),
+  tier: text('tier').notNull().default('featured'), // listed | featured | spotlight
+  setupFeePaid: integer('setup_fee_paid', { mode: 'boolean' }).notNull().default(false),
+  status: text('status').notNull().default('pending'), // pending | active | paused | rejected
+  createdAt: text('created_at').notNull(),
+});
+
+/** Verified client connections routed to an attorney — the per-lead billing log. */
+export const attorneyLeads = sqliteTable('attorney_leads', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  partnerId: integer('partner_id').notNull(),
+  clientRef: text('client_ref'), // opsClientId or 'anonymous'
+  channel: text('channel').notNull(), // call | text | notification
+  practiceArea: text('practice_area'),
+  // Billing: flat advertising fee only.
+  billingModel: text('billing_model').notNull().default('per_lead'),
+  feeAmount: integer('fee_amount'),
+  status: text('status').notNull().default('delivered'), // delivered | contacted | invoiced
+  createdAt: text('created_at').notNull(),
+});

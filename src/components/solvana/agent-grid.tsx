@@ -12,6 +12,7 @@ import {
   HeartHandshake,
   Activity,
   Scale,
+  Radio,
   type LucideIcon,
 } from "lucide-react";
 import type { AgentId } from "@/lib/agents/types";
@@ -26,6 +27,7 @@ export const AGENT_ICONS: Record<AgentId, LucideIcon> = {
   sage: HeartHandshake,
   pulse: Activity,
   guardian: Scale,
+  beacon: Radio,
 };
 
 export const AGENT_GRADIENTS: Record<AgentId, string> = {
@@ -38,6 +40,7 @@ export const AGENT_GRADIENTS: Record<AgentId, string> = {
   sage: "from-rose-400 to-red-500",
   pulse: "from-lime-400 to-emerald-600",
   guardian: "from-indigo-400 to-violet-600",
+  beacon: "from-amber-400 to-pink-600",
 };
 
 export default function AgentGrid({ compact = false }: { compact?: boolean }) {
