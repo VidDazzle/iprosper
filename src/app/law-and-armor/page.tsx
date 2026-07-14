@@ -11,9 +11,9 @@ import { ADVOCATE_STANCE, ADVOCATE_STANCE_SHORT } from "@/lib/advocacy";
 import { ShieldCheck, UploadCloud, Trash2, FileText, Scale } from "lucide-react";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Law & Armor — Understand Any Document, Know Your Rights",
+  title: "Law & Armor — Is It Covered? Understand Any Document, Know Your Rights",
   description:
-    "Upload an insurance policy, real estate contract, lease, or any agreement. AI specialist agents explain it in plain English, flag red flags, and point out your consumer rights by state. We don't store your document. Not legal advice.",
+    "Wondering if a leaking roof, defective part, or damaged vehicle is covered? Upload your homeowner, auto, or medical insurance policy, warranty, or service agreement and ask. AI specialists estimate the probability you're covered (low/medium/high) from your document's own language — never a yes. Also analyzes and compares any contract. We don't store your document. Not legal advice.",
   path: "/law-and-armor",
 });
 
@@ -55,9 +55,11 @@ export default function LawArmorPage() {
             <span className="bg-gradient-to-r from-cyan-400 to-violet-500 bg-clip-text text-transparent">Know your rights.</span>
           </h1>
           <p className="text-lg text-gray-300">
-            Insurance policies, real estate and auto documents, leases, warranties, and any contract — uploaded, analyzed
-            by AI specialists who know the rules in your state, and explained in plain English. We point out what matters
-            and what rights you may have. We never keep your document.
+            Wondering if a leaking roof, a defective part, a damaged vehicle, or a medical treatment is covered? Upload your
+            policy or warranty and ask. Our AI specialists read your document&apos;s own words and tell you the
+            <span className="text-cyan-300"> probability</span> you&apos;re covered — low, medium, or high — never &ldquo;yes,
+            you&apos;re covered.&rdquo; They also analyze and compare insurance, real-estate, auto, lease, and contract
+            documents in plain English, know the rules in your state, and never keep your document.
           </p>
         </div>
       </section>
@@ -79,7 +81,7 @@ export default function LawArmorPage() {
       <section className="px-6 py-14">
         <div className="mx-auto max-w-3xl">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-            <h2 className="text-2xl font-bold text-white">Analyze or compare</h2>
+            <h2 className="text-2xl font-bold text-white">Is it covered? Analyze &amp; compare</h2>
             <p className="text-sm text-slate-400">{USD.format(ANALYSIS_FEE)} per document — first one free. We keep the price at cost; attorney advertising funds the rest.</p>
           </div>
           <ConsentGate scope="advocate"><LawArmorTools /></ConsentGate>
