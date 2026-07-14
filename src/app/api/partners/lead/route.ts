@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { recordLead } from "@/lib/partners/store";
+import { recordLead, getPartner } from "@/lib/partners/store";
+import { notifyAttorneyLead } from "@/lib/notify/dispatch";
 
 /**
  * Log a verified client → attorney connection (call / text / notification).
@@ -21,6 +22,11 @@ export async function POST(request: NextRequest) {
       clientRef: body.clientRef ? String(body.clientRef) : "anonymous",
     });
     if (!lead) return NextResponse.json({ error: "Attorney not found." }, { status: 404 });
+
+    // Ping the attorney instantly (push + email + SMS).
+    const partner = await getPartner(partnerId);
+    if (partner) await notifyAttorneyLead(partner, lead);
+
     return NextResponse.json({ success: true, leadId: lead.id });
   } catch {
     return NextResponse.json({ error: "Could not record the connection." }, { status: 500 });

@@ -74,6 +74,17 @@ export async function sendApprovalRequest(approval: ApprovalRecord, user: Portal
   // Always record an in-app notification.
   await addNotification(user.opsClientId, `${approval.title} — your approval is needed.`, "/portal/approvals");
 
+  // Web push to the client's subscribed devices.
+  const { pushToSubject } = await import("@/lib/notify/dispatch");
+  const pushed = await pushToSubject(`client:${user.opsClientId}`, {
+    title: approval.title,
+    body: approval.detail.slice(0, 140),
+    url: "/portal/approvals",
+    tag: "xdebt-approval",
+    requireInteraction: true,
+  });
+  if (pushed) channels.push("push");
+
   if (user.notifyEmail && user.email) {
     const html = `
       <h2>${approval.title}</h2>

@@ -146,6 +146,19 @@ export const attorneyPartners = sqliteTable('attorney_partners', {
   createdAt: text('created_at').notNull(),
 });
 
+/**
+ * Web-push subscriptions. `subject` scopes who gets the push, e.g.
+ * "client:SOLV-10248" or "attorney:5". One row per browser/device endpoint.
+ */
+export const pushSubscriptions = sqliteTable('push_subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  subject: text('subject').notNull(),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
 /** Consultations booked with an attorney through the Chronos calendar. */
 export const attorneyAppointments = sqliteTable('attorney_appointments', {
   id: integer('id').primaryKey({ autoIncrement: true }),

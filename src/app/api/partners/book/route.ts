@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getPartner, bookedIntervals, createAppointment } from "@/lib/partners/store";
 import { computeSlots, fetchIcsBusy, generateIcs } from "@/lib/partners/scheduling";
+import { notifyAttorneyAppointment, notifyClientBooking } from "@/lib/notify/dispatch";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -44,8 +45,15 @@ export async function POST(request: NextRequest) {
       location: partner.phone ? `Phone: ${partner.phone}` : "Phone consultation",
     });
 
-    // In production, Chronos emails the .ics invite + reminders to both parties
-    // and mirrors the event to the attorney's calendar. Here we return it.
+    // Ping the attorney instantly (push + email + SMS) and confirm to the client.
+    const tz = partner.availability.timezone;
+    await Promise.all([
+      notifyAttorneyAppointment(partner, appt, slot.label, tz),
+      notifyClientBooking(clientEmail, clientName, partner.firmName, slot.label, tz),
+    ]);
+
+    // Chronos also mirrors the event to the attorney's calendar and schedules
+    // reminders. The .ics invite is returned for the client to add locally.
     return NextResponse.json({
       success: true,
       appointmentId: appt.id,

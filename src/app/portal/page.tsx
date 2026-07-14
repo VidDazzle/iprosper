@@ -7,6 +7,7 @@ import { listApprovals, listDocuments, listNotifications } from "@/lib/portal/st
 import { StatCard, PhaseBadge, ProgressBar, money, pct } from "@/components/admin/ui";
 import { getAgent } from "@/lib/agents/registry";
 import { AGENT_ICONS, AGENT_GRADIENTS } from "@/components/solvana/agent-grid";
+import EnablePush from "@/components/portal/enable-push";
 import { FileText, CheckSquare, Bell, ArrowRight, TrendingUp, TrendingDown, UploadCloud } from "lucide-react";
 
 export default async function PortalDashboard() {
@@ -38,6 +39,8 @@ export default async function PortalDashboard() {
             </span>
           </Link>
         </div>
+
+        <EnablePush />
 
         {/* Pending approvals banner */}
         {pending.length > 0 && (
