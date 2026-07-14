@@ -3,6 +3,7 @@ import Link from "next/link";
 import SolvanaNav from "@/components/solvana/nav";
 import SolvanaFooter from "@/components/solvana/footer";
 import HealthTools from "@/components/health/tools";
+import ConsentGate from "@/components/consent/consent-gate";
 import { JsonLd, pageMetadata } from "@/lib/solvana/seo";
 import { HEALTH_AGENTS } from "@/lib/health/agents";
 import { ANALYSIS_FEE, USD } from "@/lib/health/pricing";
@@ -82,7 +83,7 @@ export default function MedicalBillingPage() {
             <h2 className="text-2xl font-bold text-white">Audit or analyze</h2>
             <p className="text-sm text-slate-400">The itemized-bill auditor is <span className="text-emerald-300">free</span>. Document analysis is {USD.format(ANALYSIS_FEE)} — first one free. Attorney advertising funds the rest.</p>
           </div>
-          <HealthTools />
+          <ConsentGate scope="advocate"><HealthTools /></ConsentGate>
         </div>
       </section>
 

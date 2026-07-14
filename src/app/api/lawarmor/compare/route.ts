@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { compare } from "@/lib/lawarmor/compare";
+import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
 
 export const dynamic = "force-dynamic";
+
+const CONSENT_REQUIRED = { error: "Please sign the disclosure before comparing.", code: "consent_required" };
 
 /** Compare 2–4 offers/contracts and return an objective ranking. Any attached
  *  documents are analyzed for terms and discarded — never stored. Not advice. */
 export async function POST(request: NextRequest) {
   try {
+    if (!consentIsCurrent(consentFromRequest(request))) return NextResponse.json(CONSENT_REQUIRED, { status: 403 });
+
     const body = await request.json();
     const options = Array.isArray(body.options) ? body.options : [];
     if (options.length < 2) return NextResponse.json({ error: "Add at least two offers to compare." }, { status: 400 });

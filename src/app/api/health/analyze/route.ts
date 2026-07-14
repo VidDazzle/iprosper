@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeHealthDocument } from "@/lib/health/analyze";
+import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
 
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 15 * 1024 * 1024;
+
+const CONSENT_REQUIRED = { error: "Please sign the disclosure before running an analysis.", code: "consent_required" };
 
 /**
  * Analyze a healthcare document (bill, EOB, denial, estimate) and return an
@@ -14,6 +17,8 @@ const MAX_BYTES = 15 * 1024 * 1024;
  */
 export async function POST(request: NextRequest) {
   try {
+    if (!consentIsCurrent(consentFromRequest(request))) return NextResponse.json(CONSENT_REQUIRED, { status: 403 });
+
     const form = await request.formData();
     const file = form.get("file");
     const declaredType = String(form.get("declaredType") ?? "");

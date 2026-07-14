@@ -3,6 +3,7 @@ import Link from "next/link";
 import SolvanaNav from "@/components/solvana/nav";
 import SolvanaFooter from "@/components/solvana/footer";
 import LawArmorTools from "@/components/lawarmor/tools";
+import ConsentGate from "@/components/consent/consent-gate";
 import { JsonLd, pageMetadata } from "@/lib/solvana/seo";
 import { LAWARMOR_AGENTS } from "@/lib/lawarmor/agents";
 import { ANALYSIS_FEE, USD } from "@/lib/lawarmor/pricing";
@@ -81,7 +82,7 @@ export default function LawArmorPage() {
             <h2 className="text-2xl font-bold text-white">Analyze or compare</h2>
             <p className="text-sm text-slate-400">{USD.format(ANALYSIS_FEE)} per document — first one free. We keep the price at cost; attorney advertising funds the rest.</p>
           </div>
-          <LawArmorTools />
+          <ConsentGate scope="advocate"><LawArmorTools /></ConsentGate>
         </div>
       </section>
 

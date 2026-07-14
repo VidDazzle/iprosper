@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auditBill, type BillLine, type BillContext } from "@/lib/health/audit";
+import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
 
 export const dynamic = "force-dynamic";
 
 const MAX_LINES = 200;
+
+const CONSENT_REQUIRED = { error: "Please sign the disclosure before running an audit.", code: "consent_required" };
 
 /**
  * Audit an itemized medical bill and return a report of likely errors, an
@@ -14,6 +17,8 @@ const MAX_LINES = 200;
  */
 export async function POST(request: NextRequest) {
   try {
+    if (!consentIsCurrent(consentFromRequest(request))) return NextResponse.json(CONSENT_REQUIRED, { status: 403 });
+
     const body = await request.json();
     const rawLines = Array.isArray(body.lines) ? body.lines : [];
     if (rawLines.length < 1) return NextResponse.json({ error: "Add at least one line item to audit." }, { status: 400 });
