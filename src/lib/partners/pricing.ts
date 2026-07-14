@@ -99,8 +99,9 @@ export function getTier(id: Tier): TierPlan {
   return TIERS.find((t) => t.id === id) ?? TIERS[0];
 }
 
-/** Practice areas an attorney can select. */
+/** Practice areas an attorney can select (X Debt + Law & Armor). */
 export const PRACTICE_AREAS = [
+  // Debt & bankruptcy (X Debt)
   "Credit card debt",
   "Medical debt",
   "Personal loans",
@@ -111,6 +112,13 @@ export const PRACTICE_AREAS = [
   "Chapter 7 bankruptcy",
   "Chapter 13 bankruptcy",
   "Business debt",
+  // Insurance, real estate & contracts (Law & Armor)
+  "Homeowner / property insurance",
+  "Auto insurance disputes",
+  "Insurance bad-faith",
+  "Real estate / property",
+  "Landlord–tenant",
+  "Contract review",
 ] as const;
 
 /** Lead-billing model. Only "per_lead" (flat advertising fee) is allowed. */

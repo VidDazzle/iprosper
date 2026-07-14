@@ -52,7 +52,7 @@ export default async function AttorneyDashboard() {
               {partner.calendarEnabled && <span> · calendar on</span>}
             </p>
           </div>
-          <Link href="/attorneys" className="text-sm text-cyan-300 hover:text-cyan-200">Update listing →</Link>
+          <Link href="/partner/edit" className="text-sm text-cyan-300 hover:text-cyan-200">Edit listing →</Link>
         </div>
 
         {freeRemaining > 0 && (

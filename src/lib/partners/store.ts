@@ -261,6 +261,35 @@ export async function appointmentsForPartner(partnerId: number): Promise<Attorne
   return (await listAppointments()).filter((a) => a.partnerId === partnerId);
 }
 
+type EditablePartnerFields = Partial<Pick<AttorneyPartner,
+  "bio" | "phone" | "website" | "practiceAreas" | "calendarEnabled" | "calendarProvider" | "busyIcsUrl" | "availability">>;
+
+/** Attorney self-service listing edit. */
+export async function updatePartner(id: number, patch: EditablePartnerFields): Promise<AttorneyPartner | undefined> {
+  if (hasDb()) {
+    const { db } = await import("@/db");
+    const { attorneyPartners } = await import("@/db/schema");
+    const { eq } = await import("drizzle-orm");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const values: any = {};
+    if (patch.bio !== undefined) values.bio = patch.bio;
+    if (patch.phone !== undefined) values.phone = patch.phone;
+    if (patch.website !== undefined) values.website = patch.website;
+    if (patch.practiceAreas !== undefined) values.practiceAreas = JSON.stringify(patch.practiceAreas);
+    if (patch.calendarEnabled !== undefined) values.calendarEnabled = patch.calendarEnabled;
+    if (patch.calendarProvider !== undefined) values.calendarProvider = patch.calendarProvider;
+    if (patch.busyIcsUrl !== undefined) values.busyIcsUrl = patch.busyIcsUrl;
+    if (patch.availability !== undefined) { values.availability = JSON.stringify(patch.availability); values.timezone = patch.availability?.timezone; }
+    if (Object.keys(values).length) await db.update(attorneyPartners).set(values).where(eq(attorneyPartners.id, id));
+    return getPartner(id);
+  }
+  ensureSeed();
+  const p = mem.partners.find((x) => x.id === id);
+  if (!p) return undefined;
+  Object.assign(p, patch);
+  return p;
+}
+
 export async function findPartnerByEmail(email: string): Promise<AttorneyPartner | undefined> {
   const em = email.toLowerCase();
   if (hasDb()) {
