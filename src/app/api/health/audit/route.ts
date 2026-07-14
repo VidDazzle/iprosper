@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auditBill, type BillLine, type BillContext } from "@/lib/health/audit";
 import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
+import { rateLimited } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ const CONSENT_REQUIRED = { error: "Please sign the disclosure before running an 
  */
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimited(request, "health-audit", 30, 60_000); if (rl) return rl;
     if (!consentIsCurrent(consentFromRequest(request))) return NextResponse.json(CONSENT_REQUIRED, { status: 403 });
 
     const body = await request.json();

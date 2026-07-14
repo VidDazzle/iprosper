@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { compare } from "@/lib/lawarmor/compare";
 import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
+import { rateLimited } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ const CONSENT_REQUIRED = { error: "Please sign the disclosure before comparing."
  *  documents are analyzed for terms and discarded — never stored. Not advice. */
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimited(request, "lawarmor-compare", 30, 60_000); if (rl) return rl;
     if (!consentIsCurrent(consentFromRequest(request))) return NextResponse.json(CONSENT_REQUIRED, { status: 403 });
 
     const body = await request.json();

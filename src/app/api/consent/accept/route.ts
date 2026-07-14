@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AGREEMENT_VERSION, REQUIRED_ACK_IDS, allAcksAccepted } from "@/lib/consent/agreement";
 import { CONSENT_COOKIE, createConsentToken, consentCookieOptions } from "@/lib/consent/auth";
 import { recordConsent } from "@/lib/consent/store";
+import { rateLimited } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimited(request, "consent-accept", 15, 60_000); if (rl) return rl;
     const body = await request.json();
     const name = String(body.name ?? "").trim();
     const scope = String(body.scope ?? "advocate") || "advocate";

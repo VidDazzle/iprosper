@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { analyzeCoverage, type CoverageResult, type ProbabilityBand } from "@/lib/lawarmor/coverage";
 import { consentFromRequest, consentIsCurrent } from "@/lib/consent/auth";
 import { aiConfigured, analyzeJson } from "@/lib/ai/claude";
+import { rateLimited } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,7 @@ Return ONLY the JSON object matching the schema.`;
  */
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimited(request, "coverage", 30, 60_000); if (rl) return rl;
     if (!consentIsCurrent(consentFromRequest(request))) return NextResponse.json(CONSENT_REQUIRED, { status: 403 });
 
     const ct = request.headers.get("content-type") ?? "";

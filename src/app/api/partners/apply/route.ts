@@ -4,6 +4,7 @@ import { generateBusinessCardSvg, svgToDataUrl } from "@/lib/partners/businessca
 import { evaluateLeadBilling, type Tier, type LeadBillingModel } from "@/lib/partners/pricing";
 import { ADVERTISER_AGREEMENT_VERSION, allAdvertiserAcksAccepted } from "@/lib/partners/advertiser-agreement";
 import { hashPassword } from "@/lib/portal/auth";
+import { rateLimited, honeypotTripped } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BYTES = 3 * 1024 * 1024; // 3 MB per image
@@ -18,8 +19,15 @@ async function fileToDataUrl(file: File): Promise<string | undefined> {
 
 export async function POST(request: NextRequest) {
   try {
+    const rl = rateLimited(request, "partners-apply", 8, 60 * 60_000); if (rl) return rl;
     const form = await request.formData();
     const get = (k: string) => String(form.get(k) ?? "").trim();
+
+    // Bot honeypot: real users never fill the hidden "companyUrl" field. If a bot
+    // does, accept the request silently (a plausible success) without creating a record.
+    if (honeypotTripped(get("companyUrl"))) {
+      return NextResponse.json({ success: true, partnerId: 0, message: "Application received." }, { status: 201 });
+    }
 
     const firmName = get("firmName");
     const attorneyName = get("attorneyName");

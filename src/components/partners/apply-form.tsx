@@ -28,6 +28,7 @@ export default function AttorneyApplyForm() {
   });
   const [preview, setPreview] = useState<string | null>(null);
   const [acks, setAcks] = useState<Record<string, boolean>>({});
+  const [honeypot, setHoneypot] = useState(""); // bot trap — hidden from real users
   const [state, setState] = useState<"idle" | "saving" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -55,6 +56,7 @@ export default function AttorneyApplyForm() {
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       areas.forEach((a) => fd.append("practiceAreas", a));
       ADVERTISER_ACKS.forEach((a) => { if (acks[a.id]) fd.append("agreementAcks", a.id); });
+      fd.append("companyUrl", honeypot); // honeypot — empty for real users
       fd.append("agreementVersion", ADVERTISER_AGREEMENT_VERSION);
       fd.append("tier", tier);
       fd.append("generateCard", String(generateCard));
@@ -90,6 +92,9 @@ export default function AttorneyApplyForm() {
 
   return (
     <form onSubmit={submit} className="space-y-6">
+      {/* Honeypot: visually hidden; bots that autofill it are silently rejected. */}
+      <input type="text" name="companyUrl" value={honeypot} onChange={(e) => setHoneypot(e.target.value)}
+        tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Firm name" required><Input required value={form.firmName} onChange={set("firmName")} className={inputCls} /></Field>
         <Field label="Attorney name" required><Input required value={form.attorneyName} onChange={set("attorneyName")} className={inputCls} /></Field>
