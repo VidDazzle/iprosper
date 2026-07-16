@@ -74,6 +74,29 @@ alongside the calendar and email. Pages: `/meetings` (create/join) and
   specific detail of the change** (enforced client + server), so the full
   approval history and every requested change is preserved (`asset_reviews`).
 
+## Installable app (PWA)
+
+The whole suite installs as an app on phone and desktop — "Add to Home Screen" /
+"Install app" — running full-screen with its own icon, no app store needed.
+
+- Web app manifest at `/manifest.webmanifest` (`src/app/manifest.ts`) with
+  maskable icons (`public/icons/*`) and quick-launch shortcuts (Mail, Calendar,
+  Meetings, CRM).
+- Service worker (`public/sw.js`) precaches an app shell and serves an offline
+  page; API calls always go to the network. Registered by `PwaRegister`, which
+  also shows an "Install" button when the browser offers the prompt.
+- iOS installs via Share → Add to Home Screen (Apple provides no install prompt).
+
+## CRM follow-up automation
+
+Runs on the daily cron (and `GET /api/crm/followups/run` on demand):
+
+- **New leads** that sit un-worked past `FOLLOWUP_MIN_AGE_MINUTES` get an
+  automatic AI-written first-touch email, then flip to `contacted` (never emailed
+  twice).
+- **Stale open deals** (no movement in `STALE_DEAL_DAYS`) are rolled into a digest
+  emailed to the owner mailbox so nothing goes cold.
+
 ## CRM — pipelines, deals, lead capture
 
 A built-in sales CRM (`/crm`). A default pipeline (New Lead → Contacted →

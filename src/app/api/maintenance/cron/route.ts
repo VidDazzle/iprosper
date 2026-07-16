@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthorizedAgent } from '@/lib/voice-auth';
 import { runFullMaintenance } from '@/lib/maintenance';
 import { runBirthdayGreetings } from '@/lib/birthday';
+import { runLeadFollowups } from '@/lib/crm-followups';
 
 /**
  * GET /api/maintenance/cron
@@ -35,6 +36,14 @@ export async function GET(request: NextRequest) {
       console.error('Birthday greetings error during cron:', bErr);
     }
 
+    // Work CRM leads/deals on the same daily tick (best-effort).
+    let followups = null;
+    try {
+      followups = await runLeadFollowups();
+    } catch (fErr) {
+      console.error('CRM follow-up error during cron:', fErr);
+    }
+
     return NextResponse.json(
       {
         ranAt: new Date().toISOString(),
@@ -44,6 +53,7 @@ export async function GET(request: NextRequest) {
         remediated: result.heal.checks.reduce((n, c) => n + c.remediated, 0),
         recommendations: result.optimize.recommendations.length,
         birthday,
+        followups,
       },
       { status: 200 },
     );

@@ -448,3 +448,43 @@ export async function generateProductionAdvice(statsJson: string): Promise<strin
   );
   return parsed?.recommendations?.length ? parsed.recommendations : null;
 }
+
+// ---------------------------------------------------------------------------
+// CRM lead follow-up
+// ---------------------------------------------------------------------------
+
+export interface FollowupEmail {
+  subject: string;
+  body: string;
+}
+
+/**
+ * Write a warm, professional first follow-up to a new inbound lead. Light on
+ * jokes (this is a sales touch, not a sign-off), privacy-safe, with a clear
+ * next step. Returns null so the caller can fall back to a template.
+ */
+export async function generateFollowupEmail(lead: {
+  name: string;
+  company?: string | null;
+  source?: string | null;
+  message?: string | null;
+}): Promise<FollowupEmail | null> {
+  const system =
+    `You write a short, friendly first follow-up email from "Evolve" to a new ` +
+    `inbound lead. Warm, confident, lightly witty but professional; no hard sell. ` +
+    `Reference what they came in for if provided. End with one clear next step ` +
+    `(a quick call or reply). 3-5 sentences. No emojis. Sign off "— The Evolve team". ` +
+    `Never imply you monitor or track them; you're reaching out because they contacted us.`;
+  const prompt =
+    `Lead: ${lead.name}${lead.company ? ` from ${lead.company}` : ''}. ` +
+    `Came in via: ${lead.source || 'a form'}. ` +
+    (lead.message ? `They said: "${lead.message}".` : 'No message provided.');
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: { subject: { type: 'string' }, body: { type: 'string' } },
+    required: ['subject', 'body'],
+  };
+  const parsed = await structuredCall<FollowupEmail>(system, prompt, schema, 500);
+  return parsed && parsed.body ? parsed : null;
+}
