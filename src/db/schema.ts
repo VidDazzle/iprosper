@@ -192,8 +192,10 @@ export const meetingParticipants = sqliteTable('meeting_participants', {
 export const meetingAssets = sqliteTable('meeting_assets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   meetingId: integer('meeting_id').notNull(),
-  kind: text('kind').notNull().default('image'), // video | image | slideshow | document
+  kind: text('kind').notNull().default('image'), // video | image | slideshow | document | link
   title: text('title').notNull(),
+  // For kind='link' the shared resource is a URL, no upload.
+  url: text('url'),
   mimeType: text('mime_type'),
   sizeBytes: integer('size_bytes'),
   storageKey: text('storage_key'),
@@ -258,6 +260,66 @@ export const meetingSignals = sqliteTable('meeting_signals', {
   toPeer: text('to_peer'), // null = broadcast
   kind: text('kind').notNull(), // offer | answer | ice | join | leave
   payload: text('payload'), // JSON
+  createdAt: text('created_at').notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// Client project delivery ("Deliverables")
+// ---------------------------------------------------------------------------
+
+/**
+ * A project delivery package handed off to a client — a completed website, a
+ * Voice AI agent, documents, videos, links, etc. Carries an approval lifecycle
+ * so the client can approve the whole delivery or request revisions.
+ */
+export const deliverables = sqliteTable('deliverables', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  publicId: text('public_id').notNull(), // shareable id for the client review link
+  title: text('title').notNull(),
+  clientName: text('client_name'),
+  clientEmail: text('client_email'),
+  projectType: text('project_type').notNull().default('other'), // voice_ai_agent | website | document | video | design | other
+  message: text('message'), // note to the client
+  // draft | delivered | approved | revision_requested
+  status: text('status').notNull().default('draft'),
+  deliveredAt: text('delivered_at'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+/**
+ * One item inside a delivery package. A file (object storage), a link, or a
+ * pointer to a built asset like a Voice AI agent.
+ */
+export const deliverableItems = sqliteTable('deliverable_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  deliverableId: integer('deliverable_id').notNull(),
+  kind: text('kind').notNull().default('file'), // file | link | voice_agent | video | image | document
+  title: text('title').notNull(),
+  description: text('description'),
+  url: text('url'), // for link / voice_agent / external items
+  mimeType: text('mime_type'),
+  sizeBytes: integer('size_bytes'),
+  storageKey: text('storage_key'),
+  uploadId: text('upload_id'),
+  status: text('status').notNull().default('ready'), // pending | ready | uploaded
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A client's decision on a delivery: approve, or request a revision WITH the
+ * specific detailed text of what they want changed. May target the whole
+ * delivery or a single item.
+ */
+export const deliverableReviews = sqliteTable('deliverable_reviews', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  deliverableId: integer('deliverable_id').notNull(),
+  itemId: integer('item_id'), // null = the whole delivery
+  reviewerName: text('reviewer_name').notNull(),
+  reviewerEmail: text('reviewer_email'),
+  decision: text('decision').notNull(), // approved | revision_requested
+  // Required when decision = revision_requested: the specific requested change.
+  revisionDetail: text('revision_detail'),
   createdAt: text('created_at').notNull(),
 });
 

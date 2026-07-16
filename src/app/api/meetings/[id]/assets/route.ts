@@ -14,7 +14,7 @@ import { storageConfigured, createUpload, makeStorageKey, getDownloadUrl, MAX_OB
  */
 type Params = { params: Promise<{ id: string }> };
 
-const KINDS = ['video', 'image', 'slideshow', 'document'];
+const KINDS = ['video', 'image', 'slideshow', 'document', 'link'];
 
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
@@ -36,13 +36,19 @@ export async function GET(_request: NextRequest, { params }: Params) {
         id: a.id,
         kind: a.kind,
         title: a.title,
+        url: a.url,
         mimeType: a.mimeType,
         sizeBytes: a.sizeBytes,
         status: a.status,
         revision: a.revision,
         uploadedByName: a.uploadedByName,
+        // Links expose their URL directly; files get a fresh presigned URL.
         downloadUrl:
-          a.status === 'uploaded' && a.storageKey ? await getDownloadUrl(a.storageKey, a.title) : null,
+          a.kind === 'link'
+            ? a.url
+            : a.status === 'uploaded' && a.storageKey
+            ? await getDownloadUrl(a.storageKey, a.title)
+            : null,
         reviews: reviews.filter((r) => r.assetId === a.id),
       })),
     );
@@ -55,21 +61,45 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 export async function POST(request: NextRequest, { params }: Params) {
   try {
+    const meeting = await findMeeting((await params).id);
+    if (!meeting) return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+
+    const body = await request.json();
+    const title = typeof body.title === 'string' ? body.title.trim() : '';
+    const kind = KINDS.includes(body.kind) ? body.kind : 'document';
+
+    // Links carry a URL and need no upload — register and return immediately.
+    if (kind === 'link') {
+      const url = typeof body.url === 'string' ? body.url.trim() : '';
+      if (!url || !/^https?:\/\//i.test(url)) {
+        return NextResponse.json({ error: 'A valid http(s) url is required for a link' }, { status: 400 });
+      }
+      const inserted = await db
+        .insert(meetingAssets)
+        .values({
+          meetingId: meeting.id,
+          kind: 'link',
+          title: title || url,
+          url,
+          status: 'uploaded',
+          revision: Number.isInteger(body.revision) && body.revision > 0 ? body.revision : 1,
+          uploadedByName: body.uploadedByName || null,
+          uploadedByEmail: body.uploadedByEmail || null,
+          createdAt: new Date().toISOString(),
+        })
+        .returning();
+      return NextResponse.json({ assetId: inserted[0].id, mode: 'link' }, { status: 201 });
+    }
+
+    const sizeBytes = Number(body.sizeBytes);
+    const mimeType = body.mimeType || 'application/octet-stream';
+    if (!title) return NextResponse.json({ error: 'title is required' }, { status: 400 });
     if (!storageConfigured()) {
       return NextResponse.json(
         { error: 'Object storage not configured', code: 'NO_STORAGE', hint: 'Set S3_* env vars.' },
         { status: 503 },
       );
     }
-    const meeting = await findMeeting((await params).id);
-    if (!meeting) return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
-
-    const body = await request.json();
-    const title = typeof body.title === 'string' ? body.title.trim() : '';
-    const sizeBytes = Number(body.sizeBytes);
-    const kind = KINDS.includes(body.kind) ? body.kind : 'document';
-    const mimeType = body.mimeType || 'application/octet-stream';
-    if (!title) return NextResponse.json({ error: 'title is required' }, { status: 400 });
     if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
       return NextResponse.json({ error: 'sizeBytes must be positive' }, { status: 400 });
     }

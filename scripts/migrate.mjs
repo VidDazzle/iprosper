@@ -31,7 +31,15 @@ for (const file of files) {
     .filter(Boolean);
 
   for (const statement of statements) {
-    await client.execute(statement);
+    try {
+      await client.execute(statement);
+    } catch (err) {
+      // Tolerate idempotent re-runs (e.g. ALTER TABLE ADD COLUMN, which has no
+      // IF NOT EXISTS form) so applying all files repeatedly stays safe.
+      const msg = String(err?.message || err).toLowerCase();
+      if (msg.includes('duplicate column') || msg.includes('already exists')) continue;
+      throw err;
+    }
   }
   console.log(`Applied ${file} (${statements.length} statements)`);
 }

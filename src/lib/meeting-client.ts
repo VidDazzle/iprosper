@@ -116,6 +116,17 @@ export class MeetingMesh {
     this.loop();
   }
 
+  /**
+   * Swap the outgoing video track on every peer connection — used to switch
+   * between the camera and a screen-share track without renegotiating.
+   */
+  replaceVideoTrack(track: MediaStreamTrack) {
+    this.peers.forEach((pc) => {
+      const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+      if (sender) sender.replaceTrack(track).catch(() => {});
+    });
+  }
+
   stop() {
     this.polling = false;
     if (this.timer) clearTimeout(this.timer);

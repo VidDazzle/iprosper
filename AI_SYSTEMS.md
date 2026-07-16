@@ -64,11 +64,31 @@ alongside the calendar and email. Pages: `/meetings` (create/join) and
   summarizes the transcript (overview, key points, decisions, action items) and
   emails the report **only to participants who gave express `reports` consent** —
   enforced server-side (verified: non-consenting recipients are skipped).
+- **Screen share.** Any participant can share their screen (`getDisplayMedia`);
+  the mesh live-swaps the outgoing video track and restores the camera on stop.
 - **Shared work + per-revision approvals.** Participants share videos, images,
-  and slideshows (large files via the same presigned direct-to-storage upload as
-  mail attachments). Under each asset is a notes box and **Approved /
-  Not-Approved** buttons that record a review against that specific revision, so
-  the full approval history is preserved (`asset_reviews`).
+  slideshows, documents (large files via the same presigned direct-to-storage
+  upload as mail attachments) **and links / URLs**. Under each asset is a notes
+  box and three actions — **Approve**, **Request Revision**, **Not Approved** —
+  recorded against that specific revision. Requesting a revision **requires the
+  specific detail of the change** (enforced client + server), so the full
+  approval history and every requested change is preserved (`asset_reviews`).
+
+## Client project delivery (Deliverables)
+
+Package finished work and hand it to a client for sign-off. Pages: `/deliverables`
+(create/manage) and the public `/deliver/[publicId]` (client review — no account
+needed).
+
+- **Build a package** (`deliverables` + `deliverable_items`): a Voice AI agent, a
+  website, documents, videos, images, or links. File items upload direct-to-
+  storage (any size); links and Voice-AI-agent items are just URLs.
+- **Deliver** (`POST /api/deliverables/[id]/deliver`): marks it delivered and
+  emails the client an unguessable review link.
+- **Client decision** (`POST /api/deliverables/[id]/review`): the client either
+  **Approves** or **Requests a Revision with specific detailed text** (required).
+  The package status flips accordingly, and the decision is pushed into the team
+  mailbox (revision requests land as high-priority, starred).
 
 **Not included (integration points):** the production media plane (an SFU +
 TURN servers) and native mobile "download" apps (ship the room as a PWA or wrap

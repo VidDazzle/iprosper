@@ -14,7 +14,7 @@ import { eq, asc } from 'drizzle-orm';
  */
 type Params = { params: Promise<{ id: string; assetId: string }> };
 
-const DECISIONS = ['approved', 'not_approved', 'pending'];
+const DECISIONS = ['approved', 'not_approved', 'revision_requested', 'pending'];
 
 export async function GET(_request: NextRequest, { params }: Params) {
   try {
@@ -46,6 +46,15 @@ export async function POST(request: NextRequest, { params }: Params) {
     const decision = DECISIONS.includes(body.decision) ? body.decision : 'pending';
     if (!reviewerName) return NextResponse.json({ error: 'reviewerName is required' }, { status: 400 });
 
+    // Requesting a revision must include the specific detail of what to change.
+    const notes = typeof body.notes === 'string' ? body.notes.trim() : '';
+    if (decision === 'revision_requested' && !notes) {
+      return NextResponse.json(
+        { error: 'Please describe the specific revision you are requesting.', code: 'REVISION_DETAIL_REQUIRED' },
+        { status: 400 },
+      );
+    }
+
     const revision = Number.isInteger(body.revision) && body.revision > 0 ? body.revision : asset.revision;
 
     const inserted = await db
@@ -56,7 +65,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         reviewerName,
         reviewerEmail: body.reviewerEmail || null,
         decision,
-        notes: typeof body.notes === 'string' ? body.notes : null,
+        notes: notes || null,
         createdAt: new Date().toISOString(),
       })
       .returning();

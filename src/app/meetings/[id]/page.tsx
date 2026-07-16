@@ -18,6 +18,9 @@ import {
   X,
   Paperclip,
   Download,
+  MonitorUp,
+  Link2,
+  RotateCcw,
 } from "lucide-react";
 import {
   MeetingMesh,
@@ -285,9 +288,11 @@ function Room({
   const recorderRef = useRef<MediaRecorder | null>(null);
   const recognitionRef = useRef<any>(null);
 
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const [remote, setRemote] = useState<{ id: string; stream: MediaStream }[]>([]);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
+  const [sharing, setSharing] = useState(false);
   const [recording, setRecording] = useState(false);
   const [dictating, setDictating] = useState(false);
   const [transcript, setTranscript] = useState<string[]>([]);
@@ -349,8 +354,36 @@ function Room({
   }
   function leave() {
     meshRef.current?.stop();
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     window.location.href = "/meetings";
+  }
+
+  // Screen share — replaces the outgoing video track on every peer, then
+  // restores the camera when sharing stops (or the browser's Stop is clicked).
+  async function toggleScreenShare() {
+    if (sharing) {
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+      const cam = localStreamRef.current?.getVideoTracks()[0];
+      if (cam) {
+        meshRef.current?.replaceVideoTrack(cam);
+        if (localVideoRef.current) localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      setSharing(false);
+      return;
+    }
+    try {
+      const display = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      screenStreamRef.current = display;
+      const screenTrack = display.getVideoTracks()[0];
+      meshRef.current?.replaceVideoTrack(screenTrack);
+      if (localVideoRef.current) localVideoRef.current.srcObject = display;
+      screenTrack.onended = () => toggleScreenShare(); // handle browser "Stop sharing"
+      setSharing(true);
+    } catch {
+      /* user cancelled the picker */
+    }
   }
 
   // Recording (consent-gated) — records the local stream, offers a download.
@@ -483,6 +516,13 @@ function Room({
               <button onClick={toggleCam} className={`rounded-full p-3 ${camOn ? "bg-white/10" : "bg-red-500/80"}`}>
                 {camOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
               </button>
+              <button
+                onClick={toggleScreenShare}
+                title="Share your screen"
+                className={`flex items-center gap-2 rounded-full px-4 py-3 text-sm ${sharing ? "bg-blue-500/80" : "bg-white/10"}`}
+              >
+                <MonitorUp className="h-4 w-4" /> {sharing ? "Stop share" : "Share screen"}
+              </button>
               {meeting?.recordingOffered !== false && (
                 <button
                   onClick={toggleRecording}
@@ -579,6 +619,8 @@ function AssetPanel({ roomId, name }: { roomId: string; name: string }) {
   const [assets, setAssets] = useState<any[]>([]);
   const [uploadPct, setUploadPct] = useState<number | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkBusy, setLinkBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/meetings/${roomId}/assets`);
@@ -589,6 +631,28 @@ function AssetPanel({ roomId, name }: { roomId: string; name: string }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  async function shareLink() {
+    const url = linkUrl.trim();
+    if (!/^https?:\/\//i.test(url)) {
+      setUploadError("Enter a valid http(s) link.");
+      return;
+    }
+    setLinkBusy(true);
+    setUploadError(null);
+    const res = await fetch(`/api/meetings/${roomId}/assets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "link", url, title: url, uploadedByName: name }),
+    });
+    setLinkBusy(false);
+    if (res.ok) {
+      setLinkUrl("");
+      load();
+    } else {
+      setUploadError("Could not share link.");
+    }
+  }
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -629,6 +693,27 @@ function AssetPanel({ roomId, name }: { roomId: string; name: string }) {
       )}
       {uploadError && <p className="mb-2 text-xs text-red-400">{uploadError}</p>}
 
+      {/* Share a link (project delivery URL, Voice AI agent, doc, etc.) */}
+      <div className="mb-3 flex gap-2">
+        <div className="flex flex-1 items-center gap-1.5 rounded-lg border border-white/10 bg-black/40 px-2">
+          <Link2 className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+          <input
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && shareLink()}
+            placeholder="Paste a link to share…"
+            className="w-full bg-transparent py-1.5 text-xs text-white placeholder-gray-500 outline-none"
+          />
+        </div>
+        <button
+          onClick={shareLink}
+          disabled={linkBusy}
+          className="rounded-lg border border-white/10 px-2.5 py-1 text-xs text-gray-300 hover:bg-white/5 disabled:opacity-50"
+        >
+          Share
+        </button>
+      </div>
+
       {assets.length === 0 ? (
         <p className="text-xs text-gray-500">
           Share a video, image, or slideshow. Each gets a notes box and Approve / Not-approved buttons per revision.
@@ -657,16 +742,27 @@ function AssetCard({
 }) {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
-  async function review(decision: "approved" | "not_approved") {
+  async function review(decision: "approved" | "not_approved" | "revision_requested") {
+    if (decision === "revision_requested" && !notes.trim()) {
+      setReviewError("Describe the specific revision you're requesting.");
+      return;
+    }
     setBusy(true);
-    await fetch(`/api/meetings/${roomId}/assets/${asset.id}/reviews`, {
+    setReviewError(null);
+    const res = await fetch(`/api/meetings/${roomId}/assets/${asset.id}/reviews`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reviewerName: name, decision, notes, revision: asset.revision }),
     });
-    setNotes("");
     setBusy(false);
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      setReviewError(e.error || "Could not submit review.");
+      return;
+    }
+    setNotes("");
     onChange();
   }
 
@@ -695,17 +791,26 @@ function AssetCard({
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Notes on changes for this revision…"
+        placeholder="Notes, or the specific revision you're requesting…"
         rows={2}
         className="mb-2 w-full resize-none rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-xs text-white placeholder-gray-500 outline-none focus:border-white/30"
       />
-      <div className="flex gap-2">
+      {reviewError && <p className="mb-2 text-xs text-red-400">{reviewError}</p>}
+      <div className="flex flex-wrap gap-2">
         <button
           onClick={() => review("approved")}
           disabled={busy}
           className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-emerald-500/80 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
         >
-          <Check className="h-3.5 w-3.5" /> Approved
+          <Check className="h-3.5 w-3.5" /> Approve
+        </button>
+        <button
+          onClick={() => review("revision_requested")}
+          disabled={busy}
+          title="Requires details of the change"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-amber-500/80 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50"
+        >
+          <RotateCcw className="h-3.5 w-3.5" /> Request revision
         </button>
         <button
           onClick={() => review("not_approved")}
@@ -725,12 +830,14 @@ function AssetCard({
                 className={`mt-0.5 rounded px-1.5 py-0.5 ${
                   r.decision === "approved"
                     ? "bg-emerald-500/20 text-emerald-300"
+                    : r.decision === "revision_requested"
+                    ? "bg-amber-500/20 text-amber-300"
                     : r.decision === "not_approved"
                     ? "bg-red-500/20 text-red-300"
                     : "bg-gray-500/20 text-gray-300"
                 }`}
               >
-                rev {r.revision} · {r.decision.replace("_", " ")}
+                rev {r.revision} · {r.decision.replace(/_/g, " ")}
               </span>
               <span className="text-gray-400">
                 <span className="text-gray-300">{r.reviewerName}</span>
