@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { mailMessages, mailAttachments } from '@/db/schema';
 import { and, desc, eq, like, inArray } from 'drizzle-orm';
 import { encryptionConfigured } from '@/lib/crypto';
-import { triageEmail } from '@/lib/ai';
+import { triageEmail, generateTagline } from '@/lib/ai';
 import { deliverEmail } from '@/lib/mailer';
 import {
   mailboxAddress,
@@ -100,7 +100,8 @@ export async function POST(request: NextRequest) {
         welcomeApplied = true;
       } else if (body.skipTagline !== true) {
         const priorCount = await outboundCountTo(toEmails[0]);
-        tagline = pickTagline(priorCount - 1); // 2nd email → count 1 → tagline[0]
+        // Prefer a fresh AI-written one-liner; fall back to the fixed rotation.
+        tagline = (await generateTagline()) ?? pickTagline(priorCount - 1);
         outgoingBody = appendTagline(messageBody, tagline);
       }
     }

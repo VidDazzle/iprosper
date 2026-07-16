@@ -28,6 +28,7 @@ mailbox, and voice-agent webhook:
 | `parseSchedulingRequest(text, nowIso)` | `/api/calendar/schedule`, voice agent `book_meeting` | NL → structured booking fields |
 | `triageEmail(subject, body)` | `/api/mail/messages` (inbound) | priority + category + summary |
 | `draftEmail(instruction, context?)` | `/api/mail/compose`, voice agent `send_email`/`draft_email` | writes subject + body |
+| `generateTagline(avoid?)` | outbound send paths | fresh funny sign-off one-liner (Gen Z / millennial / techie voice); falls back to the curated list in `taglines.ts` when no key |
 
 Each function:
 - Uses the official `@anthropic-ai/sdk` (already installed, `^0.111.0`).

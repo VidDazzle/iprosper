@@ -248,3 +248,57 @@ export async function draftEmail(
     body: `${instruction}\n\nBest regards,`,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Sign-off taglines
+// ---------------------------------------------------------------------------
+
+// Angles rotated into the prompt so each call produces a distinctly different
+// line (temperature isn't available on current models, so we vary the input).
+const TAGLINE_ANGLES = [
+  'internet/meme culture',
+  'security flex',
+  'AI-that-does-the-work brag',
+  'productivity / inbox-zero',
+  'startup / ship-it energy',
+  'main-character / glow-up vibes',
+  'tech-insider wink',
+  'playful competitor shade',
+];
+
+/**
+ * Generate a fresh, funny one-line email sign-off in Evolve's voice, tuned to
+ * resonate with Gen Z, millennials, and techies. Returns null when the AI is
+ * unavailable so the caller can fall back to the fixed rotation.
+ */
+export async function generateTagline(avoid: string[] = []): Promise<string | null> {
+  const angle = TAGLINE_ANGLES[Math.floor(Math.random() * TAGLINE_ANGLES.length)];
+  const seed = Math.random().toString(36).slice(2, 8);
+
+  const system =
+    `You write ONE witty email sign-off line for "Evolve" — a secure, ` +
+    `AI-run email + AI voice-agent company. The line prints at the bottom of a ` +
+    `business email. Make it land with Gen Z, millennials, AND techies: clever, ` +
+    `confident, a little cheeky, culturally fluent (light slang or a dev/AI wink ` +
+    `is welcome) but never cringe, offensive, or trying too hard. ` +
+    `Rules: ONE line, under ~90 characters, no emojis, no hashtags, no quotation ` +
+    `marks around it, safe for work, and it should nod to Evolve being secure ` +
+    `and/or AI-powered. Vary structure — don't sound formulaic.`;
+
+  const prompt =
+    `Write one new Evolve sign-off tagline with this angle: ${angle}. ` +
+    `Creative seed: ${seed}. Make it fresh and unlike anything generic. ` +
+    (avoid.length ? `Do NOT reuse or closely echo any of these: ${avoid.join(' | ')}.` : '');
+
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: { tagline: { type: 'string' } },
+    required: ['tagline'],
+  };
+
+  const parsed = await structuredCall<{ tagline: string }>(system, prompt, schema, 120);
+  const line = parsed?.tagline?.trim().replace(/^["'“”]|["'“”]$/g, '').trim();
+  if (line && line.length <= 160) return line;
+  return null;
+}

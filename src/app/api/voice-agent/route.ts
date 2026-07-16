@@ -4,7 +4,7 @@ import { calendarEvents, availabilityRules, mailMessages, mailContacts } from '@
 import { and, asc, desc, eq, gte } from 'drizzle-orm';
 import { isAuthorizedAgent, agentAuthConfigured, logAgentAction } from '@/lib/voice-auth';
 import { findFreeSlots, hasConflict, generateMeetingUrl, FreeSlot } from '@/lib/scheduling';
-import { parseSchedulingRequest, draftEmail, triageEmail } from '@/lib/ai';
+import { parseSchedulingRequest, draftEmail, triageEmail, generateTagline } from '@/lib/ai';
 import { encryptionConfigured, tryDecrypt } from '@/lib/crypto';
 import { deliverEmail } from '@/lib/mailer';
 import {
@@ -411,7 +411,8 @@ async function sendEmail(body: Record<string, unknown>): Promise<ActionResult> {
     bodyText = prependWelcome(bodyText);
   } else {
     const priorCount = await outboundCountTo(to[0]);
-    bodyText = appendTagline(bodyText, pickTagline(priorCount - 1));
+    const tagline = (await generateTagline()) ?? pickTagline(priorCount - 1);
+    bodyText = appendTagline(bodyText, tagline);
   }
 
   const enc = buildEncryptedFields(subject, bodyText);
