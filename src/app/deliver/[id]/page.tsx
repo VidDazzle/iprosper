@@ -14,6 +14,7 @@ import {
   ImageIcon,
   ShieldCheck,
 } from "lucide-react";
+import ScoreCard from "@/components/ScoreCard";
 
 function itemIcon(kind: string) {
   if (kind === "voice_agent") return Bot;
@@ -112,6 +113,15 @@ export default function ClientReview() {
                 </div>
                 {it.description && <p className="mt-2 text-sm text-gray-400">{it.description}</p>}
                 {it.kind === "image" && it.url && <img src={it.url} alt={it.title} className="mt-3 max-h-64 w-full rounded object-contain" />}
+                <div className="mt-3 border-t border-white/5 pt-3">
+                  <ScoreCard
+                    targetType="deliverable_item"
+                    targetId={it.id}
+                    category={d.projectType}
+                    reviewerName={name}
+                    label={`Rate this ${it.kind.replace(/_/g, " ")}`}
+                  />
+                </div>
               </div>
             );
           })}

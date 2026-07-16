@@ -264,6 +264,105 @@ export const meetingSignals = sqliteTable('meeting_signals', {
 });
 
 // ---------------------------------------------------------------------------
+// CRM — pipelines, stages, deals, leads
+// ---------------------------------------------------------------------------
+
+export const pipelines = sqliteTable('pipelines', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});
+
+export const pipelineStages = sqliteTable('pipeline_stages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  pipelineId: integer('pipeline_id').notNull(),
+  name: text('name').notNull(),
+  position: integer('position').notNull().default(0),
+  kind: text('kind').notNull().default('open'), // open | won | lost
+  createdAt: text('created_at').notNull(),
+});
+
+export const deals = sqliteTable('deals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  pipelineId: integer('pipeline_id').notNull(),
+  stageId: integer('stage_id').notNull(),
+  title: text('title').notNull(),
+  valueCents: integer('value_cents').notNull().default(0),
+  contactName: text('contact_name'),
+  contactEmail: text('contact_email'),
+  contactPhone: text('contact_phone'),
+  company: text('company'),
+  source: text('source'),
+  notes: text('notes'),
+  status: text('status').notNull().default('open'), // open | won | lost
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+/** Raw inbound leads (capture forms, webinar signups). Convert into deals. */
+export const leads = sqliteTable('leads', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  email: text('email'),
+  phone: text('phone'),
+  company: text('company'),
+  source: text('source'), // capture_form | webinar | api | ...
+  message: text('message'),
+  status: text('status').notNull().default('new'), // new | contacted | qualified | converted | lost
+  dealId: integer('deal_id'),
+  createdAt: text('created_at').notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// Commerce — products + orders (shareable purchase page)
+// ---------------------------------------------------------------------------
+
+export const products = sqliteTable('products', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  slug: text('slug').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  priceCents: integer('price_cents').notNull().default(0),
+  currency: text('currency').notNull().default('usd'),
+  imageUrl: text('image_url'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at').notNull(),
+});
+
+export const orders = sqliteTable('orders', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  productId: integer('product_id').notNull(),
+  buyerName: text('buyer_name'),
+  buyerEmail: text('buyer_email'),
+  amountCents: integer('amount_cents').notNull(),
+  currency: text('currency').notNull().default('usd'),
+  status: text('status').notNull().default('pending'), // pending | paid | cancelled
+  provider: text('provider').notNull().default('manual'), // stripe | manual
+  providerRef: text('provider_ref'),
+  // Where the sale came from (e.g. a meeting/webinar room code).
+  sourceContext: text('source_context'),
+  createdAt: text('created_at').notNull(),
+});
+
+// ---------------------------------------------------------------------------
+// Work-card scoring — clients rate work 1-10; feeds production improvement
+// ---------------------------------------------------------------------------
+
+export const workScores = sqliteTable('work_scores', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  targetType: text('target_type').notNull(), // meeting_asset | deliverable | deliverable_item
+  targetId: integer('target_id').notNull(),
+  score: integer('score').notNull(), // 1-10
+  reviewerName: text('reviewer_name'),
+  reviewerEmail: text('reviewer_email'),
+  comment: text('comment'),
+  // Denormalized for easy aggregation ("improve production").
+  category: text('category'), // e.g. project type or asset kind
+  createdAt: text('created_at').notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // Client project delivery ("Deliverables")
 // ---------------------------------------------------------------------------
 

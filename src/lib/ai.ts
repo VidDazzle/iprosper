@@ -417,3 +417,34 @@ export async function summarizeMeeting(
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Production improvement advice (from work-card scores)
+// ---------------------------------------------------------------------------
+
+/**
+ * Turn aggregated 1-10 work-card scores into concrete, prioritized advice for
+ * improving production quality. Returns null (caller falls back to heuristics)
+ * when the AI is unavailable.
+ */
+export async function generateProductionAdvice(statsJson: string): Promise<string[] | null> {
+  const system =
+    `You are a production quality coach for a creative/AI agency. Given aggregated ` +
+    `client ratings (1-10) of delivered work by category, produce 2-5 specific, ` +
+    `actionable recommendations to raise quality and client satisfaction. Focus on ` +
+    `the lowest-scoring categories and any downward trends. Each recommendation is ` +
+    `one concrete sentence.`;
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: { recommendations: { type: 'array', items: { type: 'string' } } },
+    required: ['recommendations'],
+  };
+  const parsed = await structuredCall<{ recommendations: string[] }>(
+    system,
+    `Aggregated scores:\n${statsJson}`,
+    schema,
+    600,
+  );
+  return parsed?.recommendations?.length ? parsed.recommendations : null;
+}

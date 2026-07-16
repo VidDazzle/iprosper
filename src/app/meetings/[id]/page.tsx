@@ -27,6 +27,7 @@ import {
   uploadMeetingAsset,
   type UploadProgress,
 } from "@/lib/meeting-client";
+import ScoreCard from "@/components/ScoreCard";
 
 type Stage = "loading" | "prejoin" | "consent" | "room" | "notfound";
 
@@ -819,6 +820,11 @@ function AssetCard({
         >
           <X className="h-3.5 w-3.5" /> Not approved
         </button>
+      </div>
+
+      {/* 1-10 work-card score */}
+      <div className="mt-2 border-t border-white/5 pt-2">
+        <ScoreCard targetType="meeting_asset" targetId={asset.id} category={asset.kind} reviewerName={name} label="Score this work" />
       </div>
 
       {/* Review history */}

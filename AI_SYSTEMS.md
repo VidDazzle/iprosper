@@ -74,6 +74,42 @@ alongside the calendar and email. Pages: `/meetings` (create/join) and
   specific detail of the change** (enforced client + server), so the full
   approval history and every requested change is preserved (`asset_reviews`).
 
+## CRM — pipelines, deals, lead capture
+
+A built-in sales CRM (`/crm`). A default pipeline (New Lead → Contacted →
+Qualified → Proposal → Won → Lost) is seeded on first use.
+
+- **Kanban board** of deals by stage; moving a deal to a Won/Lost stage auto-sets
+  its status. Open pipeline value totals at the top.
+- **Lead capture** — `POST /api/crm/leads` is public (CORS-open) so any form or
+  webinar can push leads in; the CRM shows the leads inbox and **converts a lead
+  into a deal** in one click (`/api/crm/leads/[id]/convert`).
+
+## Sell during a webinar — purchase pages
+
+Create a product (`/products/manage`) and share its buy link. Drop the link in a
+webinar chat and people purchase live.
+
+- Public purchase page `/buy/[slug]` — supports `?src=<room-code>` so webinar
+  sales are attributed (stored on the order's `sourceContext`).
+- **Stripe when configured** (`STRIPE_SECRET_KEY`): `POST /api/checkout` creates
+  a real Stripe Checkout Session and redirects the buyer; the signed webhook
+  (`/api/checkout/webhook`, verified with `STRIPE_WEBHOOK_SECRET`) marks the
+  order paid. Without a key, orders are recorded as pending (manual mode), so the
+  flow works before payments are wired.
+
+## Work-card scoring → production insights
+
+Clients rate delivered work **1–10** (a `ScoreCard` widget on the meeting asset
+cards and the client delivery review page). Scores (`work_scores`) roll up at
+`/insights`:
+
+- Overall average, average **by category** (worst first), and a recent-vs-prior
+  **trend**.
+- **AI-written recommendations** to improve production, focused on the
+  lowest-scoring categories and any downtrend (heuristic fallback without a key).
+  This is the loop that turns client ratings into better work.
+
 ## Client project delivery (Deliverables)
 
 Package finished work and hand it to a client for sign-off. Pages: `/deliverables`
