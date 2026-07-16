@@ -100,6 +100,28 @@ export const mailContacts = sqliteTable('mail_contacts', {
 });
 
 /**
+ * Persisted results of every self-maintenance run (self-heal / security-audit /
+ * optimize). This is the memory that makes the system "self-improving": each
+ * run is scored and stored so trends are visible and the optimizer can learn
+ * from history.
+ */
+export const maintenanceRuns = sqliteTable('maintenance_runs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  kind: text('kind').notNull(), // heal | audit | optimize | full
+  status: text('status').notNull().default('ok'), // ok | degraded | critical
+  healthScore: integer('health_score'), // 0-100
+  securityScore: integer('security_score'), // 0-100
+  // JSON arrays.
+  findings: text('findings'),
+  remediations: text('remediations'),
+  recommendations: text('recommendations'),
+  applied: integer('applied', { mode: 'boolean' }).notNull().default(false),
+  durationMs: integer('duration_ms'),
+  trigger: text('trigger').notNull().default('manual'), // manual | cron | agent
+  createdAt: text('created_at').notNull(),
+});
+
+/**
  * Append-only audit log of every action the voice agent / AI takes. Critical
  * for an autonomous system — this is the paper trail of what the agent did.
  */

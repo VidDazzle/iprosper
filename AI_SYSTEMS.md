@@ -25,6 +25,8 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
 | Scheduling engine, availability, conflict checks | ✅ Working now | — |
 | Voice-agent action API + audit log | ✅ Working now | Set `VOICE_AGENT_API_KEY` |
 | Calendar + mailbox dashboards | ✅ Working now | — |
+| Self-healing + optimizing + security self-audit | ✅ Working now | Set `CRON_SECRET` for the daily schedule |
+| Dependency threat patching (Dependabot + npm audit CI) | ✅ Working now | Enable Dependabot in the repo's Security settings |
 | AI parsing / triage / drafting | ✅ Works (heuristic) | Add `ANTHROPIC_API_KEY` for full Claude intelligence (see `CODEX_HANDOFF.md`) |
 | Actually sending mail over the internet | ⚙️ Needs provider | Set `RESEND_API_KEY` (or swap `src/lib/mailer.ts`) |
 | Receiving mail as MX for your domain | ⚙️ Needs provider | Point an inbound provider at `POST /api/mail/messages` |
@@ -35,6 +37,44 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
 > Send is a one-line hook (`src/lib/mailer.ts`); receive is a webhook that forwards
 > inbound mail to `POST /api/mail/messages` with `direction: "inbound"`. Until then
 > the mailbox is fully functional internally and via the API.
+
+---
+
+## Self-maintaining: healing, optimizing, security
+
+Both systems run a self-maintenance cycle that keeps them healthy, tunes them
+from real usage, and continuously re-audits security. It runs automatically
+(daily Vercel Cron → `/api/maintenance/cron`) and on demand
+(`POST /api/maintenance?apply=true`). Every run is scored and stored; the
+**System Health dashboard** at `/maintenance` shows the live state.
+
+What each part actually does (honest scope — this is real maintenance
+automation, not self-rewriting code):
+
+- **Self-healing** (`src/lib/self-heal.ts`) — detects and repairs drift:
+  past events still marked scheduled → completed; events missing a join link →
+  backfilled; overdue reminders → cleared; DB connectivity checked; mailbox
+  encryption integrity sampled (undecryptable rows flagged for a human); stuck
+  outbound backlog surfaced. Safe fixes apply automatically; anything with a
+  downside is flagged, not touched.
+- **Self-optimizing** (`src/lib/optimizer.ts`) — learns from 60 days of history:
+  cancellation rate, peak booking hour vs. current availability, autonomous-vs-
+  manual mix, unread/high-priority mail, dominant mail category — and proposes
+  concrete tuning (reminders, availability windows, auto-draft, saved views).
+- **Security self-audit** (`src/lib/security-audit.ts`) — verifies config
+  strength and fail-closed behavior, and scans the agent audit log for live
+  attack signatures: **credential brute-forcing** (rejected-auth bursts) and
+  **action floods**. Produces a 0–100 score and specific recommendations.
+- **Regular threat updates** — automated in CI, independent of the app:
+  `.github/dependabot.yml` opens weekly dependency-patch PRs, and
+  `.github/workflows/security-audit.yml` runs `npm audit` on a schedule + every
+  push (failing the build on high/critical CVEs). Hardened HTTP security headers
+  (CSP, HSTS, X-Frame-Options, etc.) are applied to every route in
+  `next.config.ts`.
+
+**Endpoints:** `POST /api/maintenance?apply=true` (agent key or `CRON_SECRET`,
+runs + applies safe fixes), `GET /api/maintenance` (report history for the
+dashboard), `GET /api/maintenance/cron` (the scheduled entry point).
 
 ---
 
@@ -61,6 +101,7 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
    ```
    - Calendar dashboard → `/calendar/dashboard`
    - Encrypted mailbox → `/mail`
+   - System Health (self-heal/optimize/security) → `/maintenance`
    - Voice-agent API health → `GET /api/voice-agent`
 
 ---
