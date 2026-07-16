@@ -356,3 +356,64 @@ export async function generateBirthdayMessage(
   }
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Meeting summary
+// ---------------------------------------------------------------------------
+
+export interface MeetingSummary {
+  overview: string;
+  keyPoints: string[];
+  decisions: string[];
+  actionItems: { owner: string; task: string }[];
+}
+
+/**
+ * Summarize a meeting transcript into an overview, key points, decisions, and
+ * action items. Returns null when the AI is unavailable so the caller can fall
+ * back to a simple transcript-based summary.
+ */
+export async function summarizeMeeting(
+  title: string,
+  transcript: string,
+): Promise<MeetingSummary | null> {
+  const system =
+    `You summarize a business video meeting from its transcript. Be accurate and ` +
+    `concise; do not invent anything not supported by the transcript. Produce an ` +
+    `overview (2-4 sentences), the key discussion points, explicit decisions made, ` +
+    `and action items with an owner (use the speaker name if clear, else "Unassigned").`;
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      overview: { type: 'string' },
+      keyPoints: { type: 'array', items: { type: 'string' } },
+      decisions: { type: 'array', items: { type: 'string' } },
+      actionItems: {
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          properties: { owner: { type: 'string' }, task: { type: 'string' } },
+          required: ['owner', 'task'],
+        },
+      },
+    },
+    required: ['overview', 'keyPoints', 'decisions', 'actionItems'],
+  };
+  const parsed = await structuredCall<MeetingSummary>(
+    system,
+    `Meeting title: ${title}\n\nTranscript:\n${transcript}`,
+    schema,
+    1500,
+  );
+  if (parsed && parsed.overview) {
+    return {
+      overview: parsed.overview,
+      keyPoints: parsed.keyPoints || [],
+      decisions: parsed.decisions || [],
+      actionItems: parsed.actionItems || [],
+    };
+  }
+  return null;
+}

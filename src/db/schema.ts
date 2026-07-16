@@ -131,6 +131,136 @@ export const mailContacts = sqliteTable('mail_contacts', {
   createdAt: text('created_at').notNull(),
 });
 
+// ---------------------------------------------------------------------------
+// AI Video Meetings ("Evolve Meet")
+// ---------------------------------------------------------------------------
+
+/**
+ * A video meeting room. The live media plane (WebRTC SFU) plugs in separately;
+ * this row is the durable record — settings, lifecycle, and links to the
+ * calendar. hostDefaults gate what features are even offered in the room.
+ */
+export const meetings = sqliteTable('meetings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  roomCode: text('room_code').notNull(), // short shareable join code
+  title: text('title').notNull(),
+  hostName: text('host_name'),
+  hostEmail: text('host_email'),
+  status: text('status').notNull().default('scheduled'), // scheduled | live | ended
+  calendarEventId: integer('calendar_event_id'), // optional link to calendar_events
+  // Host toggles: whether the room offers these at all (participants still consent).
+  recordingOffered: integer('recording_offered', { mode: 'boolean' }).notNull().default(true),
+  transcriptionOffered: integer('transcription_offered', { mode: 'boolean' }).notNull().default(true),
+  summaryOffered: integer('summary_offered', { mode: 'boolean' }).notNull().default(true),
+  startedAt: text('started_at'),
+  endedAt: text('ended_at'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A participant in a meeting, with their EXPRESS per-feature consent decisions.
+ * The consent columns are the legal record captured by the authorization screen
+ * shown before anyone joins — each is an explicit opt-in/opt-out with a
+ * timestamp and the IP it was recorded from.
+ */
+export const meetingParticipants = sqliteTable('meeting_participants', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  meetingId: integer('meeting_id').notNull(),
+  name: text('name').notNull(),
+  email: text('email'),
+  role: text('role').notNull().default('participant'), // host | participant
+  // Express consent — captured on the authorization screen. Default false =
+  // opted out until the participant explicitly opts in.
+  consentRecording: integer('consent_recording', { mode: 'boolean' }).notNull().default(false),
+  consentTranscription: integer('consent_transcription', { mode: 'boolean' }).notNull().default(false),
+  consentSummary: integer('consent_summary', { mode: 'boolean' }).notNull().default(false),
+  consentReports: integer('consent_reports', { mode: 'boolean' }).notNull().default(false),
+  consentDecidedAt: text('consent_decided_at'),
+  consentIp: text('consent_ip'),
+  joinedAt: text('joined_at'),
+  leftAt: text('left_at'),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A shared asset in a meeting (video, image, slideshow, document). Bytes live
+ * in object storage (reusing the same presigned-upload layer as mail
+ * attachments); this row tracks the current revision so reviews attach to the
+ * right version.
+ */
+export const meetingAssets = sqliteTable('meeting_assets', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  meetingId: integer('meeting_id').notNull(),
+  kind: text('kind').notNull().default('image'), // video | image | slideshow | document
+  title: text('title').notNull(),
+  mimeType: text('mime_type'),
+  sizeBytes: integer('size_bytes'),
+  storageKey: text('storage_key'),
+  uploadId: text('upload_id'),
+  status: text('status').notNull().default('pending'), // pending | uploaded | failed
+  revision: integer('revision').notNull().default(1),
+  uploadedByName: text('uploaded_by_name'),
+  uploadedByEmail: text('uploaded_by_email'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A per-revision review on a shared asset: the notes box + the Approved /
+ * Not-Approved decision each client records against a specific revision.
+ */
+export const assetReviews = sqliteTable('asset_reviews', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  assetId: integer('asset_id').notNull(),
+  revision: integer('revision').notNull(),
+  reviewerName: text('reviewer_name').notNull(),
+  reviewerEmail: text('reviewer_email'),
+  decision: text('decision').notNull().default('pending'), // approved | not_approved | pending
+  notes: text('notes'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * Live dictation / transcript lines captured during the meeting (browser speech
+ * recognition posts these). The full transcript is assembled from these rows
+ * and fed to the AI summarizer.
+ */
+export const meetingTranscriptLines = sqliteTable('meeting_transcript_lines', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  meetingId: integer('meeting_id').notNull(),
+  participantName: text('participant_name'),
+  text: text('text').notNull(),
+  at: text('at').notNull(),
+});
+
+/**
+ * Generated meeting artifacts — recordings (metadata + storage key) and AI
+ * summaries (content). Kept flexible so a meeting can have several.
+ */
+export const meetingArtifacts = sqliteTable('meeting_artifacts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  meetingId: integer('meeting_id').notNull(),
+  kind: text('kind').notNull(), // recording | summary
+  content: text('content'), // summary text / JSON
+  storageKey: text('storage_key'), // recording object
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * Ephemeral WebRTC signaling messages (SDP offers/answers, ICE candidates)
+ * exchanged between peers via polling. A production deployment swaps this for a
+ * WebSocket/SFU, but this keeps peer connections working out of the box.
+ */
+export const meetingSignals = sqliteTable('meeting_signals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  meetingId: integer('meeting_id').notNull(),
+  fromPeer: text('from_peer').notNull(),
+  toPeer: text('to_peer'), // null = broadcast
+  kind: text('kind').notNull(), // offer | answer | ice | join | leave
+  payload: text('payload'), // JSON
+  createdAt: text('created_at').notNull(),
+});
+
 /**
  * Opt-in birthday list for the birthday-surprise mailer. Month/day are stored
  * separately so we can match "today's birthdays" regardless of year, and

@@ -41,6 +41,41 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
 
 ---
 
+## Evolve Meet — AI video meetings (optional add-on)
+
+A consent-first video meeting app for two or more participants, offered
+alongside the calendar and email. Pages: `/meetings` (create/join) and
+`/meetings/[id]` (the room).
+
+- **Express-consent authorization screen.** Before anyone enters a room, a
+  large, unmissable screen lets each participant opt **in or out** of each
+  feature — recording, live transcription, AI summary, and receiving an emailed
+  report. Everyone starts opted **out**; choices are stored per participant with
+  a timestamp and IP as the legal record (`meeting_participants` consent
+  columns). Media buttons in the room are disabled unless the matching consent
+  was given.
+- **Multi-participant video.** A WebRTC mesh (`src/lib/meeting-client.ts`)
+  connects peers via the polling signaling API — works out of the box for small
+  rooms. For large meetings, point the transport at a WebRTC SFU (LiveKit /
+  mediasoup / Daily); the room UI only depends on the mesh callbacks.
+- **Dictation** via the browser's speech recognition → transcript lines.
+  **Recording** via MediaRecorder (consent-gated).
+- **AI summary + permissioned reports.** `POST /api/meetings/[id]/summary`
+  summarizes the transcript (overview, key points, decisions, action items) and
+  emails the report **only to participants who gave express `reports` consent** —
+  enforced server-side (verified: non-consenting recipients are skipped).
+- **Shared work + per-revision approvals.** Participants share videos, images,
+  and slideshows (large files via the same presigned direct-to-storage upload as
+  mail attachments). Under each asset is a notes box and **Approved /
+  Not-Approved** buttons that record a review against that specific revision, so
+  the full approval history is preserved (`asset_reviews`).
+
+**Not included (integration points):** the production media plane (an SFU +
+TURN servers) and native mobile "download" apps (ship the room as a PWA or wrap
+with Capacitor / React Native). Everything else runs in the app today.
+
+---
+
 ## Large attachments — documents & full-length video
 
 The mailbox handles arbitrarily large attachments (multi-GB documents, full
