@@ -12,7 +12,8 @@ import {
   newThreadId,
   StoredMessageRow,
 } from '@/lib/mailbox';
-import { anyFirstContact, prependWelcome } from '@/lib/welcome';
+import { anyFirstContact, outboundCountTo, prependWelcome } from '@/lib/welcome';
+import { pickTagline, appendTagline } from '@/lib/taglines';
 
 /**
  * GET  /api/mail/messages?status=&direction=&category=&search=&limit=&offset=
@@ -88,14 +89,19 @@ export async function POST(request: NextRequest) {
     const fromEmail = direction === 'outbound' ? owner : body.from;
     const toEmails = direction === 'outbound' ? to : to.length ? to : [owner];
 
-    // First-contact welcome: the first time we email a new recipient, prepend
-    // the Evolve welcome banner. Opt out per-send with skipWelcome: true.
+    // First-contact welcome banner on email #1; a rotating funny sign-off
+    // tagline on email #2 onward. skipWelcome / skipTagline opt out per send.
     let outgoingBody = messageBody;
     let welcomeApplied = false;
-    if (direction === 'outbound' && body.skipWelcome !== true) {
-      if (await anyFirstContact(toEmails)) {
+    let tagline: string | null = null;
+    if (direction === 'outbound') {
+      if (body.skipWelcome !== true && (await anyFirstContact(toEmails))) {
         outgoingBody = prependWelcome(messageBody);
         welcomeApplied = true;
+      } else if (body.skipTagline !== true) {
+        const priorCount = await outboundCountTo(toEmails[0]);
+        tagline = pickTagline(priorCount - 1); // 2nd email → count 1 → tagline[0]
+        outgoingBody = appendTagline(messageBody, tagline);
       }
     }
 
@@ -161,7 +167,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: { ...toClientMessage(row), attachments }, delivery, welcomeApplied },
+      { message: { ...toClientMessage(row), attachments }, delivery, welcomeApplied, tagline },
       { status: 201 },
     );
   } catch (error) {

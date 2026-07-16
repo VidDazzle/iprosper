@@ -14,7 +14,8 @@ import {
   StoredMessageRow,
   toClientMessage,
 } from '@/lib/mailbox';
-import { anyFirstContact, prependWelcome } from '@/lib/welcome';
+import { anyFirstContact, outboundCountTo, prependWelcome } from '@/lib/welcome';
+import { pickTagline, appendTagline } from '@/lib/taglines';
 
 /**
  * Unified action endpoint for the autonomous voice agent.
@@ -405,9 +406,12 @@ async function sendEmail(body: Record<string, unknown>): Promise<ActionResult> {
   }
   if (!bodyText) return { ok: false, error: 'Provide body or instruction.' };
 
-  // First-contact welcome banner for brand-new recipients.
+  // First-contact welcome banner on email #1; rotating sign-off tagline after.
   if (await anyFirstContact(to)) {
     bodyText = prependWelcome(bodyText);
+  } else {
+    const priorCount = await outboundCountTo(to[0]);
+    bodyText = appendTagline(bodyText, pickTagline(priorCount - 1));
   }
 
   const enc = buildEncryptedFields(subject, bodyText);

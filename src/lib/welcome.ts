@@ -43,6 +43,20 @@ export async function anyFirstContact(recipients: string[]): Promise<boolean> {
   return false;
 }
 
+/**
+ * How many outbound emails we've already sent this recipient. Used to sequence
+ * the rotating sign-off taglines (2nd email → count 1 → first tagline).
+ */
+export async function outboundCountTo(recipient: string): Promise<number> {
+  const addr = recipient.trim().toLowerCase();
+  if (!addr) return 0;
+  const rows = await db
+    .select({ id: mailMessages.id })
+    .from(mailMessages)
+    .where(and(eq(mailMessages.direction, 'outbound'), like(mailMessages.toEmails, `%${addr}%`)));
+  return rows.length;
+}
+
 /** Prepend the welcome banner to a body, keeping a clean separation. */
 export function prependWelcome(body: string): string {
   return `${getWelcomeMessage()}\n\n—\n\n${body}`;
