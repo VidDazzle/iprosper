@@ -1,71 +1,59 @@
+import Anthropic from '@anthropic-ai/sdk';
+
 /**
  * AI engine shared by the calendar and mailbox.
  *
- * When ANTHROPIC_API_KEY is set, this calls the Claude Messages API to parse
- * scheduling requests, triage mail, and draft replies. When it is NOT set,
- * every function degrades to a deterministic heuristic so the whole system
- * keeps working (just less smart) with zero external dependencies.
+ * When ANTHROPIC_API_KEY is set, this calls Claude (via the official
+ * @anthropic-ai/sdk) to parse scheduling requests, triage mail, and draft
+ * replies — using structured outputs so responses are guaranteed to match the
+ * expected JSON schema. When the key is NOT set, every function degrades to a
+ * deterministic heuristic so the whole system keeps working (just less smart)
+ * with zero external dependencies.
  *
- * Model is configurable via AI_MODEL (default: claude-sonnet-5).
+ * Model is configurable via AI_MODEL (default: claude-opus-4-8 — the most
+ * capable model). Note: temperature/top_p/top_k are intentionally NOT sent —
+ * they are rejected with a 400 on Opus 4.8 / Sonnet 5 / Fable 5.
  */
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = process.env.AI_MODEL || 'claude-sonnet-5';
+const DEFAULT_MODEL = process.env.AI_MODEL || 'claude-opus-4-8';
+
+// One shared client. The SDK reads ANTHROPIC_API_KEY from the environment.
+let client: Anthropic | null = null;
+function getClient(): Anthropic | null {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  if (!client) client = new Anthropic();
+  return client;
+}
 
 export function aiConfigured(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY);
 }
 
-interface ClaudeCallOptions {
-  system: string;
-  prompt: string;
-  maxTokens?: number;
-  temperature?: number;
-}
-
-/** Low-level Claude call. Returns the assistant's text, or null on failure. */
-async function callClaude(opts: ClaudeCallOptions): Promise<string | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return null;
-
+/**
+ * Run a structured-output call. Returns the parsed object typed as T, or null
+ * on any failure (no key, API error, refusal, unparseable) so callers can fall
+ * back to heuristics.
+ */
+async function structuredCall<T>(
+  system: string,
+  prompt: string,
+  schema: Record<string, unknown>,
+  maxTokens = 1024,
+): Promise<T | null> {
+  const anthropic = getClient();
+  if (!anthropic) return null;
   try {
-    const res = await fetch(ANTHROPIC_URL, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        max_tokens: opts.maxTokens ?? 1024,
-        temperature: opts.temperature ?? 0.2,
-        system: opts.system,
-        messages: [{ role: 'user', content: opts.prompt }],
-      }),
+    const res = await anthropic.messages.parse({
+      model: DEFAULT_MODEL,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: prompt }],
+      output_config: { format: { type: 'json_schema', schema } },
     });
-
-    if (!res.ok) {
-      console.error('Claude API error:', res.status, await res.text());
-      return null;
-    }
-    const data = await res.json();
-    const text = data?.content?.[0]?.text;
-    return typeof text === 'string' ? text : null;
+    if (res.stop_reason === 'refusal') return null;
+    return (res.parsed_output as T) ?? null;
   } catch (err) {
-    console.error('Claude API call failed:', err);
-    return null;
-  }
-}
-
-/** Extract the first JSON object/array from a model response. */
-function extractJson<T>(text: string | null): T | null {
-  if (!text) return null;
-  const match = text.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-  if (!match) return null;
-  try {
-    return JSON.parse(match[0]) as T;
-  } catch {
+    console.error('Claude structured call failed:', err);
     return null;
   }
 }
@@ -91,15 +79,26 @@ export async function parseSchedulingRequest(
   text: string,
   nowIso: string,
 ): Promise<ParsedSchedulingRequest> {
-  const system = `You are a scheduling parser for a business calendar. Today is ${nowIso}. ` +
-    `Extract structured booking details from the user's request. ` +
-    `Respond with ONLY a JSON object with keys: title (string), durationMinutes (number, default 30), ` +
-    `attendees (array of email strings, [] if none), preferredDate (YYYY-MM-DD or null), ` +
-    `preferredTime (HH:MM 24h or null), notes (string or null). Resolve relative dates against today.`;
+  const system =
+    `You are a scheduling parser for a business calendar. Today is ${nowIso}. ` +
+    `Extract structured booking details from the user's request. Resolve relative ` +
+    `dates ("next Tuesday", "tomorrow") against today. Use null when a field is not specified.`;
 
-  const parsed = extractJson<ParsedSchedulingRequest>(
-    await callClaude({ system, prompt: text, temperature: 0 }),
-  );
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      title: { type: 'string' },
+      durationMinutes: { type: 'integer' },
+      attendees: { type: 'array', items: { type: 'string' } },
+      preferredDate: { type: ['string', 'null'] },
+      preferredTime: { type: ['string', 'null'] },
+      notes: { type: ['string', 'null'] },
+    },
+    required: ['title', 'durationMinutes', 'attendees', 'preferredDate', 'preferredTime', 'notes'],
+  };
+
+  const parsed = await structuredCall<ParsedSchedulingRequest>(system, text, schema);
   if (parsed && parsed.title) {
     return {
       title: parsed.title,
@@ -130,7 +129,6 @@ function heuristicSchedulingParse(text: string): ParsedSchedulingRequest {
     if (/am/i.test(timeMatch[3]) && hour === 12) hour = 0;
     preferredTime = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
   }
-  // Title: strip email addresses and common filler.
   const title = text
     .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, '')
     .replace(/\b(book|schedule|set up|please|can you|a|an|the|with|for)\b/gi, ' ')
@@ -159,24 +157,27 @@ export interface MailTriage {
 /** Classify an inbound email into priority + category + one-line summary. */
 export async function triageEmail(subject: string, body: string): Promise<MailTriage> {
   const system =
-    `You triage inbound business email. Respond with ONLY a JSON object: ` +
-    `{ "priority": "low"|"normal"|"high", "category": one lowercase word ` +
-    `(sales, support, billing, personal, spam, scheduling, legal, other), ` +
-    `"summary": a one-sentence summary }.`;
-  const parsed = extractJson<MailTriage>(
-    await callClaude({
-      system,
-      prompt: `Subject: ${subject}\n\n${body}`,
-      temperature: 0,
-      maxTokens: 300,
-    }),
+    `You triage inbound business email. Classify priority (low/normal/high), a single ` +
+    `lowercase category word (sales, support, billing, personal, spam, scheduling, legal, other), ` +
+    `and a one-sentence summary.`;
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      priority: { type: 'string', enum: ['low', 'normal', 'high'] },
+      category: { type: 'string' },
+      summary: { type: 'string' },
+    },
+    required: ['priority', 'category', 'summary'],
+  };
+  const parsed = await structuredCall<MailTriage>(
+    system,
+    `Subject: ${subject}\n\n${body}`,
+    schema,
+    400,
   );
   if (parsed && parsed.priority && parsed.category) {
-    return {
-      priority: parsed.priority,
-      category: parsed.category.toLowerCase(),
-      summary: parsed.summary || subject,
-    };
+    return { priority: parsed.priority, category: parsed.category.toLowerCase(), summary: parsed.summary || subject };
   }
   return heuristicTriage(subject, body);
 }
@@ -217,25 +218,31 @@ export async function draftEmail(
 ): Promise<DraftResult> {
   const system =
     `You are an executive assistant drafting professional business email on behalf ` +
-    `of the account owner. Be concise, warm, and clear. Respond with ONLY a JSON ` +
-    `object: { "subject": string, "body": string }. Do not include a signature block ` +
-    `unless asked; end the body with "Best regards,".`;
+    `of the account owner. Be concise, warm, and clear. End the body with "Best regards,". ` +
+    `Do not add a signature block unless asked.`;
   const prompt = context?.body
     ? `You are replying to this email from ${context.fromName || 'the sender'}:\n` +
       `Subject: ${context.subject}\n${context.body}\n\n` +
       `Write a reply that does the following: ${instruction}`
     : `Write a new email that does the following: ${instruction}`;
 
-  const parsed = extractJson<DraftResult>(
-    await callClaude({ system, prompt, temperature: 0.4, maxTokens: 800 }),
-  );
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      subject: { type: 'string' },
+      body: { type: 'string' },
+    },
+    required: ['subject', 'body'],
+  };
+
+  const parsed = await structuredCall<DraftResult>(system, prompt, schema, 800);
   if (parsed && parsed.body) {
     return {
       subject: parsed.subject || (context?.subject ? `Re: ${context.subject}` : 'Message'),
       body: parsed.body,
     };
   }
-  // Fallback: echo the instruction as a simple note.
   return {
     subject: context?.subject ? `Re: ${context.subject}` : 'Message from the iProsper AI assistant',
     body: `${instruction}\n\nBest regards,`,

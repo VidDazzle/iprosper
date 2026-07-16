@@ -25,7 +25,7 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
 | Scheduling engine, availability, conflict checks | ✅ Working now | — |
 | Voice-agent action API + audit log | ✅ Working now | Set `VOICE_AGENT_API_KEY` |
 | Calendar + mailbox dashboards | ✅ Working now | — |
-| AI parsing / triage / drafting | ✅ Works (heuristic) | Add `ANTHROPIC_API_KEY` for full intelligence |
+| AI parsing / triage / drafting | ✅ Works (heuristic) | Add `ANTHROPIC_API_KEY` for full Claude intelligence (see `CODEX_HANDOFF.md`) |
 | Actually sending mail over the internet | ⚙️ Needs provider | Set `RESEND_API_KEY` (or swap `src/lib/mailer.ts`) |
 | Receiving mail as MX for your domain | ⚙️ Needs provider | Point an inbound provider at `POST /api/mail/messages` |
 
