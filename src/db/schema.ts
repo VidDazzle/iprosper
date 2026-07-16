@@ -132,6 +132,23 @@ export const mailContacts = sqliteTable('mail_contacts', {
 });
 
 /**
+ * Opt-in birthday list for the birthday-surprise mailer. Month/day are stored
+ * separately so we can match "today's birthdays" regardless of year, and
+ * lastGreetedYear guards against sending twice in the same year.
+ */
+export const birthdaySubscribers = sqliteTable('birthday_subscribers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone'),
+  birthdate: text('birthdate').notNull(), // YYYY-MM-DD as provided
+  birthMonth: integer('birth_month').notNull(), // 1-12
+  birthDay: integer('birth_day').notNull(), // 1-31
+  lastGreetedYear: integer('last_greeted_year'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
  * Persisted results of every self-maintenance run (self-heal / security-audit /
  * optimize). This is the memory that makes the system "self-improving": each
  * run is scored and stored so trends are visible and the optimizer can learn

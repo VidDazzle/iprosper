@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthorizedAgent } from '@/lib/voice-auth';
 import { runFullMaintenance } from '@/lib/maintenance';
+import { runBirthdayGreetings } from '@/lib/birthday';
 
 /**
  * GET /api/maintenance/cron
@@ -25,6 +26,15 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await runFullMaintenance(true, 'cron');
+
+    // Send today's birthday surprises on the same daily tick (best-effort).
+    let birthday = null;
+    try {
+      birthday = await runBirthdayGreetings();
+    } catch (bErr) {
+      console.error('Birthday greetings error during cron:', bErr);
+    }
+
     return NextResponse.json(
       {
         ranAt: new Date().toISOString(),
@@ -33,6 +43,7 @@ export async function GET(request: NextRequest) {
         securityScore: result.security.securityScore,
         remediated: result.heal.checks.reduce((n, c) => n + c.remediated, 0),
         recommendations: result.optimize.recommendations.length,
+        birthday,
       },
       { status: 200 },
     );

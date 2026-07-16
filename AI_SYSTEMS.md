@@ -75,6 +75,24 @@ ETag readable from the browser).
 
 ---
 
+## Birthday surprises
+
+Signup asks for an optional birthday. A subscriber who provides one is stored in
+`birthday_subscribers`, and the birthday mailer (`src/lib/birthday.ts`) emails
+them a surprise on the day:
+
+- Matches "today's" birthdays by month/day in `BIRTHDAY_TZ` (year-agnostic;
+  Feb-29 birthdays are greeted Feb-28 in non-leap years).
+- Sends **at most once per year** per subscriber (`lastGreetedYear` guard).
+- The message is written fresh by Claude (sarcastic-but-warm, privacy-safe —
+  it never implies we saw anything; it knows the date only because they told
+  us), with a template fallback when the AI isn't configured.
+- The surprise/offer line is set via `BIRTHDAY_SURPRISE`.
+- Runs automatically on the daily maintenance cron; also
+  `GET /api/birthday/run` (cron or agent auth) for manual/test runs.
+
+---
+
 ## Self-maintaining: healing, optimizing, security
 
 Both systems run a self-maintenance cycle that keeps them healthy, tunes them

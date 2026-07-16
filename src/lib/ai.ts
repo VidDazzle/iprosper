@@ -309,3 +309,50 @@ export async function generateTagline(avoid: string[] = []): Promise<string | nu
   if (line && line.length <= 160) return line;
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Birthday surprise
+// ---------------------------------------------------------------------------
+
+export interface BirthdayEmail {
+  subject: string;
+  body: string;
+}
+
+/**
+ * Write a funny, warm, heavily-sarcastic birthday email in Evolve's voice.
+ * `surprise` is the actual offer/gift line to include. Returns null when the
+ * AI is unavailable so the caller can fall back to a template.
+ */
+export async function generateBirthdayMessage(
+  name: string,
+  surprise: string,
+): Promise<BirthdayEmail | null> {
+  const seed = Math.random().toString(36).slice(2, 8);
+  const system =
+    `You write a short, funny, HEAVILY SARCASTIC but genuinely warm birthday email ` +
+    `from "Evolve" (a secure, AI-run email + voice-agent company) to a customer. ` +
+    `Goal: make them laugh and feel special. Voice: dry, clever, celebratory, a ` +
+    `little unhinged in a fun way, resonates with Gen Z / millennials / techies. ` +
+    `HARD PRIVACY RULE: never imply Evolve reads, scans, tracks, or sees the ` +
+    `customer's email/data/activity — no "we noticed", "we saw", "our AI watches" ` +
+    `framing. You know their birthday only because they TOLD us at signup; you may ` +
+    `nod to that. Include the surprise/offer provided, verbatim in spirit. ` +
+    `3-6 short sentences. No emojis, no hashtags. Sign off as "— The Evolve crew".`;
+  const prompt =
+    `Write a birthday email to ${name || 'our favorite human'}. ` +
+    `The surprise to include: "${surprise}". Creative seed: ${seed}.`;
+
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: { subject: { type: 'string' }, body: { type: 'string' } },
+    required: ['subject', 'body'],
+  };
+
+  const parsed = await structuredCall<BirthdayEmail>(system, prompt, schema, 500);
+  if (parsed && parsed.body) {
+    return { subject: parsed.subject || 'Happy Birthday from Evolve 🎉', body: parsed.body };
+  }
+  return null;
+}
