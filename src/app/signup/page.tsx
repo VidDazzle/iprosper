@@ -49,12 +49,14 @@ interface FormData {
   name: string;
   email: string;
   phone: string;
+  birthdate: string;
 }
 
 interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
+  birthdate?: string;
 }
 
 export default function SignUpPage() {
@@ -63,6 +65,7 @@ export default function SignUpPage() {
     name: "",
     email: "",
     phone: "",
+    birthdate: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +95,14 @@ export default function SignUpPage() {
       newErrors.phone = "Please enter a valid phone number";
     }
 
+    // Birthday is optional — only validate if provided (not in the future).
+    if (formData.birthdate) {
+      const d = new Date(formData.birthdate);
+      if (isNaN(d.getTime()) || d.getTime() > Date.now()) {
+        newErrors.birthdate = "Please enter a valid birthday";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -116,6 +127,7 @@ export default function SignUpPage() {
           name: formData.name.trim(),
           email: formData.email.trim(),
           phone: formData.phone.trim(),
+          birthdate: formData.birthdate || undefined,
         }),
       });
 
@@ -280,6 +292,27 @@ export default function SignUpPage() {
                 />
                 {errors.phone && (
                   <p className="text-destructive text-sm">{errors.phone}</p>
+                )}
+              </div>
+
+              {/* Birthday Field (optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="birthdate" className="text-sm font-medium text-foreground">
+                  Birthday <span className="text-muted-foreground font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="birthdate"
+                  type="date"
+                  value={formData.birthdate}
+                  onChange={(e) => handleInputChange("birthdate", e.target.value)}
+                  className="bg-input border-border text-foreground placeholder:text-muted-foreground rounded-lg py-3 px-4 focus:ring-2 focus:ring-ring focus:border-transparent"
+                  disabled={isLoading}
+                />
+                <p className="text-muted-foreground text-xs">
+                  🎁 We&apos;d like to send you a special surprise on your birthday.
+                </p>
+                {errors.birthdate && (
+                  <p className="text-destructive text-sm">{errors.birthdate}</p>
                 )}
               </div>
 

@@ -256,38 +256,45 @@ export async function draftEmail(
 // Angles rotated into the prompt so each call produces a distinctly different
 // line (temperature isn't available on current models, so we vary the input).
 const TAGLINE_ANGLES = [
-  'internet/meme culture',
-  'security flex',
-  'AI-that-does-the-work brag',
-  'productivity / inbox-zero',
-  'startup / ship-it energy',
-  'main-character / glow-up vibes',
-  'tech-insider wink',
-  'playful competitor shade',
+  'absurd flex about how encrypted / private it is',
+  'deadpan roast of clunky old email providers',
+  'over-the-top humblebrag about the AI doing the boring work for you',
+  'self-aware joke about Evolve being extra / dramatic',
+  'inbox-zero / productivity fantasy taken too far',
+  'ship-it startup bravado',
+  'a wink about your data being locked away where nobody can touch it',
+  'unhinged confidence with a wholesome "have a great day" undertone',
 ];
 
 /**
- * Generate a fresh, funny one-line email sign-off in Evolve's voice, tuned to
- * resonate with Gen Z, millennials, and techies. Returns null when the AI is
- * unavailable so the caller can fall back to the fixed rotation.
+ * Generate a fresh, HEAVILY sarcastic one-line email sign-off in Evolve's
+ * voice, tuned to make Gen Z, millennials, and techies actually laugh. Returns
+ * null when the AI is unavailable so the caller can fall back to the fixed list.
  */
 export async function generateTagline(avoid: string[] = []): Promise<string | null> {
   const angle = TAGLINE_ANGLES[Math.floor(Math.random() * TAGLINE_ANGLES.length)];
   const seed = Math.random().toString(36).slice(2, 8);
 
   const system =
-    `You write ONE witty email sign-off line for "Evolve" — a secure, ` +
-    `AI-run email + AI voice-agent company. The line prints at the bottom of a ` +
-    `business email. Make it land with Gen Z, millennials, AND techies: clever, ` +
-    `confident, a little cheeky, culturally fluent (light slang or a dev/AI wink ` +
-    `is welcome) but never cringe, offensive, or trying too hard. ` +
-    `Rules: ONE line, under ~90 characters, no emojis, no hashtags, no quotation ` +
-    `marks around it, safe for work, and it should nod to Evolve being secure ` +
-    `and/or AI-powered. Vary structure — don't sound formulaic.`;
+    `You write ONE witty, HEAVILY SARCASTIC email sign-off line for "Evolve" — a ` +
+    `secure, AI-run email + AI voice-agent company. The line prints at the bottom ` +
+    `of a business email; the goal is to make the reader laugh and start their day ` +
+    `right. Land it with Gen Z, millennials, AND techies: clever, confident, dry, ` +
+    `sarcastic, culturally fluent — go big on the sarcasm — but never mean-spirited, ` +
+    `offensive, or cringe.\n\n` +
+    `HARD PRIVACY RULE (never break): Evolve NEVER reads, scans, monitors, peeks at, ` +
+    `analyzes, or "reads the docs/emails" of the customer. Never imply we can see, ` +
+    `access, or snoop on their messages, data, or activity — that destroys trust. ` +
+    `When you joke about security/privacy, make it clear THEIR stuff is so private ` +
+    `and locked down that even WE can't see it. Do not reference reading, watching, ` +
+    `tracking, or surveilling the user in any way.\n\n` +
+    `Format: ONE line, under ~100 characters, no emojis, no hashtags, no surrounding ` +
+    `quotation marks, safe for work. Vary structure — never formulaic.`;
 
   const prompt =
-    `Write one new Evolve sign-off tagline with this angle: ${angle}. ` +
-    `Creative seed: ${seed}. Make it fresh and unlike anything generic. ` +
+    `Write one new, savagely funny Evolve sign-off tagline with this angle: ${angle}. ` +
+    `Creative seed: ${seed}. Make it fresh, sarcastic, and unlike anything generic. ` +
+    `Remember: never imply Evolve reads or sees the customer's email/data. ` +
     (avoid.length ? `Do NOT reuse or closely echo any of these: ${avoid.join(' | ')}.` : '');
 
   const schema = {

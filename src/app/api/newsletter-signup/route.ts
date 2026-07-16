@@ -5,6 +5,7 @@ interface NewsletterSignupData {
   name: string;
   email: string;
   phone: string;
+  birthdate?: string;
 }
 
 interface ValidationError {
@@ -59,6 +60,18 @@ function validateSignupData(data: any): { isValid: boolean; errors: ValidationEr
     errors.push({ field: 'phone', message: 'Phone number is required and must be a string' });
   } else if (!validatePhone(data.phone)) {
     errors.push({ field: 'phone', message: 'Please provide a valid phone number (7-16 digits)' });
+  }
+
+  // Birthday is optional. Only validate when provided.
+  if (data.birthdate !== undefined && data.birthdate !== null && data.birthdate !== '') {
+    if (typeof data.birthdate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data.birthdate)) {
+      errors.push({ field: 'birthdate', message: 'Birthday must be a valid date (YYYY-MM-DD)' });
+    } else {
+      const d = new Date(data.birthdate);
+      if (isNaN(d.getTime()) || d.getTime() > Date.now()) {
+        errors.push({ field: 'birthdate', message: 'Please provide a valid birthday' });
+      }
+    }
   }
 
   return {
@@ -147,7 +160,9 @@ export async function POST(request: NextRequest) {
     const sanitizedData: NewsletterSignupData = {
       name: sanitizeInput(requestData.name),
       email: sanitizeInput(requestData.email.toLowerCase()),
-      phone: sanitizeInput(requestData.phone)
+      phone: sanitizeInput(requestData.phone),
+      // Optional — captured so we can send a birthday surprise.
+      birthdate: requestData.birthdate ? sanitizeInput(requestData.birthdate) : undefined
     };
 
     // Log the signup data (replace with actual database storage in production)

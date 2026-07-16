@@ -11,17 +11,17 @@
  */
 export const TAGLINES: string[] = [
   "Truth be known, we're AI snobs.",
-  "Sent from Evolve — our AI read this faster than you can say “unsubscribe.”",
-  "Our encryption is so tight, even we can't read this. (Kidding. Mostly.)",
-  "Powered by robots, perfected by Evolve.",
-  "This email flew first-class, fully encrypted, zero layovers.",
-  "No servers were snooped in the making of this message.",
-  "Evolve: because your inbox deserves a bodyguard.",
-  "Our AI booked three meetings while you read this sentence.",
-  "Bank-grade security, food-truck-level charm.",
-  "Warning: contains dangerously good AI.",
-  "If this email were any more secure, it'd need a passport.",
+  "Encrypted so hard that even we have no clue what this says. You're welcome.",
+  "Powered by robots, perfected by Evolve, judged by no one.",
+  "This email flew first-class, fully encrypted, zero layovers, unlike your last flight.",
+  "Your privacy is locked in a vault we conveniently lost the key to.",
+  "Evolve: your inbox's slightly overqualified bodyguard.",
+  "Bank-grade security, food-truck-level charm, zero-calorie sarcasm.",
+  "Warning: contains dangerously good AI and mild delusions of grandeur.",
+  "If this email were any more secure, it'd need its own passport and a bad headshot.",
   "We put the smart in your inbox and the snob in our AI.",
+  "Other email providers are quaking. We checked. They're fine, but still.",
+  "Sent with love, encryption, and an unreasonable amount of confidence.",
 ];
 
 /** Pick the tagline for a given zero-based position, wrapping around the list. */
