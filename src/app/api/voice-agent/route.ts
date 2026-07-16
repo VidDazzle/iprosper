@@ -14,6 +14,7 @@ import {
   StoredMessageRow,
   toClientMessage,
 } from '@/lib/mailbox';
+import { anyFirstContact, prependWelcome } from '@/lib/welcome';
 
 /**
  * Unified action endpoint for the autonomous voice agent.
@@ -403,6 +404,11 @@ async function sendEmail(body: Record<string, unknown>): Promise<ActionResult> {
     bodyText = draft.body;
   }
   if (!bodyText) return { ok: false, error: 'Provide body or instruction.' };
+
+  // First-contact welcome banner for brand-new recipients.
+  if (await anyFirstContact(to)) {
+    bodyText = prependWelcome(bodyText);
+  }
 
   const enc = buildEncryptedFields(subject, bodyText);
   const nowIso = new Date().toISOString();

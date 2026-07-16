@@ -12,6 +12,7 @@ import {
   newThreadId,
   StoredMessageRow,
 } from '@/lib/mailbox';
+import { anyFirstContact, prependWelcome } from '@/lib/welcome';
 
 /**
  * GET  /api/mail/messages?status=&direction=&category=&search=&limit=&offset=
@@ -87,6 +88,17 @@ export async function POST(request: NextRequest) {
     const fromEmail = direction === 'outbound' ? owner : body.from;
     const toEmails = direction === 'outbound' ? to : to.length ? to : [owner];
 
+    // First-contact welcome: the first time we email a new recipient, prepend
+    // the Evolve welcome banner. Opt out per-send with skipWelcome: true.
+    let outgoingBody = messageBody;
+    let welcomeApplied = false;
+    if (direction === 'outbound' && body.skipWelcome !== true) {
+      if (await anyFirstContact(toEmails)) {
+        outgoingBody = prependWelcome(messageBody);
+        welcomeApplied = true;
+      }
+    }
+
     // AI triage for inbound; outbound is normal priority.
     let priority = 'normal';
     let category: string | null = null;
@@ -96,7 +108,7 @@ export async function POST(request: NextRequest) {
       category = triage.category;
     }
 
-    const enc = buildEncryptedFields(subject, messageBody);
+    const enc = buildEncryptedFields(subject, outgoingBody);
     const threadId = body.threadId || newThreadId();
 
     const inserted = await db
@@ -121,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     let delivery = null;
     if (direction === 'outbound') {
-      delivery = await deliverEmail({ from: fromEmail, to: toEmails, cc, subject, body: messageBody });
+      delivery = await deliverEmail({ from: fromEmail, to: toEmails, cc, subject, body: outgoingBody });
     }
 
     const row = inserted[0] as unknown as StoredMessageRow;
@@ -149,7 +161,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: { ...toClientMessage(row), attachments }, delivery },
+      { message: { ...toClientMessage(row), attachments }, delivery, welcomeApplied },
       { status: 201 },
     );
   } catch (error) {
