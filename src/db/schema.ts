@@ -86,6 +86,38 @@ export const mailMessages = sqliteTable('mail_messages', {
 });
 
 /**
+ * Large email attachments. The actual bytes live in object storage (S3 / R2 /
+ * B2), NOT in the database — a full-length video is far too large for a DB row
+ * and for a serverless request body. This table holds only metadata plus the
+ * storage key and an envelope-wrapped per-file encryption key. Uploads go
+ * directly from the client to storage via presigned (multipart) URLs, so file
+ * size is bounded by the storage provider, not by the app.
+ */
+export const mailAttachments = sqliteTable('mail_attachments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // Linked once the message is sent; null while still a draft/pending upload.
+  messageId: integer('message_id'),
+  threadId: text('thread_id'),
+  filename: text('filename').notNull(),
+  mimeType: text('mime_type').notNull().default('application/octet-stream'),
+  // 64-bit — comfortably handles multi-GB / full-length video.
+  sizeBytes: integer('size_bytes').notNull(),
+  storageProvider: text('storage_provider').notNull().default('s3'),
+  storageKey: text('storage_key').notNull(),
+  // Set while a multipart upload is in flight; cleared on completion.
+  uploadId: text('upload_id'),
+  // pending | uploaded | failed
+  status: text('status').notNull().default('pending'),
+  // Envelope-encrypted per-file data key (base64 JSON). Enables optional
+  // client-side E2E encryption; the blob is also encrypted at rest by the
+  // bucket's default encryption.
+  wrappedKey: text('wrapped_key'),
+  checksum: text('checksum'),
+  createdAt: text('created_at').notNull(),
+  uploadedAt: text('uploaded_at'),
+});
+
+/**
  * Address book shared by the AI email + calendar so the voice agent can
  * resolve "email John" or "book a call with the Acme team".
  */

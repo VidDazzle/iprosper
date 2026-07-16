@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { calendarEvents, mailMessages } from '@/db/schema';
+import { calendarEvents, mailMessages, mailAttachments } from '@/db/schema';
 import { and, eq, lt, isNull, or } from 'drizzle-orm';
 import { tryDecrypt, encryptionConfigured } from '@/lib/crypto';
 import { generateMeetingUrl } from '@/lib/scheduling';
@@ -196,6 +196,32 @@ export async function runSelfHeal(apply: boolean): Promise<HealReport> {
       detected: queued.length,
       remediated: 0,
       detail: `${queued.length} outbound messages stored. Delivery requires RESEND_API_KEY.`,
+    });
+  }
+
+  // 7. Orphaned attachment uploads — registered but never completed (a stalled
+  //    or abandoned upload). Older than 24h → mark failed so they can be swept.
+  {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const orphans = await db
+      .select({ id: mailAttachments.id })
+      .from(mailAttachments)
+      .where(and(eq(mailAttachments.status, 'pending'), lt(mailAttachments.createdAt, cutoff)));
+    let fixed = 0;
+    if (apply && orphans.length) {
+      for (const row of orphans) {
+        await db.update(mailAttachments).set({ status: 'failed' }).where(eq(mailAttachments.id, row.id));
+        fixed++;
+      }
+    }
+    checks.push({
+      check: 'orphaned_uploads',
+      severity: orphans.length ? 'warning' : 'info',
+      detected: orphans.length,
+      remediated: fixed,
+      detail: orphans.length
+        ? `${orphans.length} incomplete uploads >24h old${apply ? ` → marked failed ${fixed}` : ''}.`
+        : 'No orphaned uploads.',
     });
   }
 

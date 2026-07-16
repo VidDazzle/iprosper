@@ -22,6 +22,7 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
 | Capability | Status | To enable |
 |---|---|---|
 | Encrypted storage of mail (at rest) | ✅ Working now | Set `MAIL_ENCRYPTION_KEY` |
+| Large attachments (docs, full-length video) | ✅ Working now | Set `S3_*` (S3/R2/B2/MinIO) |
 | Scheduling engine, availability, conflict checks | ✅ Working now | — |
 | Voice-agent action API + audit log | ✅ Working now | Set `VOICE_AGENT_API_KEY` |
 | Calendar + mailbox dashboards | ✅ Working now | — |
@@ -37,6 +38,40 @@ accounts you connect — wired up cleanly and degrading gracefully until then:
 > Send is a one-line hook (`src/lib/mailer.ts`); receive is a webhook that forwards
 > inbound mail to `POST /api/mail/messages` with `direction: "inbound"`. Until then
 > the mailbox is fully functional internally and via the API.
+
+---
+
+## Large attachments — documents & full-length video
+
+The mailbox handles arbitrarily large attachments (multi-GB documents, full
+length video) without the app server ever touching the bytes:
+
+- **Direct-to-storage uploads.** The browser calls `POST /api/mail/attachments/
+  init`, gets a presigned upload ticket, and uploads **straight to object
+  storage** (S3 / R2 / B2 / MinIO). This bypasses the serverless request-body
+  limit entirely — the size ceiling is the storage provider's (5 TB/object on
+  S3), not the app's.
+- **Chunked multipart for big files.** Files over 100 MB upload as parallel
+  ~100 MB parts (resumable, progress-tracked in the compose UI); files at or
+  under 100 MB use a single presigned PUT. The browser uploader slices the
+  `File` so a full-length video is never loaded into memory.
+- **Encrypted.** Blobs are encrypted at rest by the bucket's default encryption,
+  and each file gets an envelope-wrapped per-file data key (`crypto.ts`) for
+  optional client-side end-to-end encryption. Only metadata + the wrapped key
+  live in the database; the bytes live in storage.
+- **Time-limited downloads.** `GET /api/mail/attachments/[id]` returns a fresh
+  presigned, expiring download URL — links are never public or permanent.
+- **Self-healing tie-in.** Incomplete uploads older than 24h are detected (and
+  marked failed) by the maintenance engine so abandoned multipart uploads don't
+  accumulate storage cost.
+
+**Endpoints:** `POST /api/mail/attachments/init`, `POST /api/mail/attachments/
+[id]/complete`, `GET|DELETE /api/mail/attachments/[id]`. Send links them via
+`attachmentIds` on `POST /api/mail/messages`.
+
+**Bucket setup:** enable default encryption, and set a CORS policy allowing
+`PUT` from your app origin with `ExposeHeaders: ["ETag"]` (multipart needs the
+ETag readable from the browser).
 
 ---
 

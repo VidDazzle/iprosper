@@ -86,3 +86,24 @@ export function makePreview(body: string, max = 140): string {
   const collapsed = body.replace(/\s+/g, ' ').trim();
   return collapsed.length > max ? `${collapsed.slice(0, max - 1)}…` : collapsed;
 }
+
+/**
+ * Envelope encryption for attachments (large files can't be AES-GCM'd through
+ * a serverless function, so we protect them with a per-file data key instead of
+ * encrypting the whole blob here).
+ *
+ * `plaintextKey` is a fresh 256-bit key the client can use to encrypt the file
+ * before upload (optional end-to-end mode). `wrappedKey` is that key encrypted
+ * with the master key and safe to store in the database. The blob itself is
+ * additionally encrypted at rest by the storage bucket's default encryption.
+ */
+export function generateDataKey(): { plaintextKey: string; wrappedKey: string } {
+  const raw = crypto.randomBytes(32);
+  const plaintextKey = raw.toString('base64');
+  return { plaintextKey, wrappedKey: encrypt(plaintextKey) };
+}
+
+/** Recover a file's data key from its stored wrapped form. Throws if tampered. */
+export function unwrapDataKey(wrappedKey: string): string {
+  return decrypt(wrappedKey);
+}

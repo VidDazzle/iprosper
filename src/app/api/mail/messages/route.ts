@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { mailMessages } from '@/db/schema';
-import { and, desc, eq, like } from 'drizzle-orm';
+import { mailMessages, mailAttachments } from '@/db/schema';
+import { and, desc, eq, like, inArray } from 'drizzle-orm';
 import { encryptionConfigured } from '@/lib/crypto';
 import { triageEmail } from '@/lib/ai';
 import { deliverEmail } from '@/lib/mailer';
@@ -125,8 +125,31 @@ export async function POST(request: NextRequest) {
     }
 
     const row = inserted[0] as unknown as StoredMessageRow;
+
+    // Link any uploaded attachments to this message + thread.
+    let attachments: { id: number; filename: string; sizeBytes: number; mimeType: string }[] = [];
+    const attachmentIds: number[] = Array.isArray(body.attachmentIds)
+      ? body.attachmentIds.filter((n: unknown) => Number.isInteger(n))
+      : [];
+    if (attachmentIds.length) {
+      await db
+        .update(mailAttachments)
+        .set({ messageId: row.id, threadId })
+        .where(inArray(mailAttachments.id, attachmentIds));
+      const linked = await db
+        .select()
+        .from(mailAttachments)
+        .where(inArray(mailAttachments.id, attachmentIds));
+      attachments = linked.map((a) => ({
+        id: a.id,
+        filename: a.filename,
+        sizeBytes: a.sizeBytes,
+        mimeType: a.mimeType,
+      }));
+    }
+
     return NextResponse.json(
-      { message: toClientMessage(row), delivery },
+      { message: { ...toClientMessage(row), attachments }, delivery },
       { status: 201 },
     );
   } catch (error) {

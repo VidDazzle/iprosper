@@ -14,7 +14,17 @@ import {
   RefreshCw,
   X,
   Trash2,
+  Paperclip,
+  Download,
+  FileText,
+  Film,
 } from "lucide-react";
+import {
+  uploadAttachment,
+  downloadAttachment,
+  formatBytes,
+  type UploadProgress,
+} from "@/lib/upload-client";
 
 interface Message {
   id: number;
@@ -30,6 +40,30 @@ interface Message {
   direction: string;
   source: string;
   createdAt: string;
+  attachments?: MailAttachment[];
+}
+
+interface MailAttachment {
+  id: number;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  sizeHuman?: string;
+}
+
+interface UploadItem {
+  localId: string;
+  filename: string;
+  sizeBytes: number;
+  mimeType: string;
+  pct: number;
+  status: "uploading" | "done" | "error";
+  attachmentId?: number;
+}
+
+function attachmentIcon(mimeType: string) {
+  if (mimeType.startsWith("video/")) return Film;
+  return FileText;
 }
 
 const priorityColor: Record<string, string> = {
@@ -265,6 +299,36 @@ export default function Mailbox() {
                 <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
                   {selected.body}
                 </div>
+
+                {selected.attachments && selected.attachments.length > 0 && (
+                  <div className="mt-6 border-t border-white/10 pt-4">
+                    <div className="mb-2 flex items-center gap-2 text-xs font-medium text-gray-400">
+                      <Paperclip className="h-3.5 w-3.5" /> {selected.attachments.length} attachment
+                      {selected.attachments.length > 1 ? "s" : ""}
+                    </div>
+                    <div className="space-y-2">
+                      {selected.attachments.map((a) => {
+                        const Icon = attachmentIcon(a.mimeType);
+                        return (
+                          <button
+                            key={a.id}
+                            onClick={() => downloadAttachment(a.id)}
+                            className="group flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5 text-left hover:border-emerald-500/40"
+                          >
+                            <Icon className="h-5 w-5 shrink-0 text-emerald-400" />
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm text-white">{a.filename}</div>
+                              <div className="text-xs text-gray-500">
+                                {a.sizeHuman || formatBytes(a.sizeBytes)}
+                              </div>
+                            </div>
+                            <Download className="h-4 w-4 text-gray-500 group-hover:text-emerald-400" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex h-full min-h-[300px] items-center justify-center rounded-xl border border-dashed border-white/10 text-gray-600">
@@ -295,6 +359,40 @@ function ComposeModal({
   const [instruction, setInstruction] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [sending, setSending] = useState(false);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function onFilesChosen(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploadError(null);
+    for (const file of Array.from(files)) {
+      const localId = `${file.name}-${file.size}-${Date.now()}-${Math.random()}`;
+      setUploads((prev) => [
+        ...prev,
+        { localId, filename: file.name, sizeBytes: file.size, mimeType: file.type, pct: 0, status: "uploading" },
+      ]);
+      try {
+        const attachmentId = await uploadAttachment(file, (p: UploadProgress) =>
+          setUploads((prev) => prev.map((u) => (u.localId === localId ? { ...u, pct: p.pct } : u))),
+        );
+        setUploads((prev) =>
+          prev.map((u) => (u.localId === localId ? { ...u, attachmentId, pct: 100, status: "done" } : u)),
+        );
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : "Upload failed.");
+        setUploads((prev) =>
+          prev.map((u) => (u.localId === localId ? { ...u, status: "error" } : u)),
+        );
+      }
+    }
+  }
+
+  async function removeUpload(u: UploadItem) {
+    if (u.attachmentId) {
+      await fetch(`/api/mail/attachments/${u.attachmentId}`, { method: "DELETE" }).catch(() => {});
+    }
+    setUploads((prev) => prev.filter((x) => x.localId !== u.localId));
+  }
 
   async function aiDraft() {
     if (!instruction.trim()) return;
@@ -314,6 +412,9 @@ function ComposeModal({
 
   async function send() {
     if (!to.trim() || !body.trim()) return;
+    const attachmentIds = uploads
+      .filter((u) => u.status === "done" && u.attachmentId)
+      .map((u) => u.attachmentId as number);
     setSending(true);
     await fetch("/api/mail/messages", {
       method: "POST",
@@ -323,12 +424,15 @@ function ComposeModal({
         to: to.split(",").map((s) => s.trim()),
         subject,
         body,
+        attachmentIds,
       }),
     });
     setSending(false);
     onSent();
     onClose();
   }
+
+  const anyUploading = uploads.some((u) => u.status === "uploading");
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
@@ -380,9 +484,60 @@ function ComposeModal({
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Message"
-            rows={8}
+            rows={6}
             className="w-full resize-none rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none focus:border-white/30"
           />
+
+          {/* Attachments — direct chunked upload to storage, any size */}
+          <div>
+            <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-300 hover:bg-white/5">
+              <Paperclip className="h-4 w-4" /> Attach files
+              <span className="text-xs text-gray-500">(documents, video — any size)</span>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => onFilesChosen(e.target.files)}
+              />
+            </label>
+            {uploadError && <p className="mt-2 text-xs text-red-400">{uploadError}</p>}
+            {uploads.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {uploads.map((u) => {
+                  const Icon = attachmentIcon(u.mimeType);
+                  return (
+                    <div
+                      key={u.localId}
+                      className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+                    >
+                      <Icon className="h-4 w-4 shrink-0 text-emerald-400" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm text-white">{u.filename}</span>
+                          <span className="shrink-0 text-xs text-gray-500">{formatBytes(u.sizeBytes)}</span>
+                        </div>
+                        {u.status === "uploading" && (
+                          <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                            <div
+                              className="h-full bg-emerald-500 transition-all"
+                              style={{ width: `${u.pct}%` }}
+                            />
+                          </div>
+                        )}
+                        {u.status === "done" && (
+                          <span className="text-xs text-emerald-400">Uploaded · encrypted at rest</span>
+                        )}
+                        {u.status === "error" && <span className="text-xs text-red-400">Failed</span>}
+                      </div>
+                      <button onClick={() => removeUpload(u)} className="text-gray-500 hover:text-red-400">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 flex items-center justify-between">
@@ -391,11 +546,11 @@ function ComposeModal({
           </span>
           <button
             onClick={send}
-            disabled={sending}
+            disabled={sending || anyUploading}
             className="flex items-center gap-2 rounded-lg bg-white px-6 py-2 text-sm font-semibold text-black hover:bg-gray-200 disabled:opacity-60"
           >
             {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Send
+            {anyUploading ? "Uploading…" : "Send"}
           </button>
         </div>
       </div>

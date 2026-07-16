@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { mailMessages } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { mailMessages, mailAttachments } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
 import { encryptionConfigured } from '@/lib/crypto';
 import { toClientMessage, StoredMessageRow } from '@/lib/mailbox';
+import { humanSize } from '@/lib/storage';
 
 /**
  * GET    /api/mail/messages/[id]  -> full decrypted message (marks read).
@@ -33,7 +34,20 @@ export async function GET(_request: NextRequest, { params }: Params) {
       await db.update(mailMessages).set({ status: 'read' }).where(eq(mailMessages.id, id));
       row.status = 'read';
     }
-    return NextResponse.json({ message: toClientMessage(row) }, { status: 200 });
+
+    const atts = await db
+      .select()
+      .from(mailAttachments)
+      .where(and(eq(mailAttachments.messageId, id), eq(mailAttachments.status, 'uploaded')));
+    const attachments = atts.map((a) => ({
+      id: a.id,
+      filename: a.filename,
+      mimeType: a.mimeType,
+      sizeBytes: a.sizeBytes,
+      sizeHuman: humanSize(a.sizeBytes),
+    }));
+
+    return NextResponse.json({ message: { ...toClientMessage(row), attachments } }, { status: 200 });
   } catch (error) {
     console.error('GET /mail/messages/[id] error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
