@@ -37,6 +37,9 @@ export default function Navigation() {
               <Link href="/solutions" className="text-navigation hover:text-white transition-colors">
                 Solutions
               </Link>
+              <Link href="/ai-os" className="text-navigation hover:text-white transition-colors">
+                AI OS
+              </Link>
               <Link href="/pricing" className="text-navigation hover:text-white transition-colors">
                 Pricing
               </Link>
@@ -95,8 +98,15 @@ export default function Navigation() {
             >
               Solutions
             </Link>
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/ai-os"
+              className="text-navigation hover:text-white transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              AI OS
+            </Link>
+            <Link
+              href="/pricing"
               className="text-navigation hover:text-white transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
