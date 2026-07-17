@@ -1,0 +1,23 @@
+# Local / single-node deployment of the Evolve AI OS control plane.
+# For production, inject EVOLVE_* from a secret manager rather than a .env file,
+# and put a TLS-terminating load balancer + WAF in front.
+services:
+  control-plane:
+    build: .
+    ports:
+      - "8787:8787"
+    environment:
+      EVOLVE_ENV: ${EVOLVE_ENV:-production}
+      EVOLVE_PORT: "8787"
+      EVOLVE_KMS_ROOT_KEY: ${EVOLVE_KMS_ROOT_KEY}
+      EVOLVE_TOKEN_KID: ${EVOLVE_TOKEN_KID:-evt-2026-1}
+      EVOLVE_TOKEN_PRIVATE_KEY: ${EVOLVE_TOKEN_PRIVATE_KEY}
+      EVOLVE_TOKEN_PUBLIC_KEY: ${EVOLVE_TOKEN_PUBLIC_KEY}
+      EVOLVE_TOKEN_TTL_SEC: ${EVOLVE_TOKEN_TTL_SEC:-3600}
+      EVOLVE_ADMIN_KEY: ${EVOLVE_ADMIN_KEY}
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
