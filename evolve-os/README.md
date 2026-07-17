@@ -18,6 +18,8 @@ Evolve builds AI agents and autonomous AI products of all types. Those agents ne
 - **Governance** — a hash-chained audit log that makes tampering detectable.
 - **Orchestration** — a task queue and dispatcher that runs agents within their declared resource limits.
 - **Integration** — a connector framework to wire in all of Evolve's services and apps under policy control.
+- **Autonomy** — it is **self-healing** (auto-quarantines failing agents and recovers them; circuit-breaks failing dependencies) and **self-optimizing** (an AIMD control loop tunes agent concurrency from live metrics).
+- **Interoperability** — it exposes itself as an **MCP server**, so Claude, Codex, or any MCP client can drive the whole OS through standard tool calls.
 
 ## Architecture at a glance
 
@@ -44,6 +46,13 @@ Evolve builds AI agents and autonomous AI products of all types. Those agents ne
                          └──────────────────────────────┘
 ```
 
+Around this core run three autonomic loops and an interop surface:
+
+- **Supervisor (self-healing)** — feeds task events into metrics, auto-quarantines an agent whose failure streak crosses a threshold, and returns it to service after a cooldown. Connector calls run through **circuit breakers** that fail fast and self-probe.
+- **Optimizer (self-optimizing)** — an AIMD controller that raises concurrency for reliable, saturated agents and backs off failing ones, all within bounds and fully audited.
+- **Multi-agent fleet** — cooperating executable agents (voice, intent, responder, and a coordinator that delegates to them) running under the OS's policy + audit controls.
+- **MCP server** — the OS exposed as Model Context Protocol tools over stdio, drivable by any MCP client.
+
 Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Quick start
@@ -52,10 +61,21 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 cd evolve-os
 npm install          # installs only typescript + @types/node (devDeps)
 npm run build        # compile to dist/
-npm test             # 20 tests: crypto, policy, audit tamper-detection, kernel
+npm test             # 30 tests: crypto, policy, audit, kernel, reliability, autonomic, mcp
 npm run smoke        # end-to-end: register → deploy → run a task → verify audit
 npm start            # boot the control-plane HTTP server on :8787
+npm run mcp          # run the OS as an MCP server (stdio) for Claude/Codex
 ```
+
+### Drive the OS from an MCP client
+
+Point any MCP client at the server (Claude Desktop / Codex config):
+
+```json
+{ "mcpServers": { "evolve-os": { "command": "node", "args": ["dist/src/mcp-server.js"] } } }
+```
+
+Exposed tools: `evolve_list_agents`, `evolve_register_agent`, `evolve_deploy_agent`, `evolve_submit_task`, `evolve_get_task`, `evolve_system_health`, `evolve_audit_verify`.
 
 ### Try the API
 
@@ -105,11 +125,17 @@ evolve-os/
 │   ├── policy/        rate limiter, threat detector, policy decision point
 │   ├── agents/        agent manifests + lifecycle registry
 │   ├── orchestrator/  event bus, task queue, dispatcher
-│   ├── connectors/    connector framework + reference connectors
+│   ├── connectors/    connector framework + reference connectors (circuit-broken)
+│   ├── observability/ metrics registry (latency, streaks, failure rates)
+│   ├── reliability/   circuit breaker + self-healing supervisor
+│   ├── optimization/  self-optimizing AIMD controller
+│   ├── agents/fleet   multi-agent fleet + cooperating reference agents
+│   ├── mcp/           MCP server (JSON-RPC 2.0 over stdio) exposing OS tools
 │   ├── gateway/       zero-trust authentication front door
 │   ├── config/        env-driven configuration (fails closed in prod)
 │   ├── kernel/        the microkernel that wires it all together
-│   └── server.ts      control-plane HTTP server (Node http, no deps)
+│   ├── server.ts      control-plane HTTP server (Node http, no deps)
+│   └── mcp-server.ts  MCP server entry point (stdio)
 ├── test/              node:test suites
 ├── scripts/           keygen, smoke test
 └── docs/              architecture, security, handoff, integration

@@ -48,6 +48,7 @@ export function authenticate(kernel: Kernel, req: GatewayRequest, audience?: str
     displayName: claims.sub,
     tenantId: claims.tid,
     roles: [], // roles are resolved server-side; token carries explicit caps
+    capabilities: claims.cap, // explicit least-privilege caps from the token
   };
   return { ok: true, principal, capabilities: claims.cap, jti: claims.jti };
 }

@@ -1,5 +1,6 @@
 import type { ExecutionContext } from "../orchestrator/orchestrator.js";
 import { permissionMatches } from "../identity/rbac.js";
+import { CircuitBreaker, type BreakerOptions } from "../reliability/circuit-breaker.js";
 
 /**
  * A Connector is the OS's typed adapter to an external capability — an Evolve
@@ -39,12 +40,30 @@ export class ConnectorError extends Error {}
 /** Registry + guarded invocation surface for connectors. */
 export class ConnectorHub {
   private readonly connectors = new Map<string, Connector>();
+  private readonly breakers = new Map<string, CircuitBreaker>();
+  private readonly breakerOptions: BreakerOptions;
+
+  constructor(breakerOptions?: Partial<BreakerOptions>) {
+    this.breakerOptions = {
+      failureThreshold: 5,
+      cooldownMs: 15_000,
+      ...breakerOptions,
+    };
+  }
 
   register(connector: Connector): void {
     if (this.connectors.has(connector.id)) {
       throw new ConnectorError(`connector ${connector.id} already registered`);
     }
     this.connectors.set(connector.id, connector);
+    this.breakers.set(connector.id, new CircuitBreaker(connector.id, this.breakerOptions));
+  }
+
+  /** Current circuit-breaker state per connector (for the health endpoint). */
+  breakerStates(): Record<string, string> {
+    const out: Record<string, string> = {};
+    for (const [id, b] of this.breakers) out[id] = b.status;
+    return out;
   }
 
   get(id: string): Connector | undefined {
@@ -80,7 +99,10 @@ export class ConnectorHub {
       capabilities: ctx.capabilities,
       ...("signal" in ctx && ctx.signal ? { signal: ctx.signal } : {}),
     };
-    return connector.invoke(input, invocationCtx) as Promise<O>;
+    // Route through the circuit breaker so a failing dependency is isolated
+    // (fail-fast when open) and auto-probed for recovery after cooldown.
+    const breaker = this.breakers.get(connectorId)!;
+    return breaker.execute(() => connector.invoke(input, invocationCtx)) as Promise<O>;
   }
 
   async healthAll(): Promise<Record<string, ConnectorHealth>> {

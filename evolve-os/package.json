@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node --enable-source-maps dist/src/server.js",
+    "mcp": "node --enable-source-maps dist/src/mcp-server.js",
     "dev": "node --watch --enable-source-maps dist/src/server.js",
     "test": "npm run build && node --test dist/test/*.test.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",

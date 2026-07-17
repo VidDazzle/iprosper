@@ -5,7 +5,7 @@ import { authenticate } from "./gateway/gateway.js";
 import { readBody, sendJson, clientIp } from "./util/http.js";
 import { permissionMatches } from "./identity/rbac.js";
 import type { Principal } from "./identity/principals.js";
-import { EvolveVoiceConnector } from "./connectors/builtin.js";
+import { installDefaultFleet } from "./bootstrap.js";
 import type { AgentExecutor, ExecutionContext } from "./orchestrator/orchestrator.js";
 import type { Task } from "./orchestrator/task-queue.js";
 
@@ -21,19 +21,21 @@ import type { Task } from "./orchestrator/task-queue.js";
 const config = loadConfig();
 const kernel = Kernel.boot(config);
 
-// Register a reference connector so agents have something to call.
-kernel.connectors.register(new EvolveVoiceConnector());
+// Install the reference multi-agent fleet (voice, intent, responder,
+// coordinator) and start the self-healing + self-optimizing loops.
+installDefaultFleet(kernel);
+kernel.startSelfManagement();
 
 /**
- * Demo executor: routes a task to the Evolve voice connector when the input has
- * an `utterance`, otherwise echoes. Replace with your real agent runtime (an
- * LLM loop, a workflow engine, a sandboxed worker).
+ * Executor: run the task through the multi-agent fleet. If no executable agent
+ * is registered under the target agent's manifest name, fall back to an echo so
+ * ad-hoc registered agents still resolve. Replace/extend with your real runtime.
  */
-const demoExecutor: AgentExecutor = {
+const executor: AgentExecutor = {
   async execute(task: Task, ctx: ExecutionContext): Promise<unknown> {
-    const input = task.input as { utterance?: string } | undefined;
-    if (input?.utterance) {
-      return kernel.connectors.invoke("evolve.voice", { utterance: input.utterance }, ctx);
+    const rec = kernel.registry.get(task.agentId);
+    if (rec && kernel.fleet.has(rec.manifest.name)) {
+      return kernel.fleet.execute(task, ctx);
     }
     return { echoed: task.input, at: new Date().toISOString() };
   },
@@ -41,7 +43,7 @@ const demoExecutor: AgentExecutor = {
 
 // Background dispatch loop.
 const dispatch = setInterval(() => {
-  void kernel.orchestrator.tick(demoExecutor);
+  void kernel.orchestrator.tick(executor);
 }, 250);
 
 function requireCap(caps: string[], required: string): boolean {
@@ -70,7 +72,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
   }
   if (path === "/ready" && method === "GET") {
     const conn = await kernel.connectors.healthAll();
-    return sendJson(res, 200, { status: "ready", connectors: conn });
+    return sendJson(res, 200, {
+      status: "ready",
+      connectors: conn,
+      breakers: kernel.connectors.breakerStates(),
+      quarantinedAgents: kernel.supervisor.quarantinedAgents(),
+    });
   }
   if (path === "/.well-known/evolve-keys" && method === "GET") {
     return sendJson(res, 200, { keys: kernel.publicKeySet() });
@@ -193,6 +200,12 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     return sendJson(res, 200, { task });
   }
 
+  // GET /v1/system/health — metrics, breakers, quarantine, fleet
+  if (path === "/v1/system/health" && method === "GET") {
+    if (!requireCap(capabilities, "agent:read")) return forbidden(res, "agent:read");
+    return sendJson(res, 200, kernel.health());
+  }
+
   // GET /v1/audit — read + verify the audit chain
   if (path === "/v1/audit" && method === "GET") {
     if (!requireCap(capabilities, "audit:read")) return forbidden(res, "audit:read");
@@ -230,6 +243,7 @@ server.listen(config.httpPort, () => {
 
 function shutdown(): void {
   clearInterval(dispatch);
+  kernel.stopSelfManagement();
   kernel.orchestrator.drain();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 5000).unref();

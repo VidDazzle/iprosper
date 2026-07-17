@@ -9,6 +9,13 @@ export interface Principal {
   readonly tenantId: string;
   /** Assigned role names, resolved against the RBAC registry. */
   readonly roles: string[];
+  /**
+   * Explicit capabilities granted directly to this principal — e.g. the
+   * least-privilege set carried by a verifiable token. These are unioned with
+   * role-derived permissions during authorization, so a token-bearing principal
+   * with no server-side roles is still authorized for exactly what it holds.
+   */
+  readonly capabilities?: string[];
   /** Optional free-form attributes for attribute-based checks. */
   readonly attributes?: Record<string, string>;
 }

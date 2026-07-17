@@ -12,7 +12,11 @@ This package is a working, tested foundation for the Evolve AI OS. It is built s
 - ✅ Orchestrator: queue, dispatch, concurrency + timeout enforcement, retries, audit. (`src/orchestrator`)
 - ✅ Connector framework + reference connectors. (`src/connectors`)
 - ✅ Zero-trust gateway + control-plane HTTP server. (`src/gateway`, `src/server.ts`)
-- ✅ 20 passing tests + an end-to-end smoke script. Clean `tsc --strict` build, zero runtime deps.
+- ✅ Self-healing: metrics registry, circuit breakers on every connector, supervisor that quarantines + recovers agents. (`src/observability`, `src/reliability`)
+- ✅ Self-optimizing: AIMD controller that tunes agent concurrency from live metrics. (`src/optimization`)
+- ✅ Multi-agent fleet: cooperating executable agents with capability-scoped delegation. (`src/agents/fleet.ts`, `builtin-agents.ts`)
+- ✅ MCP server: the OS exposed as Model Context Protocol tools over stdio for Claude/Codex. (`src/mcp`, `src/mcp-server.ts`)
+- ✅ 30 passing tests + an end-to-end smoke script. Clean `tsc --strict` build, zero runtime deps.
 
 Run `npm test && npm run smoke` to confirm on your machine.
 
@@ -26,7 +30,7 @@ Everything is in-memory. Implement the interfaces against an encrypted database 
 - Store secrets/PII as `Envelope`s via `encryptJson` so DEKs are KMS-wrapped.
 
 ### 2. Real agent runtime
-Replace the demo `AgentExecutor` in `src/server.ts` with your production runtime — an LLM agent loop (Claude via the Anthropic SDK), a workflow engine, or a sandboxed worker. Enforce isolation here: separate process/VM, egress allow-list, CPU/memory cgroups. The `ExecutionContext` already carries the agent's capabilities and an `AbortSignal` for timeouts.
+The multi-agent `Fleet` (`src/agents/fleet.ts`) is already the executor; the reference agents in `builtin-agents.ts` have stub `handle` bodies. Replace those with real LLM agent loops (Claude via the Anthropic SDK), a workflow engine, or sandboxed workers — the coordination/delegation contract stays the same. Enforce isolation here: separate process/VM, egress allow-list, CPU/memory cgroups. The `AgentContext` already carries capabilities, capability-gated connector access, `delegate`, and an `AbortSignal`.
 
 ### 3. Production KMS + secrets
 Swap `LocalKeyring` for AWS KMS / GCP KMS / Vault by implementing the `Kms` interface (`src/crypto/kms.ts`). Load `EVOLVE_*` secrets from a secret manager, not env files.

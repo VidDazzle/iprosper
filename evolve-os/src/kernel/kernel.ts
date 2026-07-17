@@ -15,6 +15,10 @@ import { AgentRegistry } from "../agents/registry.js";
 import { Orchestrator } from "../orchestrator/orchestrator.js";
 import { EventBus } from "../orchestrator/event-bus.js";
 import { ConnectorHub } from "../connectors/connector.js";
+import { MetricsRegistry } from "../observability/metrics.js";
+import { Supervisor } from "../reliability/supervisor.js";
+import { Optimizer } from "../optimization/optimizer.js";
+import { Fleet } from "../agents/fleet.js";
 import { loadConfig, type OsConfig } from "../config/config.js";
 import { uuid } from "../crypto/random.js";
 
@@ -34,6 +38,10 @@ export class Kernel {
   readonly connectors: ConnectorHub;
   readonly bus: EventBus;
   readonly orchestrator: Orchestrator;
+  readonly metrics: MetricsRegistry;
+  readonly fleet: Fleet;
+  readonly supervisor: Supervisor;
+  readonly optimizer: Optimizer;
 
   private readonly tokenKeyId: string;
   private readonly tokenPrivateKeyPem: string;
@@ -63,6 +71,23 @@ export class Kernel {
       policy: this.policy,
       audit: this.audit,
       bus: this.bus,
+    });
+
+    // Autonomic layer: metrics feed the self-healing supervisor and the
+    // self-optimizing controller; the fleet is the multi-agent executor.
+    this.metrics = new MetricsRegistry();
+    this.fleet = new Fleet(this.registry, this.connectors);
+    this.supervisor = new Supervisor({
+      registry: this.registry,
+      audit: this.audit,
+      bus: this.bus,
+      metrics: this.metrics,
+    });
+    this.optimizer = new Optimizer({
+      registry: this.registry,
+      metrics: this.metrics,
+      audit: this.audit,
+      policy: this.policy,
     });
 
     this.tokenKeyId = signing.kid;
@@ -131,5 +156,36 @@ export class Kernel {
   /** The public JWKS-equivalent for external verifiers. */
   publicKeySet(): Record<string, string> {
     return { ...this.publicKeys };
+  }
+
+  /** Start the autonomic loops: self-healing supervisor + self-optimizer. */
+  startSelfManagement(): void {
+    this.supervisor.start();
+    this.optimizer.start();
+  }
+
+  /** Stop the autonomic loops (graceful shutdown). */
+  stopSelfManagement(): void {
+    this.supervisor.stop();
+    this.optimizer.stop();
+  }
+
+  /** A consolidated health snapshot for the readiness endpoint / MCP tool. */
+  health(): {
+    env: string;
+    metrics: ReturnType<MetricsRegistry["snapshot"]>;
+    connectors: Record<string, string>;
+    quarantinedAgents: string[];
+    fleet: string[];
+    agents: number;
+  } {
+    return {
+      env: this.config.env,
+      metrics: this.metrics.snapshot(),
+      connectors: this.connectors.breakerStates(),
+      quarantinedAgents: this.supervisor.quarantinedAgents(),
+      fleet: this.fleet.names(),
+      agents: this.registry.list().length,
+    };
   }
 }

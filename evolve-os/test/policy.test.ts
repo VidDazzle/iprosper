@@ -27,6 +27,18 @@ test("RBAC owner can deploy, agent cannot", () => {
   assert.ok(rbac.can(agent, "connector:invoke"));
 });
 
+test("RBAC honors explicit token capabilities when roles are empty", () => {
+  const rbac = new RbacRegistry();
+  // Mirrors a gateway-derived principal: no server roles, caps from the token.
+  const tokenPrincipal: Principal = {
+    id: "svc", kind: "service", displayName: "S", tenantId: "t1",
+    roles: [], capabilities: ["task:submit", "agent:read"],
+  };
+  assert.ok(rbac.can(tokenPrincipal, "task:submit"));
+  assert.ok(rbac.can(tokenPrincipal, "agent:read"));
+  assert.equal(rbac.can(tokenPrincipal, "secret:read"), false);
+});
+
 test("token bucket enforces burst then refills", () => {
   let now = 0;
   const rl = new TokenBucketLimiter({ ratePerSec: 1, burst: 2 }, () => now);

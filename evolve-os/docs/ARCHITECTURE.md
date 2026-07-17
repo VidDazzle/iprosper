@@ -48,6 +48,24 @@
 ### Gateway (`src/gateway`)
 - `gateway.ts` — the zero-trust front door: threat pre-screen → token verification → principal resolution. Returns the caller's least-privilege capability set to the control plane.
 
+### Observability (`src/observability`)
+- `metrics.ts` — a dependency-free metrics registry: counters, a rolling latency window (p50/p95), and per-agent success/failure streaks. It is the shared signal source for both autonomic loops.
+
+### Reliability — self-healing (`src/reliability`)
+- `circuit-breaker.ts` — closed/open/half-open breaker. The `ConnectorHub` wraps every connector call in one, so a failing dependency fails fast and is auto-probed for recovery.
+- `supervisor.ts` — the autonomic nervous system: subscribes to task events, auto-quarantines an agent whose consecutive-failure streak crosses a threshold, and runs a recovery loop that returns cooled-down agents to service. Every action is audited and alerted.
+
+### Optimization — self-optimizing (`src/optimization`)
+- `optimizer.ts` — a closed-loop AIMD controller (the TCP-congestion control family). It reads live metrics and, per agent: additively increases concurrency when the agent is reliable and saturated, and multiplicatively decreases it when the agent is failing — always within bounds, always audited.
+
+### Multi-agent fleet (`src/agents/fleet.ts`, `builtin-agents.ts`)
+- `fleet.ts` — the `Fleet` implements `AgentExecutor`: it maps a dispatched task to a concrete `ExecutableAgent` and runs it in a scoped context. Agents collaborate via `ctx.delegate`, which re-resolves each peer's own manifest capabilities (least privilege per hop) and is depth-limited.
+- `builtin-agents.ts` — a reference fleet: `VoiceAgent`, `IntentAgent`, `ResponderAgent`, and a `CoordinatorAgent` that composes them into a pipeline.
+
+### MCP interop (`src/mcp`)
+- `protocol.ts` / `mcp-server.ts` / `stdio.ts` — a dependency-free Model Context Protocol server (JSON-RPC 2.0 over newline-delimited stdio): `initialize`, `tools/list`, `tools/call`, `ping`.
+- `evolve-tools.ts` — wires the OS onto MCP: register/deploy agents, submit tasks to the fleet, read system health, verify the audit chain. This is how Codex/Claude/any MCP client drives the operating system.
+
 ### Kernel (`src/kernel`)
 - `kernel.ts` — boots and owns every subsystem, issues/verifies/revokes tokens, exposes the public key set, and rotates the KMS. `Kernel.boot()` fails closed in staging/production if signing keys are absent.
 

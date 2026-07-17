@@ -44,6 +44,9 @@ export class RbacRegistry {
   /** Does the principal hold `required` (e.g. `agent:deploy`)? */
   can(principal: Principal, required: string): boolean {
     const perms = this.permissionsFor(principal.roles);
+    // Union role-derived permissions with the principal's explicit (token)
+    // capabilities so both authorization models are honored.
+    for (const c of principal.capabilities ?? []) perms.add(c);
     return permissionMatches(perms, required);
   }
 }
