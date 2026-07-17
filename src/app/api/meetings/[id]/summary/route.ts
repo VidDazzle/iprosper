@@ -7,6 +7,7 @@ import { summarizeMeeting, aiConfigured } from '@/lib/ai';
 import { encryptionConfigured } from '@/lib/crypto';
 import { buildEncryptedFields, newThreadId, mailboxAddress } from '@/lib/mailbox';
 import { deliverEmail } from '@/lib/mailer';
+import { getPrimaryAccount, meter } from '@/lib/metering';
 
 /**
  * POST /api/meetings/[id]/summary
@@ -26,6 +27,20 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const body = await request.json().catch(() => ({}));
     const sendReports = body.sendReports === true;
+
+    // Meter the AI summary (a billable action) with a hard cap.
+    try {
+      const account = await getPrimaryAccount();
+      const m = await meter(account.id, 'meet', 'summary');
+      if (!m.allowed) {
+        return NextResponse.json(
+          { error: m.message, code: 'CAP_REACHED', product: 'meet', capReached: true },
+          { status: 402 },
+        );
+      }
+    } catch (e) {
+      console.error('metering error (meet summary):', e);
+    }
 
     const lines = await db
       .select()

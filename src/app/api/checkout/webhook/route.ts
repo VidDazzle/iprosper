@@ -3,6 +3,8 @@ import { db } from '@/db';
 import { orders } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyStripeSignature } from '@/lib/checkout';
+import { grantCredits } from '@/lib/metering';
+import { PRODUCTS, Product } from '@/lib/pricing';
 
 /**
  * POST /api/checkout/webhook
@@ -22,10 +24,23 @@ export async function POST(request: NextRequest) {
       const session = event.data?.object || {};
       const orderId = parseInt(session.client_reference_id || session.metadata?.order_id || '', 10);
       if (!isNaN(orderId)) {
-        await db
+        const rows = await db
           .update(orders)
           .set({ status: 'paid', providerRef: session.id || null })
-          .where(eq(orders.id, orderId));
+          .where(eq(orders.id, orderId))
+          .returning();
+        // If this was a credit purchase, grant the credits now that it's paid.
+        const order = rows[0];
+        if (order?.sourceContext) {
+          try {
+            const meta = JSON.parse(order.sourceContext);
+            if (meta.kind === 'credits' && PRODUCTS.includes(meta.product as Product) && meta.units > 0) {
+              await grantCredits(meta.accountId, meta.product, meta.units);
+            }
+          } catch {
+            /* not a credit order */
+          }
+        }
       }
     }
     return NextResponse.json({ received: true }, { status: 200 });

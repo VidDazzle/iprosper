@@ -3,6 +3,7 @@ import "./globals.css";
 import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
 import ErrorReporter from "@/components/ErrorReporter";
 import PwaRegister from "@/components/PwaRegister";
+import UsageMeter from "@/components/UsageMeter";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -53,6 +54,7 @@ export default function RootLayout({
         />
         {children}
         <PwaRegister />
+        <UsageMeter />
         <VisualEditsMessenger />
       </body>
     </html>

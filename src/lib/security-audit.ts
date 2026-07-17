@@ -1,8 +1,9 @@
 import { db } from '@/db';
-import { voiceAgentLog } from '@/db/schema';
+import { voiceAgentLog, usageEvents } from '@/db/schema';
 import { and, eq, gte } from 'drizzle-orm';
 import { encryptionConfigured } from '@/lib/crypto';
 import { agentAuthConfigured } from '@/lib/voice-auth';
+import { findMarginViolations } from '@/lib/pricing';
 
 /**
  * Security self-audit.
@@ -131,6 +132,34 @@ export async function runSecurityAudit(): Promise<SecurityReport> {
     ok: true,
     detail: 'Error-rate baseline recorded for trend comparison.',
   });
+
+  // --- Profit guarantee: revenue must always cover cost --------------------
+  const pricingViolations = findMarginViolations();
+  findings.push({
+    control: 'pricing_margin_floor',
+    severity: 'critical',
+    ok: pricingViolations.length === 0,
+    detail: pricingViolations.length === 0
+      ? 'All configured prices clear the margin floor.'
+      : `${pricingViolations.length} price(s) below the margin floor — would lose money.`,
+    recommendation: pricingViolations.length ? 'Fix src/lib/pricing.ts prices immediately.' : undefined,
+  });
+
+  try {
+    const events = await db.select({ cost: usageEvents.costCents, price: usageEvents.priceCents }).from(usageEvents);
+    const cost = events.reduce((s, e) => s + e.cost, 0);
+    const revenue = events.reduce((s, e) => s + e.price, 0);
+    const margin = revenue - cost;
+    findings.push({
+      control: 'realized_margin',
+      severity: 'critical',
+      ok: margin >= 0,
+      detail: `Realized margin ${(margin / 100).toFixed(2)} (revenue ${(revenue / 100).toFixed(2)} − cost ${(cost / 100).toFixed(2)}) over ${events.length} metered events.`,
+      recommendation: margin < 0 ? 'Metered revenue is below cost — raise prices or tighten caps now.' : undefined,
+    });
+  } catch {
+    /* usage table may not exist yet */
+  }
 
   // --- Score ------------------------------------------------------------
   let score = 100;

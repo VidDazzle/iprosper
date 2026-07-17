@@ -14,6 +14,7 @@ import {
 } from '@/lib/mailbox';
 import { anyFirstContact, outboundCountTo, prependWelcome } from '@/lib/welcome';
 import { pickTagline, appendTagline } from '@/lib/taglines';
+import { getPrimaryAccount, meter } from '@/lib/metering';
 
 /**
  * GET  /api/mail/messages?status=&direction=&category=&search=&limit=&offset=
@@ -84,6 +85,23 @@ export async function POST(request: NextRequest) {
     }
     if (direction === 'inbound' && !body.from) {
       return NextResponse.json({ error: 'from is required for inbound mail' }, { status: 400 });
+    }
+
+    // Meter outbound sends (a billable action). Hard-cap: if out of allowance
+    // + credits, refuse rather than do paid work for free.
+    if (direction === 'outbound') {
+      try {
+        const account = await getPrimaryAccount();
+        const m = await meter(account.id, 'email', 'send');
+        if (!m.allowed) {
+          return NextResponse.json(
+            { error: m.message, code: 'CAP_REACHED', product: 'email', capReached: true },
+            { status: 402 },
+          );
+        }
+      } catch (e) {
+        console.error('metering error (email send):', e);
+      }
     }
 
     const fromEmail = direction === 'outbound' ? owner : body.from;

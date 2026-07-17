@@ -264,6 +264,64 @@ export const meetingSignals = sqliteTable('meeting_signals', {
 });
 
 // ---------------------------------------------------------------------------
+// Billing & metering — the three Evolve products, usage caps, profit guardrail
+// ---------------------------------------------------------------------------
+
+/** A paying customer account. In production this ties to auth; for now there's
+ *  a primary account that the usage bar reflects. */
+export const billingAccounts = sqliteTable('billing_accounts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name'),
+  email: text('email'),
+  isPrimary: integer('is_primary', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});
+
+/** Purchasable plan tiers per product (calendar | email | meet). */
+export const plans = sqliteTable('plans', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  product: text('product').notNull(), // calendar | email | meet
+  tier: text('tier').notNull(), // starter | pro | business
+  name: text('name').notNull(),
+  monthlyPriceCents: integer('monthly_price_cents').notNull(),
+  includedUnits: integer('included_units').notNull(),
+  unitLabel: text('unit_label').notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at').notNull(),
+});
+
+/** A customer's active subscription to one product, with the current billing
+ *  period's usage and any prepaid overage credits remaining. */
+export const productSubscriptions = sqliteTable('product_subscriptions', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  accountId: integer('account_id').notNull(),
+  product: text('product').notNull(),
+  tier: text('tier').notNull(),
+  includedUnits: integer('included_units').notNull(),
+  usedUnits: integer('used_units').notNull().default(0),
+  extraCredits: integer('extra_credits').notNull().default(0), // prepaid overage units
+  periodStart: text('period_start').notNull(),
+  periodEnd: text('period_end').notNull(),
+  status: text('status').notNull().default('active'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+/** Append-only metered-usage ledger: every billable event with its COST and
+ *  the PRICE charged, so margin is provable and never negative. */
+export const usageEvents = sqliteTable('usage_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  accountId: integer('account_id').notNull(),
+  product: text('product').notNull(),
+  kind: text('kind').notNull(),
+  units: integer('units').notNull(),
+  costCents: integer('cost_cents').notNull(),
+  priceCents: integer('price_cents').notNull(),
+  source: text('source').notNull().default('included'), // included | credit
+  createdAt: text('created_at').notNull(),
+});
+
+// ---------------------------------------------------------------------------
 // CRM — pipelines, stages, deals, leads
 // ---------------------------------------------------------------------------
 

@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { availabilityRules, calendarEvents } from '@/db/schema';
 import { parseSchedulingRequest, aiConfigured } from '@/lib/ai';
 import { findFreeSlots, generateMeetingUrl, FreeSlot } from '@/lib/scheduling';
+import { getPrimaryAccount, meter } from '@/lib/metering';
 
 /**
  * POST /api/calendar/schedule
@@ -53,6 +54,20 @@ export async function POST(request: NextRequest) {
     const { text, book = false, timezone } = body;
     if (!text || typeof text !== 'string') {
       return NextResponse.json({ error: 'text is required' }, { status: 400 });
+    }
+
+    // Meter AI scheduling (a billable action) with a hard cap.
+    try {
+      const account = await getPrimaryAccount();
+      const m = await meter(account.id, 'calendar', 'schedule');
+      if (!m.allowed) {
+        return NextResponse.json(
+          { error: m.message, code: 'CAP_REACHED', product: 'calendar', capReached: true },
+          { status: 402 },
+        );
+      }
+    } catch (e) {
+      console.error('metering error (calendar schedule):', e);
     }
 
     const nowIso = new Date().toISOString();

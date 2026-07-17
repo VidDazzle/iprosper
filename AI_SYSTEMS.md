@@ -74,6 +74,35 @@ alongside the calendar and email. Pages: `/meetings` (create/join) and
   specific detail of the change** (enforced client + server), so the full
   approval history and every requested change is preserved (`asset_reviews`).
 
+## Metered billing + the profit guarantee
+
+The three products (Evolve Calendar, Mail, Meet) are each metered, with a
+dedicated sales page at `/plans` and an **always-visible usage bar**
+(`UsageMeter`) showing monthly consumption vs. cap on every screen.
+
+- **Pricing** lives in `src/lib/pricing.ts`: per-product tiers (Starter/Pro/
+  Business), an internal cost-per-unit, and an overage credit price.
+- **"Never lose money"** is enforced three ways:
+  1. **Margin floor (build-time):** `assertProfitable()` runs at import and
+     throws if any price (plan allowance or credit) is below cost × (1 +
+     `MIN_MARGIN`). The build literally fails on an unprofitable price sheet —
+     which it did during development, catching two under-priced tiers.
+  2. **Prepaid hard cap (runtime):** `meter()` charges each billable action;
+     when allowance + credits are exhausted it returns **HTTP 402** and the
+     costly work is refused — Evolve never does paid work it hasn't been paid
+     for. Metered actions: email send, AI scheduling, meeting summaries.
+  3. **Margin ledger + alarm:** every metered event stores cost and price;
+     `GET /api/billing/margin` proves revenue ≥ cost, and the security audit
+     raises a **critical** alarm if realized margin ever goes negative or a
+     price violates the floor.
+- **At the cap**, the usage bar offers **buy credits** (priced at the overage
+  rate, always profitable) or **upgrade** — credits are granted only after a
+  confirmed payment (Stripe webhook) or an authorized admin grant.
+
+Endpoints: `GET /api/billing/usage`, `GET /api/billing/plans`,
+`POST /api/billing/credits/checkout`, `POST /api/billing/credits/grant`
+(admin/webhook), `GET /api/billing/margin`.
+
 ## Installable app (PWA)
 
 The whole suite installs as an app on phone and desktop — "Add to Home Screen" /
