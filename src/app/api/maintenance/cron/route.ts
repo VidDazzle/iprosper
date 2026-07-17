@@ -3,6 +3,7 @@ import { isAuthorizedAgent } from '@/lib/voice-auth';
 import { runFullMaintenance } from '@/lib/maintenance';
 import { runBirthdayGreetings } from '@/lib/birthday';
 import { runLeadFollowups } from '@/lib/crm-followups';
+import { runEventReminders } from '@/lib/reminders';
 
 /**
  * GET /api/maintenance/cron
@@ -44,6 +45,14 @@ export async function GET(request: NextRequest) {
       console.error('CRM follow-up error during cron:', fErr);
     }
 
+    // Dispatch due calendar reminders (best-effort).
+    let reminders = null;
+    try {
+      reminders = await runEventReminders();
+    } catch (rErr) {
+      console.error('Reminder error during cron:', rErr);
+    }
+
     return NextResponse.json(
       {
         ranAt: new Date().toISOString(),
@@ -54,6 +63,7 @@ export async function GET(request: NextRequest) {
         recommendations: result.optimize.recommendations.length,
         birthday,
         followups,
+        reminders,
       },
       { status: 200 },
     );

@@ -488,6 +488,22 @@ function Room({
           </div>
         </div>
 
+        {/* Pinned "buy now" CTA — lets attendees purchase live during a webinar */}
+        {meeting?.pinnedCtaUrl && (
+          <a
+            href={`${meeting.pinnedCtaUrl}${meeting.pinnedCtaUrl.includes("?") ? "&" : "?"}src=${meeting.roomCode}`}
+            target="_blank"
+            className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-pink-500/40 bg-pink-500/10 px-4 py-3 hover:bg-pink-500/15"
+          >
+            <span className="text-sm font-medium text-pink-100">
+              {meeting.pinnedCtaLabel || "Special offer for attendees"}
+            </span>
+            <span className="shrink-0 rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black">
+              Buy now →
+            </span>
+          </a>
+        )}
+
         {mediaError && (
           <div className="mb-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-200">
             {mediaError}

@@ -97,9 +97,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       patch.status = 'ended';
       patch.endedAt = new Date().toISOString();
     }
-    for (const f of ['recordingOffered', 'transcriptionOffered', 'summaryOffered'] as const) {
+    for (const f of ['recordingOffered', 'transcriptionOffered', 'summaryOffered', 'isWebinar'] as const) {
       if (typeof body[f] === 'boolean') patch[f] = body[f];
     }
+    // Host can pin/clear a "buy now" CTA during a webinar.
+    if (body.pinnedCtaUrl !== undefined) patch.pinnedCtaUrl = body.pinnedCtaUrl || null;
+    if (body.pinnedCtaLabel !== undefined) patch.pinnedCtaLabel = body.pinnedCtaLabel || null;
     if (Object.keys(patch).length === 0) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
     }

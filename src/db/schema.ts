@@ -148,6 +148,10 @@ export const meetings = sqliteTable('meetings', {
   hostEmail: text('host_email'),
   status: text('status').notNull().default('scheduled'), // scheduled | live | ended
   calendarEventId: integer('calendar_event_id'), // optional link to calendar_events
+  isWebinar: integer('is_webinar', { mode: 'boolean' }).notNull().default(false),
+  // A "buy now" call-to-action the host can pin in the room during a webinar.
+  pinnedCtaUrl: text('pinned_cta_url'),
+  pinnedCtaLabel: text('pinned_cta_label'),
   // Host toggles: whether the room offers these at all (participants still consent).
   recordingOffered: integer('recording_offered', { mode: 'boolean' }).notNull().default(true),
   transcriptionOffered: integer('transcription_offered', { mode: 'boolean' }).notNull().default(true),

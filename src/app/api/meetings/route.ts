@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
         recordingOffered: body.recordingOffered !== false,
         transcriptionOffered: body.transcriptionOffered !== false,
         summaryOffered: body.summaryOffered !== false,
+        isWebinar: body.isWebinar === true,
+        pinnedCtaUrl: body.pinnedCtaUrl || null,
+        pinnedCtaLabel: body.pinnedCtaLabel || null,
         createdAt: nowIso,
       })
       .returning();
