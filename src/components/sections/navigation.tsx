@@ -13,15 +13,16 @@ export default function Navigation() {
     <header className="relative z-50 w-full border-b border-white/10 bg-[#1a1a1a] text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex items-center gap-2.5">
           <Image
-            src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-            alt="iProsper.io"
-            width={140}
-            height={40}
-            className="h-8 w-auto brightness-100 contrast-100"
+            src="/evolve-mark.svg"
+            alt="Evolve mark"
+            width={34}
+            height={34}
+            className="h-8 w-8"
             priority
           />
+          <span className="text-lg font-bold tracking-tight text-white">Evolve</span>
         </Link>
 
         <div className="flex items-center space-x-8">
