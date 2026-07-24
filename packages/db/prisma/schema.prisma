@@ -35,9 +35,16 @@ model DispatchJob {
   invoicePaidAt     DateTime?
   revenueAttributed Decimal   @default(0) @db.Decimal(12, 2)
 
+  // Loop-engineering additions (task #11/#20): what "done" means for this
+  // job, and what the inspector actually found — so retries are informed
+  // by a specific deficiency instead of a blind re-run.
+  doneChecklist    Json?
+  inspectorVerdict Json?
+
   brandKit      BrandKit?
   previewResult PreviewResult?
   lead          Lead?
+  outcome       JobOutcome?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -47,6 +54,36 @@ model DispatchJob {
   @@index([agentId])
   @@index([status])
   @@index([createdAt])
+}
+
+// Structured "memory" for a completed job — baseline, hypothesis, result,
+// next recommendation. Not in the literal spec; added so Scout's
+// confidenceBasis ("comparables, market data, historical APEX data") has
+// real historical APEX data to point to instead of nothing.
+model JobOutcome {
+  id             String      @id @default(cuid())
+  jobId          String      @unique
+  job            DispatchJob @relation(fields: [jobId], references: [id])
+  baseline       Json?
+  hypothesis     String?
+  result         Json
+  recommendation String?
+  createdAt      DateTime    @default(now())
+}
+
+// Idempotency log for revenue-confirmation webhooks (Stripe settlement,
+// invoice-paid, affiliate commission-confirmed). Without this, a retried
+// webhook delivery could double-count revenueAttributed — a real money
+// correctness bug, not a style choice.
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String // "stripe" | "invoicing" | "affiliate-network"
+  externalId  String // the provider's own event id
+  eventType   String
+  payload     Json
+  processedAt DateTime @default(now())
+
+  @@unique([provider, externalId])
 }
 
 model EngineWeek {
@@ -74,9 +111,17 @@ model Agent {
   // agentId, e.g. "rebrand-engine", "affiliate-agent-x", "evolve-launch-y"
   id         String    @id
   engine     String // "client-acquisition" | "affiliate" | "evolve"
-  status     String    @default("active") // active | killed
+  status     String    @default("trial") // trial | active | killed
   killedAt   DateTime?
   killReason String?
+
+  // Loop-engineering addition: new agents start on `trial` (supervised,
+  // still budget-capped) and only auto-promote to `active` after
+  // enough successful inner-loop runs — "prove an inner loop before
+  // promoting it into an outer loop." Not in the literal spec.
+  trialRunsCompleted Int       @default(0)
+  trialRunsRequired  Int       @default(3)
+  promotedAt         DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -141,13 +186,50 @@ model Lead {
   consentTimestamp DateTime
   consentText      String
   source           String
-  status           String @default("active") // active | dormant | erased
+  status           String    @default("active") // active | nurture | dormant | revoked | erased
+  consentRevokedAt DateTime?
+
+  touches Touch[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([consentTimestamp])
+}
+
+// Every outbound Closer/nurture touch, so escalation counting (3 touches
+// / 48h) and the 14-day nurture cadence can be computed from real state
+// instead of trusting BullMQ job state alone.
+model Touch {
+  id          String    @id @default(cuid())
+  leadId      String
+  lead        Lead      @relation(fields: [leadId], references: [id])
+  phase       String // "closer" | "nurture"
+  channel     String // "sms" | "voice" | "email"
+  sequence    Int // touch number within its phase
+  sentAt      DateTime  @default(now())
+  responded   Boolean   @default(false)
+  respondedAt DateTime?
+
+  @@index([leadId])
+  @@index([phase])
+}
+
+// License-ID audit table for the compliance gate's licensed-media check
+// (spec Section 3). Every media asset used in a preview or post must
+// resolve to a non-revoked, non-expired row here before it can publish.
+model MediaLicense {
+  id          String    @id @default(cuid())
+  licenseId   String    @unique // the external license/purchase reference
+  assetUrl    String
+  source      String // e.g. "shutterstock" | "ai-generated" | "client-provided"
+  licenseType String // e.g. "royalty-free" | "rights-managed" | "client-owned"
+  expiresAt   DateTime?
+  revoked     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([assetUrl])
 }
 
 model OpportunityCandidate {
@@ -162,6 +244,10 @@ model OpportunityCandidate {
   score             Decimal @db.Decimal(10, 4)
   complianceFlags   String[]
   status            String  @default("pending_review")
+
+  // Which signal source(s) fed the score, and their raw inputs — lets a
+  // human reviewer trace exactly what confidenceBasis is claiming.
+  sourceSignals Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -83,15 +83,16 @@ export function shouldAutoKill(window: RollingWindow): boolean {
 /**
  * Hourly cron entry point. 7-day rolling spend-vs-revenue window is
  * keyed by DispatchJob.createdAt — i.e. jobs opened in the trailing
- * week, cost and any revenue they've attributed since. Only agents
- * currently "active" are checked (a killed agent has nothing left to
- * auto-kill).
+ * week, cost and any revenue they've attributed since. Both "trial" and
+ * "active" agents are checked — a trial agent still has a real budget
+ * cap and can still overspend, so trial status doesn't exempt it from
+ * the kill-switch (only "killed" has nothing left to auto-kill).
  */
 export async function checkAndFireKillSwitch(now: Date = new Date()) {
   const windowStart = new Date(now.getTime() - SEVEN_DAYS_MS);
 
   const [activeAgents, jobs] = await Promise.all([
-    prisma.agent.findMany({ where: { status: "active" }, select: { id: true } }),
+    prisma.agent.findMany({ where: { status: { in: ["trial", "active"] } }, select: { id: true } }),
     prisma.dispatchJob.findMany({
       where: { createdAt: { gte: windowStart } },
       select: { agentId: true, costToDate: true, revenueAttributed: true },

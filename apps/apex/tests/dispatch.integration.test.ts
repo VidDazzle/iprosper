@@ -22,7 +22,7 @@ describe("dispatch", () => {
     expect(Number(job.budgetCap)).toBe(5);
 
     const agent = await prisma.agent.findUnique({ where: { id: "test-agent-1" } });
-    expect(agent?.status).toBe("active");
+    expect(agent?.status).toBe("trial");
     expect(agent?.engine).toBe("client-acquisition");
   });
 
