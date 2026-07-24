@@ -19,6 +19,9 @@ yarn-error.log*
 # Prisma
 packages/db/generated/
 
+# Redis dump from local dev/test runs
+dump.rdb
+
 # Playwright
 apps/**/test-results/
 apps/**/playwright-report/
