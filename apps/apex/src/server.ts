@@ -10,6 +10,9 @@ import { runWeeklyRebalance } from "./rebalance.js";
 import { kill } from "./killSwitch.js";
 import { startKillSwitchCron } from "./cron/killSwitchCron.js";
 import { startRebalanceCron } from "./cron/rebalanceCron.js";
+import { startScoutCron } from "./cron/scoutCron.js";
+import { startSweeperCron } from "./cron/sweeperCron.js";
+import { approveOpportunity, rejectOpportunity } from "@apex/scout";
 
 const env = loadEnv();
 
@@ -86,6 +89,35 @@ server.tool(
   },
 );
 
+server.tool(
+  "apex.approveOpportunity",
+  "The only sanctioned path from a Scout candidate to a real dispatch — human-gated, never automatic.",
+  {
+    candidateId: z.string().min(1),
+    approvedBy: z.string().min(1),
+    agentId: z.string().min(1),
+    budgetCap: z.number().positive(),
+  },
+  async ({ candidateId, approvedBy, agentId, budgetCap }) => {
+    const job = await approveOpportunity(candidateId, approvedBy, agentId, budgetCap);
+    return { content: [{ type: "text", text: JSON.stringify(job, null, 2) }] };
+  },
+);
+
+server.tool(
+  "apex.rejectOpportunity",
+  "Marks a Scout candidate rejected.",
+  {
+    candidateId: z.string().min(1),
+    rejectedBy: z.string().min(1),
+    reason: z.string().min(1),
+  },
+  async ({ candidateId, rejectedBy, reason }) => {
+    await rejectOpportunity(candidateId, rejectedBy, reason);
+    return { content: [{ type: "text", text: "ok" }] };
+  },
+);
+
 async function main() {
   console.info(`[apex] starting — LIVE_MODE=${env.LIVE_MODE}`);
   if (!env.LIVE_MODE) {
@@ -94,6 +126,8 @@ async function main() {
 
   startKillSwitchCron();
   startRebalanceCron();
+  startScoutCron();
+  startSweeperCron();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

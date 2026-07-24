@@ -41,6 +41,11 @@ model DispatchJob {
   doneChecklist    Json?
   inspectorVerdict Json?
 
+  // Sweeper (spec Section 3: "retries failed jobs up to 3x with
+  // backoff, then escalates via daily digest"). Tracks how many times
+  // this job has been automatically re-enqueued after failing.
+  retryCount Int @default(0)
+
   brandKit      BrandKit?
   previewResult PreviewResult?
   lead          Lead?

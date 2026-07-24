@@ -48,3 +48,5 @@ export async function dispatch(input: DispatchTaskInput) {
 
   return job;
 }
+
+export * from "./sweeper.js";

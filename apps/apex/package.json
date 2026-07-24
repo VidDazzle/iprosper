@@ -17,6 +17,7 @@
         "@apex/db": "*",
         "@apex/dispatch": "*",
         "@apex/queue": "*",
+        "@apex/scout": "*",
         "@apex/spend": "*",
         "@modelcontextprotocol/sdk": "^1.6.1",
         "node-cron": "^3.0.3",
