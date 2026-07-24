@@ -1,16 +1,16 @@
 [Unit]
-Description=iProsper autonomous social media agent
+Description=ViralHive autonomous social media agent
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/iprosper-social-agent
-EnvironmentFile=/opt/iprosper-social-agent/.env
-ExecStart=/usr/bin/node /opt/iprosper-social-agent/dist/cli.js daemon
+WorkingDirectory=/opt/viralhive
+EnvironmentFile=/opt/viralhive/.env
+ExecStart=/usr/bin/node /opt/viralhive/dist/cli.js daemon
 Restart=always
 RestartSec=5
-User=iprosper
+User=viralhive
 NoNewPrivileges=true
 
 [Install]

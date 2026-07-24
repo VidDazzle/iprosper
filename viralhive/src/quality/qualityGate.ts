@@ -1,6 +1,6 @@
 import type { LLMProvider, ViralityProvider } from "../creative/types.js";
 import type { CampaignConfig, ContentItem, QualityScore } from "../config/types.js";
-import type { VideoPipeline } from "../creative/videoPipeline.js";
+import type { VideoPipeline, PipelineOptions } from "../creative/videoPipeline.js";
 import { checkPolicyCompliance } from "./policyFilter.js";
 import { childLogger } from "../core/logger.js";
 
@@ -132,12 +132,13 @@ export async function runQualityGate(
   pipeline: VideoPipeline,
   campaign: CampaignConfig,
   llm: LLMProvider,
-  virality: ViralityProvider | undefined
+  virality: ViralityProvider | undefined,
+  opts: PipelineOptions = {}
 ): Promise<QualityGateResult> {
-  let item = await pipeline.createDraft(campaign);
+  let item = await pipeline.createDraft(campaign, opts);
 
   for (let attempt = 1; attempt <= campaign.maxRegenerationAttempts; attempt++) {
-    item = await pipeline.renderAssets(item, campaign);
+    item = await pipeline.renderAssets(item, campaign, opts);
     const score = await scoreContentItem(item, campaign, llm, virality);
     item = { ...item, qualityScore: score };
 
@@ -153,7 +154,7 @@ export async function runQualityGate(
     if (!score.policyCompliant) {
       log.warn({ campaignId: campaign.id, reasons: score.notes }, "content failed policy check");
       // Policy failures get a fresh idea next attempt rather than re-rendering the same script.
-      item = await pipeline.createDraft(campaign);
+      item = await pipeline.createDraft(campaign, opts);
     }
   }
 

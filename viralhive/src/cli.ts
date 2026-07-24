@@ -8,7 +8,7 @@ import { childLogger } from "./core/logger.js";
 const log = childLogger("cli");
 
 function usage() {
-  console.log(`iprosper-social-agent <command>
+  console.log(`ViralHive <command>
 
 Commands:
   daemon              Run forever: autonomous scheduler posts to every
@@ -57,7 +57,7 @@ async function main() {
 
     case "run": {
       if (!arg) {
-        console.error("Usage: iprosper-social-agent run <campaignId>");
+        console.error("Usage: viralhive run <campaignId>");
         process.exit(1);
       }
       const summary = await orchestrator.runCampaignOnce(arg);

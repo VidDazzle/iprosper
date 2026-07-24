@@ -1,5 +1,5 @@
 services:
-  social-agent:
+  viralhive:
     build: .
     restart: unless-stopped
     env_file: .env

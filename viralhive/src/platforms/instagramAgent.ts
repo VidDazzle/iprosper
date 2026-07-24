@@ -1,4 +1,4 @@
-import type { AccountConfig, ContentItem, PostResult } from "../config/types.js";
+import type { AccountConfig, ContentItem, EngagementSnapshot, InboundComment, PostResult } from "../config/types.js";
 import { resolveCredentials } from "../config/config.js";
 import type { SocialPlatformAgent } from "./types.js";
 import { ok, fail } from "./types.js";
@@ -76,5 +76,55 @@ export class InstagramAgent implements SocialPlatformAgent {
       await new Promise((r) => setTimeout(r, 4000));
     }
     throw new Error(`IG container ${containerId} not ready after timeout`);
+  }
+
+  async fetchRecentComments(remotePostId: string): Promise<InboundComment[]> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const res = await fetch(
+      `https://graph.facebook.com/${this.apiVersion}/${remotePostId}/comments?fields=id,text,username,timestamp&access_token=${accessToken}`
+    );
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`IG comments fetch failed: ${JSON.stringify(data)}`);
+    return (data.data ?? []).map((c: any) => ({
+      id: c.id,
+      platform: this.platform,
+      accountId: this.account.id,
+      postRemoteId: remotePostId,
+      authorHandle: c.username ?? "unknown",
+      text: c.text,
+      createdAt: c.timestamp ?? new Date().toISOString(),
+    }));
+  }
+
+  async replyToComment(_remotePostId: string, commentId: string, text: string): Promise<void> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const res = await fetch(`https://graph.facebook.com/${this.apiVersion}/${commentId}/replies`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message: text, access_token: accessToken }),
+    });
+    if (!res.ok) throw new Error(`IG comment reply failed: ${res.status} ${await res.text()}`);
+  }
+
+  async fetchMetrics(remotePostId: string, postId: string): Promise<EngagementSnapshot> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const res = await fetch(
+      `https://graph.facebook.com/${this.apiVersion}/${remotePostId}/insights?metric=likes,comments,shares,saved,reach,ig_reels_avg_watch_time&access_token=${accessToken}`
+    );
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`IG insights fetch failed: ${JSON.stringify(data)}`);
+    const metric = (name: string) => data.data?.find((m: any) => m.name === name)?.values?.[0]?.value ?? 0;
+    return {
+      postId,
+      accountId: this.account.id,
+      platform: this.platform,
+      views: metric("reach"),
+      likes: metric("likes"),
+      comments: metric("comments"),
+      shares: metric("shares"),
+      clicks: 0, // Graph API doesn't expose link clicks for organic Reels; use commerce UTM data instead.
+      newFollowers: 0, // not attributable to a single post via Graph API; requires Insights API account-level deltas.
+      collectedAt: new Date().toISOString(),
+    };
   }
 }

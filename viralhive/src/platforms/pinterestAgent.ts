@@ -1,4 +1,4 @@
-import type { AccountConfig, ContentItem, PostResult } from "../config/types.js";
+import type { AccountConfig, ContentItem, EngagementSnapshot, PostResult } from "../config/types.js";
 import { resolveCredentials } from "../config/config.js";
 import type { SocialPlatformAgent } from "./types.js";
 import { ok, fail } from "./types.js";
@@ -48,5 +48,37 @@ export class PinterestAgent implements SocialPlatformAgent {
     } catch (err) {
       return fail(this.account, this.platform, item, err);
     }
+  }
+
+  // Pinterest does not expose a general-purpose pin-comments API, so this
+  // agent implements metrics only; prospect Q&A on Pinterest happens via the
+  // messaging surface, which is out of scope for the engagement agent today.
+  async fetchMetrics(remotePostId: string, postId: string): Promise<EngagementSnapshot> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const end = new Date();
+    const start = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const params = new URLSearchParams({
+      start_date: start.toISOString().slice(0, 10),
+      end_date: end.toISOString().slice(0, 10),
+      metric_types: "IMPRESSION,PIN_CLICK,OUTBOUND_CLICK,SAVE",
+    });
+    const res = await fetch(`https://api.pinterest.com/v5/pins/${remotePostId}/analytics?${params}`, {
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`Pinterest analytics fetch failed: ${JSON.stringify(data)}`);
+    const totals = data.all?.summary_metrics ?? {};
+    return {
+      postId,
+      accountId: this.account.id,
+      platform: this.platform,
+      views: totals.IMPRESSION ?? 0,
+      likes: 0,
+      comments: 0,
+      shares: totals.SAVE ?? 0,
+      clicks: (totals.PIN_CLICK ?? 0) + (totals.OUTBOUND_CLICK ?? 0),
+      newFollowers: 0,
+      collectedAt: new Date().toISOString(),
+    };
   }
 }

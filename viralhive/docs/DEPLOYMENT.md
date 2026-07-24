@@ -1,6 +1,6 @@
 # Deployment
 
-The daemon (`iprosper-social-agent daemon`) is a single long-running Node
+The daemon (`viralhive daemon`) is a single long-running Node
 process with no external dependencies beyond a SQLite file (`data/*.db`).
 Pick whichever host keeps it running 24/7 — that's the only real
 requirement for "runs without me."
@@ -15,9 +15,9 @@ choice. Options, in order of setup effort:
 1. **Docker** — `docker compose up -d` using the included
    `docker-compose.yml`. Restarts automatically on crash or host reboot
    (`restart: unless-stopped`).
-2. **systemd** — copy `systemd/iprosper-social-agent.service`, adjust the
-   paths/user, `systemctl enable --now iprosper-social-agent`. Survives
-   reboots, restarts on crash, logs to `journalctl -u iprosper-social-agent`.
+2. **systemd** — copy `systemd/viralhive.service`, adjust the
+   paths/user, `systemctl enable --now viralhive`. Survives
+   reboots, restarts on crash, logs to `journalctl -u viralhive`.
 3. **PM2** — `pm2 start ecosystem.config.js && pm2 save && pm2 startup`.
    Easiest if you're already comfortable with PM2 from other Node apps.
 
@@ -33,7 +33,7 @@ Technically works, is not recommended as your only deployment:
 
 ```bash
 pkg install nodejs git
-git clone <your fork> && cd social-agent
+git clone <your fork> && cd viralhive
 npm install && npm run build
 cp .env.example .env && cp accounts.example.yaml accounts.yaml   # fill in
 termux-wake-lock          # prevents Android from suspending the process
@@ -58,6 +58,11 @@ iOS has no equivalent background-daemon story at all; don't attempt it there.
   OAuth tokens expire hourly). None of the agents implement token refresh
   themselves — wire a refresh cron/webhook that rewrites the relevant env
   var, or front the daemon with a secrets manager that does it for you.
+- Stripe (commerce) — `STRIPE_SECRET_KEY` should be a *restricted* key scoped
+  to Checkout Sessions only if your Stripe account supports it. Without it
+  set, checkout links fall back to a plain UTM-tagged URL to
+  `commerce.checkoutBaseUrl` — still trackable, just not a real Stripe
+  Checkout session.
 
 ## Scaling to more accounts/campaigns
 

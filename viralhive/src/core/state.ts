@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
-import type { ContentItem, PostResult } from "../config/types.js";
+import type { ContentItem, EngagementSnapshot, PostResult } from "../config/types.js";
+
+const MIN_TIMING_SAMPLES = 3;
 
 export class StateStore {
   private db: Database.Database;
@@ -49,6 +51,34 @@ export class StateStore {
         last_run_at TEXT,
         posts_today INTEGER NOT NULL DEFAULT 0,
         day_bucket TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS post_metrics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        post_id TEXT NOT NULL,
+        account_id TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        views INTEGER NOT NULL,
+        likes INTEGER NOT NULL,
+        comments INTEGER NOT NULL,
+        shares INTEGER NOT NULL,
+        clicks INTEGER NOT NULL,
+        new_followers INTEGER NOT NULL,
+        collected_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS timing_stats (
+        account_id TEXT NOT NULL,
+        day_of_week INTEGER NOT NULL,
+        hour INTEGER NOT NULL,
+        avg_score REAL NOT NULL DEFAULT 0,
+        sample_count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (account_id, day_of_week, hour)
+      );
+
+      CREATE TABLE IF NOT EXISTS handled_comments (
+        comment_id TEXT PRIMARY KEY,
+        handled_at TEXT NOT NULL DEFAULT (datetime('now'))
       );
     `);
   }
@@ -164,6 +194,111 @@ export class StateStore {
       )
       .run(key, count, bucket);
     return count;
+  }
+
+  /** Posts from the last `sinceDays` that have a remoteId (postable to a metrics API), newest first. */
+  listPostsForMetricsCollection(sinceDays = 14, limit = 100): (PostResult & { id: string; campaignId: string })[] {
+    const since = new Date(Date.now() - sinceDays * 86_400_000).toISOString();
+    const rows = this.db
+      .prepare(
+        `SELECT posts.*, content_items.campaign_id as campaign_id
+         FROM posts
+         JOIN content_items ON content_items.id = posts.content_item_id
+         WHERE posts.success = 1 AND posts.remote_id IS NOT NULL AND posts.posted_at >= ?
+         ORDER BY posts.posted_at DESC LIMIT ?`
+      )
+      .all(since, limit) as any[];
+    return rows.map((r) => ({
+      id: r.id,
+      campaignId: r.campaign_id,
+      accountId: r.account_id,
+      platform: r.platform,
+      contentItemId: r.content_item_id,
+      success: !!r.success,
+      remoteId: r.remote_id ?? undefined,
+      remoteUrl: r.remote_url ?? undefined,
+      error: r.error ?? undefined,
+      postedAt: r.posted_at,
+    }));
+  }
+
+  recordEngagementSnapshot(snapshot: EngagementSnapshot) {
+    this.db
+      .prepare(
+        `INSERT INTO post_metrics (post_id, account_id, platform, views, likes, comments, shares, clicks, new_followers, collected_at)
+         VALUES (@postId, @accountId, @platform, @views, @likes, @comments, @shares, @clicks, @newFollowers, @collectedAt)`
+      )
+      .run(snapshot);
+  }
+
+  /** Simple weighted engagement rate used everywhere downstream as "the" score for a post. */
+  static computeEngagementScore(s: Pick<EngagementSnapshot, "views" | "likes" | "comments" | "shares" | "clicks" | "newFollowers">): number {
+    const weighted = s.likes + s.comments * 2 + s.shares * 3 + s.clicks * 2 + s.newFollowers * 5;
+    return weighted / Math.max(s.views, 1);
+  }
+
+  recordEngagementScoreForContentItem(contentItemId: string, score: number) {
+    const item = this.getContentItem(contentItemId);
+    if (!item) return;
+    this.saveContentItem({ ...item, engagementScore: score });
+  }
+
+  /** Topics/hooks that historically drove the strongest engagement for a campaign — feeds ideation. */
+  getTopPerformingTopics(campaignId: string, limit = 5): string[] {
+    const rows = this.db
+      .prepare(
+        `SELECT payload FROM content_items
+         WHERE campaign_id = ? AND json_extract(payload, '$.engagementScore') IS NOT NULL
+         ORDER BY json_extract(payload, '$.engagementScore') DESC LIMIT ?`
+      )
+      .all(campaignId, limit) as { payload: string }[];
+    return rows.map((r) => {
+      const item = JSON.parse(r.payload) as ContentItem;
+      return `${item.brief.topic} (hook: "${item.brief.hook}")`;
+    });
+  }
+
+  /** Incrementally updates the account's day-of-week/hour engagement average with a new sample. */
+  recordTimingSample(accountId: string, postedAtIso: string, score: number) {
+    const postedAt = new Date(postedAtIso);
+    const dayOfWeek = postedAt.getDay();
+    const hour = postedAt.getHours();
+    const row = this.db
+      .prepare(`SELECT avg_score, sample_count FROM timing_stats WHERE account_id = ? AND day_of_week = ? AND hour = ?`)
+      .get(accountId, dayOfWeek, hour) as { avg_score: number; sample_count: number } | undefined;
+
+    const sampleCount = (row?.sample_count ?? 0) + 1;
+    const avgScore = row ? row.avg_score + (score - row.avg_score) / sampleCount : score;
+
+    this.db
+      .prepare(
+        `INSERT INTO timing_stats (account_id, day_of_week, hour, avg_score, sample_count) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(account_id, day_of_week, hour) DO UPDATE SET avg_score = excluded.avg_score, sample_count = excluded.sample_count`
+      )
+      .run(accountId, dayOfWeek, hour, avgScore, sampleCount);
+  }
+
+  /** Best learned "HH:mm" slots for an account, or undefined if not enough data yet. */
+  getLearnedSlots(accountId: string, count: number): string[] | undefined {
+    const rows = this.db
+      .prepare(
+        `SELECT hour, avg_score, sample_count FROM timing_stats
+         WHERE account_id = ? AND sample_count >= ?
+         ORDER BY avg_score DESC LIMIT ?`
+      )
+      .all(accountId, MIN_TIMING_SAMPLES, count) as { hour: number; avg_score: number; sample_count: number }[];
+    if (rows.length < count) return undefined;
+    return rows.map((r) => `${String(r.hour).padStart(2, "0")}:00`);
+  }
+
+  isCommentHandled(commentId: string): boolean {
+    return !!this.db.prepare(`SELECT 1 FROM handled_comments WHERE comment_id = ?`).get(commentId);
+  }
+
+  markCommentHandled(commentId: string) {
+    this.db
+      .prepare(`INSERT OR IGNORE INTO handled_comments (comment_id) VALUES (?)`)
+      .run(commentId);
   }
 
   close() {

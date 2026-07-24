@@ -40,6 +40,9 @@ const campaignSchema = z.object({
   maxRegenerationAttempts: z.number().int().min(1).max(10).default(4),
   videoLengthSeconds: z.number().int().min(5).max(180).default(30),
   autopilot: z.boolean().default(true),
+  smartScheduling: z.boolean().default(true),
+  engagementAutoReply: z.boolean().default(true),
+  productId: z.string().optional(),
 });
 
 const providerSchema = z.object({
@@ -50,18 +53,37 @@ const providerSchema = z.object({
   model: z.string().optional(),
 });
 
+const productSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  priceCents: z.number().int().min(0),
+  currency: z.string().default("usd"),
+  imageUrls: z.array(z.string()).default([]),
+  stripePriceId: z.string().optional(),
+});
+
+const commerceSchema = z.object({
+  stripeSecretKeyEnv: z.string().optional(),
+  checkoutBaseUrl: z.string().optional(),
+});
+
+const providerRef = z.union([z.string(), z.array(z.string()).min(1)]);
+
 const rootSchema = z.object({
   accounts: z.array(accountSchema).default([]),
   campaigns: z.array(campaignSchema).default([]),
+  products: z.array(productSchema).default([]),
+  commerce: commerceSchema.default({}),
   providers: z.object({
-    script: z.string(),
-    video: z.string(),
-    image: z.string().optional(),
-    voice: z.string().optional(),
-    virality: z.string().optional(),
+    script: providerRef,
+    video: providerRef,
+    image: providerRef.optional(),
+    voice: providerRef.optional(),
+    virality: providerRef.optional(),
   }),
   providerRegistry: z.array(providerSchema).default([]),
-  dbPath: z.string().default("./data/iprosper-social-agent.db"),
+  dbPath: z.string().default("./data/viralhive.db"),
   logLevel: z.string().default("info"),
 });
 
@@ -93,9 +115,23 @@ export function loadConfig(configPath = process.env.CONFIG_PATH || "./accounts.y
         throw new Error(`Campaign "${campaign.id}" references unknown account "${accountId}"`);
       }
     }
+    if (campaign.productId && !config.products.some((p) => p.id === campaign.productId)) {
+      throw new Error(`Campaign "${campaign.id}" references unknown product "${campaign.productId}"`);
+    }
+  }
+
+  if (config.commerce.stripeSecretKeyEnv && !process.env[config.commerce.stripeSecretKeyEnv]) {
+    throw new Error(
+      `commerce.stripeSecretKeyEnv references "${config.commerce.stripeSecretKeyEnv}" which is not set in .env`
+    );
   }
 
   return config as AppConfig;
+}
+
+/** Normalizes a providers.* entry (single id or fallback chain) into an ordered array. */
+export function providerChain(ref: string | string[]): string[] {
+  return Array.isArray(ref) ? ref : [ref];
 }
 
 /** Resolves an account's declared credential env-var names into actual secret values. */

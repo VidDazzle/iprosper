@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Orchestrator } from "../core/orchestrator.js";
+import { resolvePostingSlots, resolveTopPerformers } from "../analytics/learningEngine.js";
 
 /**
  * MCP tool surface for interactive control: check status, trigger a run,
@@ -132,6 +133,51 @@ export function registerTools(server: McpServer, orchestrator: Orchestrator) {
     async ({ limit }) => {
       const log = orchestrator.getState().tailLog(limit ?? 100);
       return { content: [{ type: "text", text: JSON.stringify(log, null, 2) }] };
+    }
+  );
+
+  server.registerTool(
+    "get_learning_insights",
+    {
+      title: "Get what the agent has learned",
+      description:
+        "Shows the self-optimization state for a campaign: each account's learned best posting times " +
+        "(falls back to the static config window until enough engagement data exists) and the " +
+        "highest-performing past topics/hooks currently biasing new content ideation.",
+      inputSchema: { campaignId: z.string() },
+    },
+    async ({ campaignId }) => {
+      const config = orchestrator.getConfig();
+      const state = orchestrator.getState();
+      const campaign = config.campaigns.find((c) => c.id === campaignId);
+      if (!campaign) throw new Error(`Unknown campaign "${campaignId}"`);
+
+      const accounts = config.accounts.filter((a) => campaign.accountIds.includes(a.id));
+      const learnedSlots = Object.fromEntries(
+        accounts.map((a) => [a.id, { configured: a.postingWindow, active: resolvePostingSlots(state, a) }])
+      );
+      const topPerformers = resolveTopPerformers(state, campaignId, 10);
+
+      return {
+        content: [{ type: "text", text: JSON.stringify({ learnedSlots, topPerformers }, null, 2) }],
+      };
+    }
+  );
+
+  server.registerTool(
+    "list_products",
+    {
+      title: "List shoppable products",
+      description: "Lists products configured for shoppable/commerce campaigns, and which campaigns feature each.",
+      inputSchema: {},
+    },
+    async () => {
+      const config = orchestrator.getConfig();
+      const products = config.products.map((p) => ({
+        ...p,
+        featuredInCampaigns: config.campaigns.filter((c) => c.productId === p.id).map((c) => c.id),
+      }));
+      return { content: [{ type: "text", text: JSON.stringify(products, null, 2) }] };
     }
   );
 }

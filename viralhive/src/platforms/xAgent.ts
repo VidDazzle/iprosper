@@ -1,4 +1,4 @@
-import type { AccountConfig, ContentItem, PostResult } from "../config/types.js";
+import type { AccountConfig, ContentItem, EngagementSnapshot, InboundComment, PostResult } from "../config/types.js";
 import { resolveCredentials } from "../config/config.js";
 import type { SocialPlatformAgent } from "./types.js";
 import { ok, fail } from "./types.js";
@@ -102,5 +102,58 @@ export class XAgent implements SocialPlatformAgent {
     }
 
     return mediaId;
+  }
+
+  async fetchRecentComments(remotePostId: string): Promise<InboundComment[]> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const query = encodeURIComponent(`conversation_id:${remotePostId} is:reply`);
+    const res = await fetch(
+      `https://api.twitter.com/2/tweets/search/recent?query=${query}&tweet.fields=author_id,created_at&max_results=20`,
+      { headers: { authorization: `Bearer ${accessToken}` } }
+    );
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`X reply search failed: ${JSON.stringify(data)}`);
+    return (data.data ?? []).map((t: any) => ({
+      id: t.id,
+      platform: this.platform,
+      accountId: this.account.id,
+      postRemoteId: remotePostId,
+      authorHandle: t.author_id,
+      text: t.text,
+      createdAt: t.created_at ?? new Date().toISOString(),
+    }));
+  }
+
+  async replyToComment(_remotePostId: string, commentId: string, text: string): Promise<void> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const res = await fetch("https://api.twitter.com/2/tweets", {
+      method: "POST",
+      headers: { authorization: `Bearer ${accessToken}`, "content-type": "application/json" },
+      body: JSON.stringify({ text: text.slice(0, 280), reply: { in_reply_to_tweet_id: commentId } }),
+    });
+    if (!res.ok) throw new Error(`X reply post failed: ${res.status} ${await res.text()}`);
+  }
+
+  async fetchMetrics(remotePostId: string, postId: string): Promise<EngagementSnapshot> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const res = await fetch(
+      `https://api.twitter.com/2/tweets/${remotePostId}?tweet.fields=public_metrics`,
+      { headers: { authorization: `Bearer ${accessToken}` } }
+    );
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`X tweet metrics fetch failed: ${JSON.stringify(data)}`);
+    const m = data.data?.public_metrics ?? {};
+    return {
+      postId,
+      accountId: this.account.id,
+      platform: this.platform,
+      views: m.impression_count ?? 0,
+      likes: m.like_count ?? 0,
+      comments: m.reply_count ?? 0,
+      shares: m.retweet_count ?? 0,
+      clicks: 0,
+      newFollowers: 0,
+      collectedAt: new Date().toISOString(),
+    };
   }
 }

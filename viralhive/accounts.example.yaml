@@ -10,7 +10,7 @@ accounts:
       accessToken: TIKTOK_MAIN_ACCESS_TOKEN
     niche: "fitness motivation"
     postsPerDay: 2
-    postingWindow: ["09:00", "18:30"]
+    postingWindow: ["09:00", "18:30"] # starting point only when smartScheduling is on — see below
     timezone: "America/New_York"
     enabled: true
 
@@ -50,11 +50,29 @@ accounts:
     timezone: "America/New_York"
     enabled: false
 
+# Products the agent can feature in videos with a real checkout link — see
+# commerce.stripeSecretKeyEnv below. Create the Price once in your Stripe
+# dashboard/API and paste its id here; the agent only creates the per-post
+# Checkout Session, not the underlying catalog.
+products:
+  - id: coaching_program
+    name: "8-Week Shred Coaching Program"
+    description: "Structured 8-week program with weekly check-ins and a custom macro plan."
+    priceCents: 19900
+    currency: usd
+    imageUrls:
+      - "https://yourbrand.example.com/products/coaching-program.jpg"
+    stripePriceId: "price_XXXXXXXXXXXXXXXX"
+
+commerce:
+  stripeSecretKeyEnv: STRIPE_SECRET_KEY # omit entirely to fall back to a static UTM-tagged link
+  checkoutBaseUrl: "https://buy.yourbrand.example.com"
+
 campaigns:
   - id: daily_fitness_shorts
     name: "Daily fitness motivation shorts"
     niche: "fitness motivation"
-    goal: "Grow followers and drive link-in-bio clicks to the coaching offer."
+    goal: "Grow followers and drive checkout conversions on the coaching program."
     toneKeywords: ["high energy", "no-nonsense", "encouraging"]
     bannedTopics: ["extreme dieting", "medical claims", "before/after weight loss numbers"]
     platforms: ["tiktok", "instagram", "youtube"]
@@ -63,9 +81,14 @@ campaigns:
     maxRegenerationAttempts: 4
     videoLengthSeconds: 28
     autopilot: true # starts fully autonomous the moment the daemon boots
+    smartScheduling: true # after ~3 posts per hour-slot, switches to each account's learned best times
+    engagementAutoReply: true # answers prospect comments/questions automatically
+    productId: coaching_program # embeds the product + a checkout CTA in every generated video
 
 providers:
-  script: openai_main # LLM that writes hooks/scripts/captions
+  # A single id, or a priority-ordered array for automatic failover — if the
+  # first provider errors out, the next one takes over for that run.
+  script: [claude_main, openai_main] # LLM that writes hooks/scripts/captions/SEO metadata
   video: higgsfield_main # video generation backend
   image: higgsfield_main
   voice: elevenlabs_main # optional; omit to skip voiceover synthesis
@@ -74,7 +97,9 @@ providers:
 # Any AI platform / LLM / API key can be plugged in here. `kind` picks the
 # adapter; everything else (baseUrl, model, which env var holds the key) is
 # just config. Point `llm-openai-compatible` at OpenAI, Groq, Together,
-# Fireworks, or a local Ollama instance's OpenAI-compatible route.
+# Fireworks, or a local Ollama instance's OpenAI-compatible route. Update
+# `model` whenever you want to move to a newer release — that's the whole
+# upgrade, no code changes.
 providerRegistry:
   - id: openai_main
     kind: llm-openai-compatible
@@ -103,5 +128,5 @@ providerRegistry:
     baseUrl: "https://api.elevenlabs.io/v1"
     apiKeyEnv: ELEVENLABS_API_KEY
 
-dbPath: "./data/iprosper-social-agent.db"
+dbPath: "./data/viralhive.db"
 logLevel: "info"

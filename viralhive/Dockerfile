@@ -18,5 +18,5 @@ VOLUME ["/app/data"]
 # Mount your real accounts.yaml and .env at runtime, e.g.:
 #   docker run -v $(pwd)/accounts.yaml:/app/accounts.yaml \
 #              -v $(pwd)/data:/app/data \
-#              --env-file .env iprosper-social-agent
+#              --env-file .env viralhive
 CMD ["node", "dist/cli.js", "daemon"]

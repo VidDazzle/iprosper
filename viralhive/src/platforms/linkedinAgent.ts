@@ -1,4 +1,4 @@
-import type { AccountConfig, ContentItem, PostResult } from "../config/types.js";
+import type { AccountConfig, ContentItem, EngagementSnapshot, InboundComment, PostResult } from "../config/types.js";
 import { resolveCredentials } from "../config/config.js";
 import type { SocialPlatformAgent } from "./types.js";
 import { ok, fail } from "./types.js";
@@ -82,5 +82,61 @@ export class LinkedInAgent implements SocialPlatformAgent {
     } catch (err) {
       return fail(this.account, this.platform, item, err);
     }
+  }
+
+  async fetchRecentComments(remotePostId: string): Promise<InboundComment[]> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const shareUrn = encodeURIComponent(remotePostId);
+    const res = await fetch(`https://api.linkedin.com/v2/socialActions/${shareUrn}/comments`, {
+      headers: { authorization: `Bearer ${accessToken}`, "X-Restli-Protocol-Version": "2.0.0" },
+    });
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`LinkedIn comments fetch failed: ${JSON.stringify(data)}`);
+    return (data.elements ?? []).map((c: any) => ({
+      id: c.$URN ?? c.id,
+      platform: this.platform,
+      accountId: this.account.id,
+      postRemoteId: remotePostId,
+      authorHandle: c.actor,
+      text: c.message?.text ?? "",
+      createdAt: new Date(c.created?.time ?? Date.now()).toISOString(),
+    }));
+  }
+
+  async replyToComment(remotePostId: string, _commentId: string, text: string): Promise<void> {
+    const { accessToken, authorUrn } = resolveCredentials(this.account.credentials);
+    const shareUrn = encodeURIComponent(remotePostId);
+    const res = await fetch(`https://api.linkedin.com/v2/socialActions/${shareUrn}/comments`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        "content-type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
+      },
+      body: JSON.stringify({ actor: authorUrn, message: { text } }),
+    });
+    if (!res.ok) throw new Error(`LinkedIn comment reply failed: ${res.status} ${await res.text()}`);
+  }
+
+  async fetchMetrics(remotePostId: string, postId: string): Promise<EngagementSnapshot> {
+    const { accessToken } = resolveCredentials(this.account.credentials);
+    const shareUrn = encodeURIComponent(remotePostId);
+    const res = await fetch(`https://api.linkedin.com/v2/socialActions/${shareUrn}`, {
+      headers: { authorization: `Bearer ${accessToken}`, "X-Restli-Protocol-Version": "2.0.0" },
+    });
+    const data = (await res.json()) as any;
+    if (!res.ok) throw new Error(`LinkedIn social actions fetch failed: ${JSON.stringify(data)}`);
+    return {
+      postId,
+      accountId: this.account.id,
+      platform: this.platform,
+      views: 0, // impression counts require organizationalEntityShareStatistics (org pages only).
+      likes: data.likesSummary?.totalLikes ?? 0,
+      comments: data.commentsSummary?.totalFirstLevelComments ?? 0,
+      shares: 0,
+      clicks: 0,
+      newFollowers: 0,
+      collectedAt: new Date().toISOString(),
+    };
   }
 }

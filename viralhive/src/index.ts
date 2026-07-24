@@ -22,8 +22,8 @@ async function main() {
   scheduler.start();
 
   const server = new McpServer({
-    name: "iprosper-social-agent",
-    version: "0.1.0",
+    name: "viralhive",
+    version: "0.2.0",
   });
   registerTools(server, orchestrator);
 

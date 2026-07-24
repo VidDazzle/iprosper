@@ -3,7 +3,7 @@
 module.exports = {
   apps: [
     {
-      name: "iprosper-social-agent",
+      name: "viralhive",
       script: "dist/cli.js",
       args: "daemon",
       cwd: __dirname,

@@ -7,6 +7,9 @@ import { VideoPipeline } from "../creative/videoPipeline.js";
 import { LLMTrendSource } from "../creative/trendEngine.js";
 import { runQualityGate } from "../quality/qualityGate.js";
 import { buildAgentsForAccounts } from "../platforms/registry.js";
+import { resolveTopPerformers } from "../analytics/learningEngine.js";
+import { createCheckoutLink } from "../commerce/checkout.js";
+import { withCheckoutCta } from "../commerce/productPlacement.js";
 
 const log = childLogger("orchestrator");
 
@@ -55,9 +58,25 @@ export class Orchestrator {
       trends: new LLMTrendSource(providers.llm),
     });
 
-    const gateResult = await withRetry(`quality-gate:${campaignId}`, () =>
-      runQualityGate(pipeline, campaign, providers.llm, providers.virality)
+    const product = campaign.productId ? this.config.products.find((p) => p.id === campaign.productId) : undefined;
+    const topPerformers = resolveTopPerformers(this.state, campaignId);
+
+    let gateResult = await withRetry(`quality-gate:${campaignId}`, () =>
+      runQualityGate(pipeline, campaign, providers.llm, providers.virality, { topPerformers, product })
     );
+
+    if (gateResult.passed && product) {
+      try {
+        const checkoutUrl = await createCheckoutLink(this.config.commerce, product, {
+          campaignId,
+          accountId: campaignId,
+          contentItemId: gateResult.item.id,
+        });
+        gateResult = { ...gateResult, item: { ...gateResult.item, brief: withCheckoutCta(gateResult.item.brief, checkoutUrl) } };
+      } catch (err) {
+        log.warn({ campaignId, err }, "checkout link creation failed; posting without a shoppable CTA");
+      }
+    }
 
     this.state.saveContentItem(gateResult.item);
 

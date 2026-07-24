@@ -1,11 +1,11 @@
 {
-  "name": "iprosper-social-agent",
-  "version": "0.1.0",
+  "name": "viralhive",
+  "version": "0.2.0",
   "private": true,
-  "description": "Autonomous multi-account social video agent swarm with an MCP control surface.",
+  "description": "ViralHive: a self-optimizing, autonomous multi-account social video agent swarm with an MCP control surface.",
   "type": "module",
   "bin": {
-    "iprosper-social-agent": "./dist/cli.js"
+    "viralhive": "./dist/cli.js"
   },
   "engines": {
     "node": ">=18.18"
@@ -25,6 +25,7 @@
     "dotenv": "^16.4.5",
     "js-yaml": "^4.1.0",
     "node-cron": "^3.0.3",
+    "stripe": "^17.4.0",
     "pino": "^9.5.0",
     "pino-pretty": "^11.3.0",
     "zod": "^3.23.8"
