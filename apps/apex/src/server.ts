@@ -13,8 +13,10 @@ import { startRebalanceCron } from "./cron/rebalanceCron.js";
 import { startScoutCron } from "./cron/scoutCron.js";
 import { startSweeperCron } from "./cron/sweeperCron.js";
 import { startDigestCron } from "./cron/digestCron.js";
+import { startHeartbeatCron } from "./cron/heartbeatCron.js";
 import { generateAndDeliverWeeklyDigest } from "@apex/digest";
 import { approveOpportunity, rejectOpportunity } from "@apex/scout";
+import { runHeartbeat, getLatestHeartbeat, isHeartbeatStale, heartbeatStaleAfterMs } from "@apex/health";
 
 const env = loadEnv();
 
@@ -117,6 +119,18 @@ server.tool(
 );
 
 server.tool(
+  "apex.health",
+  "Self-check heartbeat: runs a live DB/Redis check and reports whether the background cron scheduler has been ticking recently.",
+  {},
+  async () => {
+    const current = await runHeartbeat();
+    const latest = await getLatestHeartbeat();
+    const stale = isHeartbeatStale(latest, new Date(), heartbeatStaleAfterMs());
+    return { content: [{ type: "text", text: JSON.stringify({ ...current, schedulerStale: stale }, null, 2) }] };
+  },
+);
+
+server.tool(
   "apex.rejectOpportunity",
   "Marks a Scout candidate rejected.",
   {
@@ -141,6 +155,7 @@ async function main() {
   startScoutCron();
   startSweeperCron();
   startDigestCron();
+  startHeartbeatCron();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

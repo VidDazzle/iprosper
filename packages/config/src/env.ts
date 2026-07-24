@@ -48,6 +48,11 @@ const envSchema = z.object({
   // (Slack incoming webhook, etc.). Unset -> digest is generated and
   // stored, just not delivered anywhere external.
   OWNER_DIGEST_WEBHOOK_URL: z.string().optional(),
+
+  // Self-check heartbeat (not spec-defined): how stale the latest
+  // SystemHeartbeat row can be before the admin dashboard flags the
+  // apex background process as possibly dead — see packages/health.
+  HEARTBEAT_STALE_AFTER_MS: z.coerce.number().positive().default(600000),
 });
 
 export type ApexEnv = z.infer<typeof envSchema>;

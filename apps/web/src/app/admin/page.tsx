@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@apex/db";
 import type { WeeklyDigestContent } from "@apex/digest";
+import { getLatestHeartbeat, isHeartbeatStale, heartbeatStaleAfterMs } from "@apex/health";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/adminAuth";
 import { KillAgentButton, PromoteAgentButton, OpportunityActions } from "./AdminControls";
 
@@ -15,28 +16,64 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const [engineTotals, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest] = await Promise.all([
-    prisma.dispatchJob.groupBy({
-      by: ["engine"],
-      _sum: { costToDate: true, revenueAttributed: true },
-      _count: { _all: true },
-    }),
-    prisma.auditLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      where: { action: { in: ["kill_switch_fired", "rebalance_applied", "budget_cap_exceeded", "agent_promoted"] } },
-    }),
-    prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
-    prisma.agent.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.opportunityCandidate.findMany({ where: { status: "pending_review" }, orderBy: { score: "desc" } }),
-    prisma.weeklyDigest.findFirst({ orderBy: { weekStart: "desc" } }),
-  ]);
+  const [engineTotals, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest, latestHeartbeat] =
+    await Promise.all([
+      prisma.dispatchJob.groupBy({
+        by: ["engine"],
+        _sum: { costToDate: true, revenueAttributed: true },
+        _count: { _all: true },
+      }),
+      prisma.auditLog.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        where: { action: { in: ["kill_switch_fired", "rebalance_applied", "budget_cap_exceeded", "agent_promoted"] } },
+      }),
+      prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
+      prisma.agent.findMany({ orderBy: { createdAt: "desc" } }),
+      prisma.opportunityCandidate.findMany({ where: { status: "pending_review" }, orderBy: { score: "desc" } }),
+      prisma.weeklyDigest.findFirst({ orderBy: { weekStart: "desc" } }),
+      getLatestHeartbeat(),
+    ]);
 
   const digestContent = latestDigest?.content as unknown as WeeklyDigestContent | undefined;
+  const heartbeatChecks = latestHeartbeat?.checks as unknown as
+    | { db: { ok: boolean; latencyMs: number; error?: string }; redis: { ok: boolean; latencyMs: number; error?: string } }
+    | undefined;
+  const schedulerStale = isHeartbeatStale(latestHeartbeat, new Date(), heartbeatStaleAfterMs());
 
   return (
     <main className="min-h-screen bg-gray-50 p-8 text-black">
       <h1 className="text-2xl font-bold">APEX Ledger</h1>
+
+      <section className="mt-4">
+        <div
+          className={`rounded-lg border p-4 text-sm ${
+            schedulerStale ? "border-red-300 bg-red-50" : latestHeartbeat?.status === "ok" ? "border-green-300 bg-green-50" : "border-amber-300 bg-amber-50"
+          }`}
+        >
+          <p className="font-semibold">
+            {schedulerStale
+              ? "⚠ Background process may be down"
+              : latestHeartbeat?.status === "ok"
+                ? "System heartbeat: OK"
+                : "System heartbeat: degraded"}
+          </p>
+          {latestHeartbeat ? (
+            <p className="mt-1 text-gray-600">
+              Last checked {latestHeartbeat.createdAt.toISOString()}
+              {heartbeatChecks && (
+                <>
+                  {" — "}db {heartbeatChecks.db.ok ? `ok (${heartbeatChecks.db.latencyMs}ms)` : `FAILED: ${heartbeatChecks.db.error}`}
+                  {", "}redis {heartbeatChecks.redis.ok ? `ok (${heartbeatChecks.redis.latencyMs}ms)` : `FAILED: ${heartbeatChecks.redis.error}`}
+                </>
+              )}
+              {schedulerStale && " — no heartbeat within the staleness threshold; the apex cron scheduler may have died."}
+            </p>
+          ) : (
+            <p className="mt-1 text-gray-600">No heartbeat recorded yet — apps/apex may not be running.</p>
+          )}
+        </div>
+      </section>
 
       <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
         {engineTotals.map((row) => {

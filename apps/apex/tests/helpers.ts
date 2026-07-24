@@ -23,6 +23,7 @@ export async function resetDb() {
   await prisma.agent.deleteMany();
   await prisma.opportunityCandidate.deleteMany();
   await prisma.weeklyDigest.deleteMany();
+  await prisma.systemHeartbeat.deleteMany();
 }
 
 export async function teardown() {

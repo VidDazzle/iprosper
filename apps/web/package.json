@@ -16,6 +16,7 @@
         "@apex/db": "*",
         "@apex/digest": "*",
         "@apex/dispatch": "*",
+        "@apex/health": "*",
         "@apex/pipeline": "*",
         "@apex/renderer": "*",
         "@apex/scout": "*",

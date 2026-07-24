@@ -123,6 +123,21 @@ model WeeklyDigest {
   createdAt DateTime @default(now())
 }
 
+// Self-check heartbeat: proves the apex background process (cron
+// scheduler) is actually alive and its dependencies (DB, Redis) are
+// reachable — distinct from apps/web's /api/health, which does its own
+// live check on request and doesn't touch this table. Append-only, like
+// AuditLog, so staleness/history is visible on the admin dashboard
+// rather than overwriting a single row.
+model SystemHeartbeat {
+  id        String   @id @default(cuid())
+  status    String // "ok" | "degraded"
+  checks    Json // { db: { ok, latencyMs, error? }, redis: { ok, latencyMs, error? } }
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Agent {
   // agentId, e.g. "rebrand-engine", "affiliate-agent-x", "evolve-launch-y"
   id         String    @id
