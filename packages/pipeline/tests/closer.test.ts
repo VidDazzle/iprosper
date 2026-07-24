@@ -23,11 +23,27 @@ describe("closer message builders", () => {
     expect(sms).toContain("YES");
   });
 
-  it("builds an email with vertical-specific bullets and a scheduling link", () => {
+  it("builds an email with vertical-specific bullets, the shared search-visibility bullet, and a scheduling link", () => {
     const email = buildEmailMessage("Coastal Roofing Co", "https://example.com/preview/abc", "built", "https://schedule.example.com");
     expect(email.body).toContain("https://example.com/preview/abc");
     expect(email.body).toContain("https://schedule.example.com");
-    expect(email.body.split("\n- ").length - 1).toBe(3); // exactly 3 bullets
+    expect(email.body).toContain("AI search");
+    expect(email.body.split("\n- ").length - 1).toBe(4); // 3 vertical bullets + 1 shared search-visibility bullet
+  });
+
+  it("appends the social-proof bullet only when one is provided", () => {
+    const withoutProof = buildEmailMessage("Coastal Roofing Co", "https://example.com/preview/abc", "built", "https://schedule.example.com", null);
+    expect(withoutProof.body.split("\n- ").length - 1).toBe(4);
+
+    const withProof = buildEmailMessage(
+      "Coastal Roofing Co",
+      "https://example.com/preview/abc",
+      "built",
+      "https://schedule.example.com",
+      "12+ businesses like yours are already live on this",
+    );
+    expect(withProof.body).toContain("12+ businesses like yours are already live on this");
+    expect(withProof.body.split("\n- ").length - 1).toBe(5);
   });
 
   it("builds a voice script covering opening, value frame, discovery, bridging, and objection handling", () => {

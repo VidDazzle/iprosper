@@ -82,7 +82,7 @@ export async function processNurtureTouch(leadId: string, day: number) {
         [
           `Thought you'd find this useful even if the timing isn't right yet:`,
           ``,
-          `We recently helped a similar business turn a stale site into a real booking funnel — same idea as your preview.`,
+          `A real booking funnel — like your preview — is what Google and AI search tools reward with visibility now, since a lot of local searches get answered by an AI summary instead of a list of links.`,
           ``,
           `No action needed — just reply if you have questions.`,
         ].join("\n"),

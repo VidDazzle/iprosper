@@ -4,6 +4,8 @@ import { isChannelLive } from "@apex/config";
 import { getQueue, QUEUE_NAMES } from "@apex/queue";
 import { isConsentActive } from "./consent.js";
 import { closerJobId, closerEscalationJobId } from "./jobIds.js";
+import { getSocialProofStat, socialProofBullet } from "./socialProof.js";
+import type { Engine } from "@apex/contracts";
 import type { TemplateKey } from "@apex/renderer/src/selectTemplate.js";
 
 const TOUCH_DELAYS_MS = {
@@ -14,6 +16,13 @@ const TOUCH_DELAYS_MS = {
   emailAfterFirstTouchMs: Number(process.env.CLOSER_EMAIL_DELAY_MS ?? 2 * 60 * 60 * 1000), // +2h, spec-defined
   escalationWindowMs: 48 * 60 * 60 * 1000, // spec Section 6: "3 touches over 48 hours"
 } as const;
+
+// Applies across every vertical — true of the rebuild itself, not
+// vertical-specific. Deliberately no invented traffic/revenue
+// percentage (see packages/digest client-outcome stat once real
+// closed deals exist to compute one from).
+const SEARCH_VISIBILITY_BULLET =
+  "Built to show up in modern search — Google and AI search tools like ChatGPT and Google's AI Overviews, not just old-school SEO";
 
 const VERTICAL_BULLETS: Record<TemplateKey, string[]> = {
   luxe: [
@@ -42,8 +51,10 @@ export function buildEmailMessage(
   previewUrl: string,
   vertical: TemplateKey,
   schedulingLink: string,
+  socialProof: string | null = null,
 ): { subject: string; body: string } {
-  const bullets = VERTICAL_BULLETS[vertical];
+  const bullets = [...VERTICAL_BULLETS[vertical], SEARCH_VISIBILITY_BULLET];
+  if (socialProof) bullets.push(socialProof);
   return {
     subject: `Your ${businessName} preview is still up`,
     body: [
@@ -51,6 +62,8 @@ export function buildEmailMessage(
       ``,
       `What a real launch actually includes:`,
       ...bullets.map((b) => `- ${b}`),
+      ``,
+      `One new customer from this usually covers what it costs many times over.`,
       ``,
       `Want to talk through it? Grab a time here: ${schedulingLink}`,
     ].join("\n"),
@@ -75,7 +88,7 @@ export interface VoiceScript {
 export function buildVoiceScript(businessName: string): VoiceScript {
   return {
     opening: `Confirm you're speaking with the right person, then reference the ${businessName} preview specifically — not a generic pitch.`,
-    valueFrame: `Point at what the preview doesn't show: the booking flow, financing calculator, or real-time availability — tied to a concrete outcome (e.g. "clients qualify themselves before they call you").`,
+    valueFrame: `Point at what the preview doesn't show: the booking flow, financing calculator, or real-time availability — plus that it's built for how people search now (Google and AI search tools, not just old SEO) — tied to a concrete outcome (e.g. "clients qualify themselves before they call you"). Never quote a specific traffic or revenue percentage — nothing in this system measures the client's own results yet.`,
     discoveryQuestion: `Ask one open question about what's actually costing them leads or bookings today, then stop talking and listen.`,
     bridgingGuidance: `Bridge their answer directly to the tier that solves THAT problem. Never pitch a tier they didn't ask for.`,
     objectionHandling: {
@@ -150,7 +163,14 @@ export async function processCloserTouch(leadId: string, sequence: number) {
     await scheduleNext(leadId, 3, emailDelay);
   } else if (sequence === 3) {
     const vertical = await resolveVertical(lead.job.id);
-    const email = buildEmailMessage(businessName, previewUrl, vertical, schedulingLinkFor(leadId));
+    const proof = await getSocialProofStat(lead.job.engine as Engine);
+    const email = buildEmailMessage(
+      businessName,
+      previewUrl,
+      vertical,
+      schedulingLinkFor(leadId),
+      socialProofBullet(proof),
+    );
     await recordAndMaybeSend(leadId, "email", 3, `${email.subject}\n\n${email.body}`);
     await scheduleEscalationCheck(leadId);
   }

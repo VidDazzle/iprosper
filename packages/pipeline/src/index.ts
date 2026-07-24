@@ -7,6 +7,7 @@ export * from "./render.js";
 export * from "./voice.js";
 export * from "./notify.js";
 export * from "./consent.js";
+export * from "./socialProof.js";
 export * from "./closer.js";
 export * from "./nurture.js";
 export * from "./runPipeline.js";
