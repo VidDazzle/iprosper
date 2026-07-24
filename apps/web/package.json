@@ -8,14 +8,17 @@
         "start": "next start -p 3100"
     },
     "dependencies": {
+        "@apex/agents": "*",
         "@apex/audit": "*",
         "argon2": "^0.41.1",
         "@apex/config": "*",
         "@apex/contracts": "*",
         "@apex/db": "*",
+        "@apex/digest": "*",
         "@apex/dispatch": "*",
         "@apex/pipeline": "*",
         "@apex/renderer": "*",
+        "@apex/scout": "*",
         "@apex/spend": "*",
         "framer-motion": "^12.23.12",
         "next": "15.5.2",

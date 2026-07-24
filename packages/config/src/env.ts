@@ -43,6 +43,11 @@ const envSchema = z.object({
   // platform choice. See apps/web/src/app/api/webhooks/.
   INVOICING_WEBHOOK_SECRET: z.string().optional(),
   AFFILIATE_WEBHOOK_SECRET: z.string().optional(),
+
+  // Optional generic webhook the weekly Auditor digest POSTs to
+  // (Slack incoming webhook, etc.). Unset -> digest is generated and
+  // stored, just not delivered anywhere external.
+  OWNER_DIGEST_WEBHOOK_URL: z.string().optional(),
 });
 
 export type ApexEnv = z.infer<typeof envSchema>;

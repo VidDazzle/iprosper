@@ -112,6 +112,17 @@ model EngineWeek {
   @@index([engine])
 }
 
+// Auditor weekly report (spec Section 8): "delivered via owner digest
+// before Sunday's rebalance runs." Persisted so the admin dashboard
+// can show it, not just whatever delivery channel is/isn't wired.
+model WeeklyDigest {
+  id        String   @id @default(cuid())
+  weekStart DateTime @unique
+  content   Json
+  delivered Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model Agent {
   // agentId, e.g. "rebrand-engine", "affiliate-agent-x", "evolve-launch-y"
   id         String    @id

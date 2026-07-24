@@ -22,6 +22,7 @@ export async function resetDb() {
   await prisma.engineWeek.deleteMany();
   await prisma.agent.deleteMany();
   await prisma.opportunityCandidate.deleteMany();
+  await prisma.weeklyDigest.deleteMany();
 }
 
 export async function teardown() {

@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@apex/db";
+import type { WeeklyDigestContent } from "@apex/digest";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/adminAuth";
+import { KillAgentButton, PromoteAgentButton, OpportunityActions } from "./AdminControls";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,7 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const [engineTotals, recentAudit, recentLeads, agents] = await Promise.all([
+  const [engineTotals, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest] = await Promise.all([
     prisma.dispatchJob.groupBy({
       by: ["engine"],
       _sum: { costToDate: true, revenueAttributed: true },
@@ -26,7 +28,11 @@ export default async function AdminPage() {
     }),
     prisma.lead.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.agent.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.opportunityCandidate.findMany({ where: { status: "pending_review" }, orderBy: { score: "desc" } }),
+    prisma.weeklyDigest.findFirst({ orderBy: { weekStart: "desc" } }),
   ]);
+
+  const digestContent = latestDigest?.content as unknown as WeeklyDigestContent | undefined;
 
   return (
     <main className="min-h-screen bg-gray-50 p-8 text-black">
@@ -59,6 +65,7 @@ export default async function AdminPage() {
               <th className="pb-2">Engine</th>
               <th className="pb-2">Status</th>
               <th className="pb-2">Trial Runs</th>
+              <th className="pb-2">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -70,10 +77,119 @@ export default async function AdminPage() {
                 <td className="py-2">
                   {a.trialRunsCompleted}/{a.trialRunsRequired}
                 </td>
+                <td className="py-2">
+                  {a.status !== "killed" && (
+                    <>
+                      <KillAgentButton agentId={a.id} />
+                      {a.status === "trial" && <PromoteAgentButton agentId={a.id} />}
+                    </>
+                  )}
+                </td>
               </tr>
             ))}
+            {agents.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-2 text-gray-400">
+                  No agents yet.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Pending Scout Opportunities</h2>
+        <table className="mt-2 w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-500">
+              <th className="pb-2">Name</th>
+              <th className="pb-2">Category</th>
+              <th className="pb-2">Score</th>
+              <th className="pb-2">Confidence</th>
+              <th className="pb-2">Est. Revenue/mo</th>
+              <th className="pb-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pendingOpportunities.map((o) => (
+              <tr key={o.id} className="border-t align-top">
+                <td className="py-2">{o.name}</td>
+                <td className="py-2">{o.category}</td>
+                <td className="py-2">{Number(o.score).toFixed(2)}</td>
+                <td className="py-2">{o.confidence}</td>
+                <td className="py-2">${Number(o.estRevenueMonthly).toFixed(2)}</td>
+                <td className="py-2">
+                  <OpportunityActions candidateId={o.id} />
+                </td>
+              </tr>
+            ))}
+            {pendingOpportunities.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-2 text-gray-400">
+                  No pending opportunities.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Latest Weekly Digest</h2>
+        {digestContent ? (
+          <div className="mt-2 rounded-lg border bg-white p-4 text-sm">
+            <p className="text-gray-500">
+              Week of {new Date(digestContent.weekStart).toDateString()} – {new Date(digestContent.weekEnd).toDateString()}
+              {latestDigest && !latestDigest.delivered && (
+                <span className="ml-2 text-xs text-amber-600">(not yet delivered)</span>
+              )}
+            </p>
+            <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-4">
+              <p>Previews: {digestContent.previewsGenerated}</p>
+              <p>Leads: {digestContent.leadsCaptured}</p>
+              <p>Consent rate: {(digestContent.consentRate * 100).toFixed(1)}%</p>
+              <p>Closes: {digestContent.closes}</p>
+              <p>Total spend: ${digestContent.totalSpend.toFixed(2)}</p>
+              <p>Total revenue: ${digestContent.totalRevenue.toFixed(2)}</p>
+              <p>Cost/close: {digestContent.costPerClose === null ? "—" : `$${digestContent.costPerClose.toFixed(2)}`}</p>
+            </div>
+            <div className="mt-3">
+              <h3 className="font-semibold">ROI per engine</h3>
+              <ul className="mt-1 space-y-0.5">
+                {digestContent.roiPerEngine.map((r) => (
+                  <li key={r.engine}>
+                    {r.engine}: spend ${r.spend.toFixed(2)}, revenue ${r.revenue.toFixed(2)}, ROI {(r.roi * 100).toFixed(1)}%
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="mt-3">
+              <h3 className="font-semibold">Engine status</h3>
+              <ul className="mt-1 space-y-0.5">
+                {digestContent.engineStatus.map((s) => (
+                  <li key={s.engine}>
+                    {s.engine}: {s.status}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {digestContent.killSwitchEvents.length > 0 && (
+              <div className="mt-3">
+                <h3 className="font-semibold">Kill-switch events</h3>
+                <ul className="mt-1 space-y-0.5">
+                  {digestContent.killSwitchEvents.map((e, i) => (
+                    <li key={i}>
+                      {e.agentId ?? "—"} at {new Date(e.firedAt).toISOString()}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 text-gray-400">No digest generated yet.</p>
+        )}
       </section>
 
       <section className="mt-8">

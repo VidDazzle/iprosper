@@ -1,5 +1,6 @@
 import argon2 from "argon2";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { NextRequest } from "next/server";
 import { loadEnv } from "@apex/config";
 
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
@@ -46,4 +47,9 @@ export function verifyAdminSessionToken(token: string | undefined): boolean {
   const actualBuf = Buffer.from(sig, "hex");
   if (expectedBuf.length !== actualBuf.length) return false;
   return timingSafeEqual(expectedBuf, actualBuf);
+}
+
+/** Convenience guard for admin-only Route Handlers (kill/promote/approve/reject). */
+export function isAdminRequest(req: NextRequest): boolean {
+  return verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 }

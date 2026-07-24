@@ -12,6 +12,8 @@ import { startKillSwitchCron } from "./cron/killSwitchCron.js";
 import { startRebalanceCron } from "./cron/rebalanceCron.js";
 import { startScoutCron } from "./cron/scoutCron.js";
 import { startSweeperCron } from "./cron/sweeperCron.js";
+import { startDigestCron } from "./cron/digestCron.js";
+import { generateAndDeliverWeeklyDigest } from "@apex/digest";
 import { approveOpportunity, rejectOpportunity } from "@apex/scout";
 
 const env = loadEnv();
@@ -90,6 +92,16 @@ server.tool(
 );
 
 server.tool(
+  "apex.digest",
+  "Generates (and attempts delivery of) the Auditor weekly report for the most recently completed week.",
+  {},
+  async () => {
+    const digest = await generateAndDeliverWeeklyDigest();
+    return { content: [{ type: "text", text: JSON.stringify(digest, null, 2) }] };
+  },
+);
+
+server.tool(
   "apex.approveOpportunity",
   "The only sanctioned path from a Scout candidate to a real dispatch — human-gated, never automatic.",
   {
@@ -128,6 +140,7 @@ async function main() {
   startRebalanceCron();
   startScoutCron();
   startSweeperCron();
+  startDigestCron();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

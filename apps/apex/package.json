@@ -15,6 +15,7 @@
         "@apex/config": "*",
         "@apex/contracts": "*",
         "@apex/db": "*",
+        "@apex/digest": "*",
         "@apex/dispatch": "*",
         "@apex/queue": "*",
         "@apex/scout": "*",

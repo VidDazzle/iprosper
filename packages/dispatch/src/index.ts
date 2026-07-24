@@ -50,3 +50,4 @@ export async function dispatch(input: DispatchTaskInput) {
 }
 
 export * from "./sweeper.js";
+export * from "./stuckJobs.js";

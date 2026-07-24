@@ -69,3 +69,5 @@ export async function promoteAgent(agentId: string, actor: string) {
   });
   return promoted;
 }
+
+export * from "./killSwitch.js";
