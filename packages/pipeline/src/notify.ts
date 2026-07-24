@@ -1,6 +1,7 @@
 import { prisma } from "@apex/db";
 import { appendAuditLog } from "@apex/audit";
 import { getQueue, QUEUE_NAMES } from "@apex/queue";
+import { closerJobId } from "./jobIds.js";
 
 export interface CaptureLeadInput {
   jobId: string;
@@ -58,7 +59,11 @@ export async function captureLead(input: CaptureLeadInput) {
 
   // Closer must contact within 5 minutes of unlock (spec Section 6).
   // The actual send is LIVE_MODE-gated inside the Closer consumer, not here.
-  await getQueue(QUEUE_NAMES.closerDispatch).add("first-touch", { leadId: lead.id, sequence: 1 });
+  await getQueue(QUEUE_NAMES.closerDispatch).add(
+    "touch",
+    { leadId: lead.id, sequence: 1 },
+    { jobId: closerJobId(lead.id, 1) },
+  );
 
   await getQueue(QUEUE_NAMES.ownerDigest).add("lead-captured", { leadId: lead.id, jobId: input.jobId });
 

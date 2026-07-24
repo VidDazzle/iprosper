@@ -46,3 +46,41 @@ export async function createTestJob(overrides: Partial<Parameters<typeof prisma.
     },
   });
 }
+
+/** A job + BrandKit + PreviewResult + Lead, ready for Closer/nurture tests. */
+export async function createTestLead(
+  overrides: { consentTimestamp?: Date; status?: string } = {},
+) {
+  const job = await createTestJob();
+  await prisma.brandKit.create({
+    data: {
+      jobId: job.id,
+      name: "Coastal Roofing Co",
+      palette: ["#1e6b3d"],
+      fonts: ["Poppins"],
+      services: ["Roof Repair", "Solar Panel Installation"],
+      reviews: [],
+    },
+  });
+  await prisma.previewResult.create({
+    data: { jobId: job.id, previewUrl: "https://example.com/preview/abc", expiresAt: new Date(Date.now() + 86400000) },
+  });
+
+  const { consentTimestamp, ...rest } = overrides;
+  const lead = await prisma.lead.create({
+    data: {
+      jobId: job.id,
+      name: "Jane Test",
+      email: "jane@test.com",
+      consentTimestamp: consentTimestamp ?? new Date(),
+      consentText: "I agree to be contacted.",
+      source: "rebrand-engine-preview",
+      status: "active",
+      ...rest,
+    },
+  });
+
+  await prisma.dispatchJob.update({ where: { id: job.id }, data: { leadId: lead.id } });
+
+  return { job, lead };
+}

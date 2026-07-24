@@ -12,6 +12,14 @@ const envSchema = z.object({
     .transform((v) => v === "true")
     .default(false),
 
+  // Per-channel outbound kill switches, layered under LIVE_MODE — all
+  // default false even when LIVE_MODE=true, so going live doesn't
+  // silently enable every channel at once. Each must be explicitly
+  // flipped on top of LIVE_MODE.
+  SMS_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
+  VOICE_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
+  EMAIL_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
+
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
 
@@ -28,6 +36,13 @@ const envSchema = z.object({
   ELEVENLABS_API_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+  // Generic HMAC secrets for the invoicing/affiliate revenue webhooks
+  // (Section 8) — no specific provider is named in the spec for either,
+  // so these gate a provider-agnostic payload shape pending a real
+  // platform choice. See apps/web/src/app/api/webhooks/.
+  INVOICING_WEBHOOK_SECRET: z.string().optional(),
+  AFFILIATE_WEBHOOK_SECRET: z.string().optional(),
 });
 
 export type ApexEnv = z.infer<typeof envSchema>;
@@ -75,5 +90,25 @@ export class DryRunBlockedError extends Error {
   constructor(action: string) {
     super(`Blocked in dry-run (LIVE_MODE=false): ${action}`);
     this.name = "DryRunBlockedError";
+  }
+}
+
+export type Channel = "sms" | "voice" | "email";
+
+/** Per-channel outbound gate: requires LIVE_MODE AND the specific channel's own flag. */
+export function isChannelLive(channel: Channel, env: NodeJS.ProcessEnv = process.env): boolean {
+  const cfg = loadEnv(env);
+  if (!cfg.LIVE_MODE) return false;
+  return channel === "sms" ? cfg.SMS_ENABLED : channel === "voice" ? cfg.VOICE_ENABLED : cfg.EMAIL_ENABLED;
+}
+
+/**
+ * Guard for a specific outbound channel. Throws in dry-run OR when
+ * LIVE_MODE is true but that particular channel hasn't been separately
+ * enabled — going live never silently enables every channel at once.
+ */
+export function assertChannelLive(channel: Channel, action: string, env: NodeJS.ProcessEnv = process.env): void {
+  if (!isChannelLive(channel, env)) {
+    throw new DryRunBlockedError(`[${channel}] ${action}`);
   }
 }

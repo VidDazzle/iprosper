@@ -16,10 +16,12 @@
         "@apex/dispatch": "*",
         "@apex/pipeline": "*",
         "@apex/renderer": "*",
+        "@apex/spend": "*",
         "framer-motion": "^12.23.12",
         "next": "15.5.2",
         "react": "19.1.0",
         "react-dom": "19.1.0",
+        "stripe": "^17.5.0",
         "zod": "^4.1.5"
     },
     "devDependencies": {

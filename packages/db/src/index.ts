@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/client";
+import { PrismaClient } from "../generated/client/index.js";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -15,4 +15,4 @@ if (process.env.NODE_ENV !== "production") {
   globalThis.__apexPrisma = prisma;
 }
 
-export * from "../generated/client";
+export * from "../generated/client/index.js";

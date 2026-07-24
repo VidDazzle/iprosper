@@ -1,5 +1,5 @@
 import { prisma } from "@apex/db";
-import { loadEnv, isLiveMode } from "@apex/config";
+import { loadEnv, isChannelLive } from "@apex/config";
 import type { BrandKit } from "@apex/contracts";
 
 export interface VoiceResult {
@@ -9,18 +9,19 @@ export interface VoiceResult {
 
 /**
  * Ephemeral ElevenLabs voice-demo agent, primed with business name +
- * services, expiring with the preview (spec Section 4). Gated on
- * LIVE_MODE — in dry-run this returns a null agent id and touches
- * nothing external, so no real ElevenLabs cost is incurred while
- * developing/testing. NOT verified against a live ElevenLabs API in
- * this build — no key was available to test against; the request shape
- * below is best-effort from ElevenLabs' documented conversational-agent
- * API and needs a real smoke test before this stage is trusted live.
+ * services, expiring with the preview (spec Section 4). Gated on the
+ * "voice" channel switch (LIVE_MODE AND VOICE_ENABLED) — in dry-run
+ * this returns a null agent id and touches nothing external, so no
+ * real ElevenLabs cost is incurred while developing/testing. NOT
+ * verified against a live ElevenLabs API in this build — no key was
+ * available to test against; the request shape below is best-effort
+ * from ElevenLabs' documented conversational-agent API and needs a
+ * real smoke test before this stage is trusted live.
  */
 export async function voice(jobId: string, brandKit: BrandKit): Promise<VoiceResult> {
   const env = loadEnv();
 
-  if (!isLiveMode() || !env.ELEVENLABS_API_KEY) {
+  if (!isChannelLive("voice") || !env.ELEVENLABS_API_KEY) {
     await prisma.previewResult.update({ where: { jobId }, data: { voiceAgentId: null } });
     return { voiceAgentId: null, live: false };
   }

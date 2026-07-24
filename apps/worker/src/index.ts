@@ -2,7 +2,14 @@ import { Worker } from "bullmq";
 import { prisma } from "@apex/db";
 import { loadEnv } from "@apex/config";
 import { getRedisConnection, QUEUE_NAMES } from "@apex/queue";
-import { runPipeline } from "@apex/pipeline";
+import {
+  runPipeline,
+  processCloserTouch,
+  processEscalationCheck,
+  processNurtureTouch,
+  processNurtureDormant,
+  startNurtureQueue,
+} from "@apex/pipeline";
 
 const env = loadEnv();
 
@@ -19,7 +26,7 @@ interface DispatchJobPayload {
  * explicitly marked failed with a clear reason rather than left stuck
  * in "queued" forever or silently treated as done.
  */
-async function processJob(payload: DispatchJobPayload) {
+async function processDispatchJob(payload: DispatchJobPayload) {
   const job = await prisma.dispatchJob.findUnique({ where: { id: payload.dispatchJobId } });
   if (!job) {
     console.error(`[worker] DispatchJob ${payload.dispatchJobId} not found — skipping.`);
@@ -45,21 +52,61 @@ async function processJob(payload: DispatchJobPayload) {
   return runPipeline(job.id);
 }
 
+async function processCloserJob(name: string, data: { leadId: string; sequence?: number }) {
+  if (name === "touch") {
+    return processCloserTouch(data.leadId, data.sequence!);
+  }
+  if (name === "escalation-check") {
+    return processEscalationCheck(data.leadId, startNurtureQueue);
+  }
+  console.warn(`[worker] unknown closer-dispatch job name "${name}"`);
+}
+
+async function processNurtureJob(name: string, data: { leadId: string; day?: number }) {
+  if (name === "nurture-touch") {
+    return processNurtureTouch(data.leadId, data.day!);
+  }
+  if (name === "nurture-dormant") {
+    return processNurtureDormant(data.leadId);
+  }
+  console.warn(`[worker] unknown nurture-dispatch job name "${name}"`);
+}
+
 async function main() {
   console.info(`[worker] starting — LIVE_MODE=${env.LIVE_MODE}`);
 
-  const worker = new Worker<DispatchJobPayload>(
+  const connection = getRedisConnection();
+
+  const dispatchWorker = new Worker<DispatchJobPayload>(
     QUEUE_NAMES.apexDispatch,
-    async (job) => processJob(job.data),
-    { connection: getRedisConnection(), concurrency: 2 },
+    async (job) => processDispatchJob(job.data),
+    { connection, concurrency: 2 },
   );
 
-  worker.on("failed", (job, err) => {
-    console.error(`[worker] job ${job?.id} failed:`, err.message);
-  });
+  const closerWorker = new Worker(
+    QUEUE_NAMES.closerDispatch,
+    async (job) => processCloserJob(job.name, job.data),
+    { connection, concurrency: 5 },
+  );
+
+  const nurtureWorker = new Worker(
+    QUEUE_NAMES.nurtureDispatch,
+    async (job) => processNurtureJob(job.name, job.data),
+    { connection, concurrency: 5 },
+  );
+
+  for (const [name, worker] of [
+    ["dispatch", dispatchWorker],
+    ["closer", closerWorker],
+    ["nurture", nurtureWorker],
+  ] as const) {
+    worker.on("failed", (job, err) => {
+      console.error(`[worker:${name}] job ${job?.id} failed:`, err.message);
+    });
+  }
 
   process.on("SIGTERM", async () => {
-    await worker.close();
+    await Promise.all([dispatchWorker.close(), closerWorker.close(), nurtureWorker.close()]);
     process.exit(0);
   });
 }
