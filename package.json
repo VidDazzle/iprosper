@@ -2,10 +2,18 @@
     "name": "app",
     "version": "0.1.0",
     "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
-        "start": "next start"
+        "start": "next start",
+        "apex:dev": "npm run dev --workspace=@apex/apex",
+        "apex:test": "npm run test --workspace=@apex/apex",
+        "db:generate": "npm run generate --workspace=@apex/db",
+        "db:migrate": "npm run migrate --workspace=@apex/db"
     },
     "packageManager": "npm@10.9.0",
     "engines": {

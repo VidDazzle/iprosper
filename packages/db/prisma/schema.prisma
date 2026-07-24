@@ -1,0 +1,171 @@
+// APEX system schema.
+// Models here match VidDazzle APEX System spec, Section 2, plus the
+// Rebrand Engine contracts (BrandKit/Lead/PreviewResult) and Scout's
+// OpportunityCandidate. DispatchJob carries a few fields beyond the
+// literal spec (agentId, budgetCap, task, status) because apex.dispatch
+// needs somewhere to persist them — noted here since it's a deviation.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DispatchJob {
+  id        String @id @default(cuid())
+  source    String // "rebrand-engine" | "affiliate-agent" | "evolve"
+  engine    String // "client-acquisition" | "affiliate" | "evolve"
+  stage     String // scrape|extract|render|voice|notify|closed
+
+  // Not in the literal spec model, but required to make apex.dispatch
+  // functional: which agent owns this job, what it was asked to do,
+  // its hard budget cap, and its current lifecycle status.
+  agentId   String
+  task      Json
+  budgetCap Decimal @db.Decimal(12, 2)
+  status    String  @default("queued") // queued|running|completed|failed|killed
+
+  costToDate        Decimal   @default(0) @db.Decimal(12, 2)
+  leadId            String?
+  invoicePaid       Boolean   @default(false)
+  invoicePaidAt     DateTime?
+  revenueAttributed Decimal   @default(0) @db.Decimal(12, 2)
+
+  brandKit      BrandKit?
+  previewResult PreviewResult?
+  lead          Lead?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([source])
+  @@index([engine])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EngineWeek {
+  id        String   @id @default(cuid())
+  engine    String
+  weekStart DateTime
+  spend     Decimal  @db.Decimal(12, 2)
+  revenue   Decimal  @db.Decimal(12, 2)
+  roi       Decimal  @db.Decimal(8, 4)
+
+  consecutiveWinCycles  Int    @default(0)
+  // Not in the literal spec model — needed to implement the "2 straight
+  // cycles below target" revert rule (Section 1) without conflating it
+  // with the win-streak counter used for concentration.
+  consecutiveMissCycles Int    @default(0)
+  status                String // "balanced" | "concentrated" | "heartbeat"
+
+  createdAt DateTime @default(now())
+
+  @@unique([engine, weekStart])
+  @@index([engine])
+}
+
+model Agent {
+  // agentId, e.g. "rebrand-engine", "affiliate-agent-x", "evolve-launch-y"
+  id         String    @id
+  engine     String // "client-acquisition" | "affiliate" | "evolve"
+  status     String    @default("active") // active | killed
+  killedAt   DateTime?
+  killReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([engine])
+  @@index([status])
+}
+
+// Append-only. Nothing in application code should ever UPDATE or
+// DELETE a row here — only INSERT. This is the audit trail required
+// by the security baseline and the compliance gate.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String // "system" | "apex.kill" | "apex.rebalance" | agentId, etc.
+  action    String // e.g. "kill_switch_fired", "rebalance_applied", "dispatch_queued"
+  target    String?
+  detail    Json
+  createdAt DateTime @default(now())
+
+  @@index([actor])
+  @@index([action])
+  @@index([target])
+  @@index([createdAt])
+}
+
+model BrandKit {
+  id     String @id @default(cuid())
+  jobId  String @unique
+  job    DispatchJob @relation(fields: [jobId], references: [id])
+
+  name     String
+  palette  String[]
+  fonts    String[]
+  logoUrl  String?
+  services String[]
+  reviews  Json[]
+
+  createdAt DateTime @default(now())
+}
+
+model PreviewResult {
+  id     String @id @default(cuid())
+  jobId  String @unique
+  job    DispatchJob @relation(fields: [jobId], references: [id])
+
+  previewUrl   String
+  expiresAt    DateTime
+  voiceAgentId String?
+  watermarked  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id     String       @id @default(cuid())
+  jobId  String?      @unique
+  job    DispatchJob? @relation(fields: [jobId], references: [id])
+
+  name             String
+  email            String
+  phone            String?
+  consentTimestamp DateTime
+  consentText      String
+  source           String
+  status           String @default("active") // active | dormant | erased
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([consentTimestamp])
+}
+
+model OpportunityCandidate {
+  id                String @id @default(cuid())
+  name              String
+  category          String // new-vertical | new-app | new-affiliate-program
+  estRevenueMonthly Decimal @db.Decimal(12, 2)
+  confidence        String // low | med | high
+  confidenceBasis   String
+  estBuildHours     Decimal @db.Decimal(8, 2)
+  infraReuse        String[]
+  score             Decimal @db.Decimal(10, 4)
+  complianceFlags   String[]
+  status            String  @default("pending_review")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([score])
+}

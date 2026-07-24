@@ -1,0 +1,24 @@
+node_modules/
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+.env
+.env.local
+.env.*.local
+!.env.example
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.DS_Store
+*.pem
+
+# Prisma
+packages/db/generated/
+
+# Playwright
+apps/**/test-results/
+apps/**/playwright-report/
