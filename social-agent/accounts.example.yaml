@@ -1,0 +1,107 @@
+# Copy this file to accounts.yaml and fill in your real accounts/campaigns.
+# Secrets are NEVER stored here — only the env var *names* that hold them.
+# Put the actual values in .env (copy .env.example -> .env).
+
+accounts:
+  - id: tiktok_main
+    platform: tiktok
+    displayName: "@yourbrand on TikTok"
+    credentials:
+      accessToken: TIKTOK_MAIN_ACCESS_TOKEN
+    niche: "fitness motivation"
+    postsPerDay: 2
+    postingWindow: ["09:00", "18:30"]
+    timezone: "America/New_York"
+    enabled: true
+
+  - id: ig_main
+    platform: instagram
+    displayName: "@yourbrand on Instagram"
+    credentials:
+      accessToken: IG_MAIN_ACCESS_TOKEN
+      igUserId: IG_MAIN_USER_ID
+    niche: "fitness motivation"
+    postsPerDay: 1
+    postingWindow: ["12:00"]
+    timezone: "America/New_York"
+    enabled: true
+
+  - id: yt_main
+    platform: youtube
+    displayName: "YourBrand Shorts"
+    credentials:
+      accessToken: YT_MAIN_ACCESS_TOKEN
+    niche: "fitness motivation"
+    postsPerDay: 1
+    postingWindow: ["15:00"]
+    timezone: "America/New_York"
+    enabled: true
+
+  # Example of the escape-hatch agent for a platform without a native
+  # integration yet (route it through Zapier/Make/n8n/your own service).
+  - id: threads_main
+    platform: webhook
+    displayName: "@yourbrand on Threads (via webhook bridge)"
+    credentials: {}
+    webhookUrl: "https://hooks.zapier.com/hooks/catch/xxxxx/yyyyy/"
+    niche: "fitness motivation"
+    postsPerDay: 1
+    postingWindow: ["12:00"]
+    timezone: "America/New_York"
+    enabled: false
+
+campaigns:
+  - id: daily_fitness_shorts
+    name: "Daily fitness motivation shorts"
+    niche: "fitness motivation"
+    goal: "Grow followers and drive link-in-bio clicks to the coaching offer."
+    toneKeywords: ["high energy", "no-nonsense", "encouraging"]
+    bannedTopics: ["extreme dieting", "medical claims", "before/after weight loss numbers"]
+    platforms: ["tiktok", "instagram", "youtube"]
+    accountIds: ["tiktok_main", "ig_main", "yt_main"]
+    qualityThreshold: 9.2 # out of 10; content below this is regenerated, not posted
+    maxRegenerationAttempts: 4
+    videoLengthSeconds: 28
+    autopilot: true # starts fully autonomous the moment the daemon boots
+
+providers:
+  script: openai_main # LLM that writes hooks/scripts/captions
+  video: higgsfield_main # video generation backend
+  image: higgsfield_main
+  voice: elevenlabs_main # optional; omit to skip voiceover synthesis
+  virality: higgsfield_main # optional; omit to score on creative quality alone
+
+# Any AI platform / LLM / API key can be plugged in here. `kind` picks the
+# adapter; everything else (baseUrl, model, which env var holds the key) is
+# just config. Point `llm-openai-compatible` at OpenAI, Groq, Together,
+# Fireworks, or a local Ollama instance's OpenAI-compatible route.
+providerRegistry:
+  - id: openai_main
+    kind: llm-openai-compatible
+    baseUrl: "https://api.openai.com/v1"
+    apiKeyEnv: OPENAI_API_KEY
+    model: "gpt-4o-mini"
+
+  - id: claude_main
+    kind: llm-anthropic
+    baseUrl: "https://api.anthropic.com/v1"
+    apiKeyEnv: ANTHROPIC_API_KEY
+    model: "claude-sonnet-5"
+
+  - id: higgsfield_main
+    kind: higgsfield
+    baseUrl: "https://api.higgsfield.ai/v1"
+    apiKeyEnv: HIGGSFIELD_API_KEY
+
+  - id: leonardo_main
+    kind: leonardo
+    baseUrl: "https://cloud.leonardo.ai/api/rest/v1"
+    apiKeyEnv: LEONARDO_API_KEY
+
+  - id: elevenlabs_main
+    kind: elevenlabs
+    baseUrl: "https://api.elevenlabs.io/v1"
+    apiKeyEnv: ELEVENLABS_API_KEY
+
+dbPath: "./data/iprosper-social-agent.db"
+logLevel: "info"

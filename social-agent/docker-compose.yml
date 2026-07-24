@@ -1,0 +1,9 @@
+services:
+  social-agent:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./accounts.yaml:/app/accounts.yaml:ro
+      - ./data:/app/data
+    command: ["node", "dist/cli.js", "daemon"]

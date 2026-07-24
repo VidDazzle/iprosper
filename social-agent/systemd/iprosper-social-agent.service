@@ -1,0 +1,17 @@
+[Unit]
+Description=iProsper autonomous social media agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/iprosper-social-agent
+EnvironmentFile=/opt/iprosper-social-agent/.env
+ExecStart=/usr/bin/node /opt/iprosper-social-agent/dist/cli.js daemon
+Restart=always
+RestartSec=5
+User=iprosper
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
