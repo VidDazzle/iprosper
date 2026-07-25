@@ -7,6 +7,9 @@
   "bin": {
     "viralhive": "./dist/cli.js"
   },
+  "exports": {
+    "./*": "./dist/*.js"
+  },
   "engines": {
     "node": ">=18.18"
   },

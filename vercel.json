@@ -3,5 +3,11 @@
   "installCommand": "npm ci",
   "buildCommand": "next build",
   "outputDirectory": ".next",
-  "routes": []
+  "routes": [],
+  "crons": [
+    {
+      "path": "/api/viralhive/cron",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

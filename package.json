@@ -5,7 +5,9 @@
     "scripts": {
         "dev": "next dev --turbopack",
         "build": "next build",
-        "start": "next start"
+        "start": "next start",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate"
     },
     "packageManager": "npm@10.9.0",
     "engines": {
@@ -45,13 +47,12 @@
         "clsx": "^2.1.1",
         "cmdk": "^1.1.1",
         "date-fns": "^4.1.0",
-        "drizzle-kit": "^0.18.1",
-        "drizzle-orm": "^0.44.5",
+        "drizzle-orm": "^0.45.2",
         "embla-carousel-react": "^8.6.0",
         "framer-motion": "^12.23.12",
         "input-otp": "^1.4.2",
         "lucide-react": "^0.542.0",
-        "next": "15.5.2",
+        "next": "15.5.21",
         "next-themes": "^0.4.6",
         "react": "19.1.0",
         "react-day-picker": "^9.9.0",
@@ -61,8 +62,10 @@
         "react-server-dom-webpack": "19.1.0",
         "recharts": "^2.15.4",
         "sonner": "^2.0.7",
+        "stripe": "^17.4.0",
         "tailwind-merge": "^3.3.1",
         "vaul": "^1.1.2",
+        "viralhive": "file:./viralhive",
         "zod": "^4.1.5"
     },
     "devDependencies": {
@@ -72,6 +75,7 @@
         "@types/react-dom": "^19",
         "@typescript-eslint/eslint-plugin": "^8.44.0",
         "@typescript-eslint/parser": "^8.44.0",
+        "drizzle-kit": "^0.30.6",
         "eslint": "^9.35.0",
         "eslint-config-next": "^15.5.3",
         "tailwindcss": "^4",
