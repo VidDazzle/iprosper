@@ -1,0 +1,23 @@
+{
+    "name": "@apex/mocksite",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@apex/config": "*",
+        "@apex/contracts": "*",
+        "@apex/db": "*",
+        "jszip": "^3.10.1",
+        "sanitize-html": "^2.14.0"
+    },
+    "devDependencies": {
+        "@types/sanitize-html": "^2.13.0",
+        "typescript": "^5",
+        "vitest": "^3.0.5"
+    }
+}

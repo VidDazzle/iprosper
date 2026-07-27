@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Tailwind's zero-config content detection doesn't reach outside this
+   app's own directory tree — @apex/renderer's template components live
+   in a sibling workspace package, so their utility classes (especially
+   arbitrary-value ones like text-[var(--brand-color-primary)]) would
+   never get generated without this. */
+@source "../../../../packages/renderer/src";
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+}

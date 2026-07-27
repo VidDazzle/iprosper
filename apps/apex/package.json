@@ -1,0 +1,35 @@
+{
+    "name": "@apex/apex",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "tsx watch src/server.ts",
+        "start": "tsx src/server.ts",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "@apex/agents": "*",
+        "@apex/audit": "*",
+        "@apex/config": "*",
+        "@apex/contracts": "*",
+        "@apex/db": "*",
+        "@apex/digest": "*",
+        "@apex/dispatch": "*",
+        "@apex/health": "*",
+        "@apex/queue": "*",
+        "@apex/scout": "*",
+        "@apex/spend": "*",
+        "@modelcontextprotocol/sdk": "^1.6.1",
+        "node-cron": "^3.0.3",
+        "zod": "^4.1.5"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/node-cron": "^3.0.11",
+        "tsx": "^4.19.2",
+        "typescript": "^5",
+        "vitest": "^3.0.5"
+    }
+}

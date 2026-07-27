@@ -1,0 +1,16 @@
+{
+    "name": "@apex/queue",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "dependencies": {
+        "@apex/config": "*",
+        "bullmq": "^5.34.7",
+        "ioredis": "^5.4.2"
+    },
+    "devDependencies": {
+        "typescript": "^5"
+    }
+}

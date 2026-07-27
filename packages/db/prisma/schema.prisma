@@ -1,0 +1,321 @@
+// APEX system schema.
+// Models here match VidDazzle APEX System spec, Section 2, plus the
+// Rebrand Engine contracts (BrandKit/Lead/PreviewResult) and Scout's
+// OpportunityCandidate. DispatchJob carries a few fields beyond the
+// literal spec (agentId, budgetCap, task, status) because apex.dispatch
+// needs somewhere to persist them — noted here since it's a deviation.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model DispatchJob {
+  id        String @id @default(cuid())
+  source    String // "rebrand-engine" | "affiliate-agent" | "evolve"
+  engine    String // "client-acquisition" | "affiliate" | "evolve"
+  stage     String // scrape|extract|render|mocksite|voice|notify|closed
+
+  // Not in the literal spec model, but required to make apex.dispatch
+  // functional: which agent owns this job, what it was asked to do,
+  // its hard budget cap, and its current lifecycle status.
+  agentId   String
+  task      Json
+  budgetCap Decimal @db.Decimal(12, 2)
+  status    String  @default("queued") // queued|running|completed|failed|killed
+
+  costToDate        Decimal   @default(0) @db.Decimal(12, 2)
+  leadId            String?
+  invoicePaid       Boolean   @default(false)
+  invoicePaidAt     DateTime?
+  revenueAttributed Decimal   @default(0) @db.Decimal(12, 2)
+
+  // Loop-engineering additions (task #11/#20): what "done" means for this
+  // job, and what the inspector actually found — so retries are informed
+  // by a specific deficiency instead of a blind re-run.
+  doneChecklist    Json?
+  inspectorVerdict Json?
+
+  // Sweeper (spec Section 3: "retries failed jobs up to 3x with
+  // backoff, then escalates via daily digest"). Tracks how many times
+  // this job has been automatically re-enqueued after failing.
+  retryCount Int @default(0)
+
+  brandKit      BrandKit?
+  previewResult PreviewResult?
+  mockSite      MockSite?
+  lead          Lead?
+  outcome       JobOutcome?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([source])
+  @@index([engine])
+  @@index([agentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Structured "memory" for a completed job — baseline, hypothesis, result,
+// next recommendation. Not in the literal spec; added so Scout's
+// confidenceBasis ("comparables, market data, historical APEX data") has
+// real historical APEX data to point to instead of nothing.
+model JobOutcome {
+  id             String      @id @default(cuid())
+  jobId          String      @unique
+  job            DispatchJob @relation(fields: [jobId], references: [id])
+  baseline       Json?
+  hypothesis     String?
+  result         Json
+  recommendation String?
+  createdAt      DateTime    @default(now())
+}
+
+// Idempotency log for revenue-confirmation webhooks (Stripe settlement,
+// invoice-paid, affiliate commission-confirmed). Without this, a retried
+// webhook delivery could double-count revenueAttributed — a real money
+// correctness bug, not a style choice.
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String // "stripe" | "invoicing" | "affiliate-network"
+  externalId  String // the provider's own event id
+  eventType   String
+  payload     Json
+  processedAt DateTime @default(now())
+
+  @@unique([provider, externalId])
+}
+
+model EngineWeek {
+  id        String   @id @default(cuid())
+  engine    String
+  weekStart DateTime
+  spend     Decimal  @db.Decimal(12, 2)
+  revenue   Decimal  @db.Decimal(12, 2)
+  roi       Decimal  @db.Decimal(8, 4)
+
+  consecutiveWinCycles  Int    @default(0)
+  // Not in the literal spec model — needed to implement the "2 straight
+  // cycles below target" revert rule (Section 1) without conflating it
+  // with the win-streak counter used for concentration.
+  consecutiveMissCycles Int    @default(0)
+  status                String // "balanced" | "concentrated" | "heartbeat"
+
+  createdAt DateTime @default(now())
+
+  @@unique([engine, weekStart])
+  @@index([engine])
+}
+
+// Auditor weekly report (spec Section 8): "delivered via owner digest
+// before Sunday's rebalance runs." Persisted so the admin dashboard
+// can show it, not just whatever delivery channel is/isn't wired.
+model WeeklyDigest {
+  id        String   @id @default(cuid())
+  weekStart DateTime @unique
+  content   Json
+  delivered Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Self-check heartbeat: proves the apex background process (cron
+// scheduler) is actually alive and its dependencies (DB, Redis) are
+// reachable — distinct from apps/web's /api/health, which does its own
+// live check on request and doesn't touch this table. Append-only, like
+// AuditLog, so staleness/history is visible on the admin dashboard
+// rather than overwriting a single row.
+model SystemHeartbeat {
+  id        String   @id @default(cuid())
+  status    String // "ok" | "degraded"
+  checks    Json // { db: { ok, latencyMs, error? }, redis: { ok, latencyMs, error? } }
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Agent {
+  // agentId, e.g. "rebrand-engine", "affiliate-agent-x", "evolve-launch-y"
+  id         String    @id
+  engine     String // "client-acquisition" | "affiliate" | "evolve"
+  status     String    @default("trial") // trial | active | killed
+  killedAt   DateTime?
+  killReason String?
+
+  // Loop-engineering addition: new agents start on `trial` (supervised,
+  // still budget-capped) and only auto-promote to `active` after
+  // enough successful inner-loop runs — "prove an inner loop before
+  // promoting it into an outer loop." Not in the literal spec.
+  trialRunsCompleted Int       @default(0)
+  trialRunsRequired  Int       @default(3)
+  promotedAt         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([engine])
+  @@index([status])
+}
+
+// Append-only. Nothing in application code should ever UPDATE or
+// DELETE a row here — only INSERT. This is the audit trail required
+// by the security baseline and the compliance gate.
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String // "system" | "apex.kill" | "apex.rebalance" | agentId, etc.
+  action    String // e.g. "kill_switch_fired", "rebalance_applied", "dispatch_queued"
+  target    String?
+  detail    Json
+  createdAt DateTime @default(now())
+
+  @@index([actor])
+  @@index([action])
+  @@index([target])
+  @@index([createdAt])
+}
+
+model BrandKit {
+  id     String @id @default(cuid())
+  jobId  String @unique
+  job    DispatchJob @relation(fields: [jobId], references: [id])
+
+  name     String
+  palette  String[]
+  fonts    String[]
+  logoUrl  String?
+  services String[]
+  reviews  Json[]
+
+  createdAt DateTime @default(now())
+}
+
+model PreviewResult {
+  id     String @id @default(cuid())
+  jobId  String @unique
+  job    DispatchJob @relation(fields: [jobId], references: [id])
+
+  previewUrl   String
+  expiresAt    DateTime
+  voiceAgentId String?
+  watermarked  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+// Gemini-generated, Netlify-hosted per-prospect mock site — not in the
+// original spec. Deliberately separate from PreviewResult (the
+// existing, always-available, zero-external-cost APEX-hosted preview)
+// rather than replacing it: this is a strictly optional upgrade that
+// degrades gracefully to PreviewResult.previewUrl whenever Gemini/
+// Netlify aren't configured or LIVE_MODE is off.
+model MockSite {
+  id    String      @id @default(cuid())
+  jobId String      @unique
+  job   DispatchJob @relation(fields: [jobId], references: [id])
+
+  // Single-file HTML, stored verbatim for audit — the prompt is
+  // constrained to only the real facts already in BrandKit, but this
+  // is what actually got generated and (if deployed) published
+  // publicly under this business's name, so it must be inspectable.
+  html          String?
+  generatedLive Boolean  @default(false) // false in dry-run/no-key — html above is null in that case
+
+  // Best-effort structural check (business name + every listed service
+  // actually appear in the output) — NOT a hallucination detector. Real
+  // grounding is enforced by the prompt itself (only real facts given,
+  // explicit no-invention instruction); this just catches the more
+  // common failure of a generic/off-target generation.
+  groundingWarnings String[]
+
+  siteUrl      String? // live per-deploy Netlify preview URL, null until deployed
+  deployId     String? // Netlify deploy id, for audit/cleanup
+  deployedLive Boolean @default(false) // false in dry-run/no-key — siteUrl above is null in that case
+
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id     String       @id @default(cuid())
+  jobId  String?      @unique
+  job    DispatchJob? @relation(fields: [jobId], references: [id])
+
+  name             String
+  email            String
+  phone            String?
+  consentTimestamp DateTime
+  consentText      String
+  source           String
+  status           String    @default("active") // active | nurture | dormant | revoked | erased
+  consentRevokedAt DateTime?
+
+  touches Touch[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([consentTimestamp])
+}
+
+// Every outbound Closer/nurture touch, so escalation counting (3 touches
+// / 48h) and the 14-day nurture cadence can be computed from real state
+// instead of trusting BullMQ job state alone.
+model Touch {
+  id          String    @id @default(cuid())
+  leadId      String
+  lead        Lead      @relation(fields: [leadId], references: [id])
+  phase       String // "closer" | "nurture"
+  channel     String // "sms" | "voice" | "email"
+  sequence    Int // touch number within its phase
+  sentAt      DateTime  @default(now())
+  responded   Boolean   @default(false)
+  respondedAt DateTime?
+
+  @@index([leadId])
+  @@index([phase])
+}
+
+// License-ID audit table for the compliance gate's licensed-media check
+// (spec Section 3). Every media asset used in a preview or post must
+// resolve to a non-revoked, non-expired row here before it can publish.
+model MediaLicense {
+  id          String    @id @default(cuid())
+  licenseId   String    @unique // the external license/purchase reference
+  assetUrl    String
+  source      String // e.g. "shutterstock" | "ai-generated" | "client-provided"
+  licenseType String // e.g. "royalty-free" | "rights-managed" | "client-owned"
+  expiresAt   DateTime?
+  revoked     Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([assetUrl])
+}
+
+model OpportunityCandidate {
+  id                String @id @default(cuid())
+  name              String
+  category          String // new-vertical | new-app | new-affiliate-program
+  estRevenueMonthly Decimal @db.Decimal(12, 2)
+  confidence        String // low | med | high
+  confidenceBasis   String
+  estBuildHours     Decimal @db.Decimal(8, 2)
+  infraReuse        String[]
+  score             Decimal @db.Decimal(10, 4)
+  complianceFlags   String[]
+  status            String  @default("pending_review")
+
+  // Which signal source(s) fed the score, and their raw inputs — lets a
+  // human reviewer trace exactly what confidenceBasis is claiming.
+  sourceSignals Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([score])
+}

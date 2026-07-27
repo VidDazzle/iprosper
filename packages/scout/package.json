@@ -1,0 +1,25 @@
+{
+    "name": "@apex/scout",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "src/index.ts",
+    "types": "src/index.ts",
+    "scripts": {
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@apex/agents": "*",
+        "@apex/audit": "*",
+        "@apex/config": "*",
+        "@apex/contracts": "*",
+        "@apex/db": "*",
+        "@apex/dispatch": "*",
+        "@apex/owner-alerts": "*",
+        "@apex/queue": "*"
+    },
+    "devDependencies": {
+        "typescript": "^5",
+        "vitest": "^3.0.5"
+    }
+}
