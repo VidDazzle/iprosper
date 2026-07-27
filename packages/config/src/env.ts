@@ -76,6 +76,39 @@ const envSchema = z.object({
   // SystemHeartbeat row can be before the admin dashboard flags the
   // apex background process as possibly dead — see packages/health.
   HEARTBEAT_STALE_AFTER_MS: z.coerce.number().positive().default(600000),
+
+  // Autonomous Scout approval (not spec-defined, per explicit
+  // decision: "full autonomy with hard caps"). Master switch — false
+  // means Scout candidates behave exactly as before this feature
+  // existed (always wait for a human in the admin dashboard).
+  AUTONOMOUS_APPROVAL_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
+
+  // Fixed ceiling for any candidate the system approves on its own —
+  // this is the hard cap. Deliberately NOT derived from a candidate's
+  // own estRevenueMonthly/estBuildHours (those are projections, not a
+  // spending authorization — same reasoning as approveOpportunity's
+  // existing human-supplied budgetCap). Conservative placeholder —
+  // raise it once you've watched a few autonomous approvals play out.
+  AUTONOMOUS_DISPATCH_CAP: z.coerce.number().positive().default(15),
+
+  // Rolling 7-day ceiling on total budgetCap committed via autonomous
+  // (not human) approval — caps how fast autonomous spending can
+  // compound even if many individual candidates each pass the
+  // per-candidate cap above.
+  AUTONOMOUS_WEEKLY_SPEND_CAP: z.coerce.number().positive().default(100),
+
+  // The budgetCap PROPOSED in a human-approval-request link, for
+  // candidates that don't qualify for autonomous approval (over the
+  // weekly cap, or compliance-flagged). A one-click link can't collect
+  // a human-typed number, so the amount is stated up front in the
+  // message and committed to on approve.
+  AUTONOMOUS_ESCALATION_CAP: z.coerce.number().positive().default(50),
+
+  // Where autonomous-approval requests and real-time kill-switch
+  // alerts get sent — see packages/ownerAlerts. Unset -> those alerts
+  // stay dry-run (logged, not delivered), same as every other channel.
+  OWNER_PHONE_NUMBER: z.string().optional(),
+  OWNER_EMAIL: z.string().optional(),
 });
 
 export type ApexEnv = z.infer<typeof envSchema>;
@@ -156,4 +189,16 @@ export function isMockSiteGenerationLive(env: NodeJS.ProcessEnv = process.env): 
 export function isMockSiteDeployLive(env: NodeJS.ProcessEnv = process.env): boolean {
   const cfg = loadEnv(env);
   return cfg.LIVE_MODE && cfg.NETLIFY_DEPLOY_ENABLED;
+}
+
+/**
+ * Requires LIVE_MODE AND AUTONOMOUS_APPROVAL_ENABLED — the master
+ * switch for Scout auto-approving its own candidates (see
+ * packages/scout/autonomousApproval.ts). False in dry-run regardless
+ * of this flag, same as every other capability in this system: a
+ * fresh deploy can never silently start committing autonomous spend.
+ */
+export function isAutonomousApprovalLive(env: NodeJS.ProcessEnv = process.env): boolean {
+  const cfg = loadEnv(env);
+  return cfg.LIVE_MODE && cfg.AUTONOMOUS_APPROVAL_ENABLED;
 }

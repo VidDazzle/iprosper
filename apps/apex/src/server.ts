@@ -14,8 +14,9 @@ import { startScoutCron } from "./cron/scoutCron.js";
 import { startSweeperCron } from "./cron/sweeperCron.js";
 import { startDigestCron } from "./cron/digestCron.js";
 import { startHeartbeatCron } from "./cron/heartbeatCron.js";
+import { startAutonomousApprovalCron } from "./cron/autonomousApprovalCron.js";
 import { generateAndDeliverWeeklyDigest } from "@apex/digest";
-import { approveOpportunity, rejectOpportunity } from "@apex/scout";
+import { approveOpportunity, rejectOpportunity, runAutonomousApprovalSweep } from "@apex/scout";
 import { runHeartbeat, getLatestHeartbeat, isHeartbeatStale, heartbeatStaleAfterMs } from "@apex/health";
 
 const env = loadEnv();
@@ -131,6 +132,16 @@ server.tool(
 );
 
 server.tool(
+  "apex.autonomousApprovalSweep",
+  "Manually runs the autonomous-approval sweep: auto-dispatches eligible Scout candidates under the hard caps, sends SMS/email approval requests for the rest. No-ops unless LIVE_MODE + AUTONOMOUS_APPROVAL_ENABLED are both true.",
+  {},
+  async () => {
+    const result = await runAutonomousApprovalSweep();
+    return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  },
+);
+
+server.tool(
   "apex.rejectOpportunity",
   "Marks a Scout candidate rejected.",
   {
@@ -156,6 +167,7 @@ async function main() {
   startSweeperCron();
   startDigestCron();
   startHeartbeatCron();
+  startAutonomousApprovalCron();
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

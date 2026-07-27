@@ -11,9 +11,11 @@
     "dependencies": {
         "@apex/agents": "*",
         "@apex/audit": "*",
+        "@apex/config": "*",
         "@apex/contracts": "*",
         "@apex/db": "*",
         "@apex/dispatch": "*",
+        "@apex/owner-alerts": "*",
         "@apex/queue": "*"
     },
     "devDependencies": {

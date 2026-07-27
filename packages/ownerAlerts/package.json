@@ -1,17 +1,18 @@
 {
-    "name": "@apex/agents",
+    "name": "@apex/owner-alerts",
     "version": "0.1.0",
     "private": true,
     "type": "module",
     "main": "src/index.ts",
     "types": "src/index.ts",
+    "scripts": {
+        "test": "vitest run"
+    },
     "dependencies": {
-        "@apex/audit": "*",
-        "@apex/contracts": "*",
-        "@apex/db": "*",
-        "@apex/owner-alerts": "*"
+        "@apex/config": "*"
     },
     "devDependencies": {
-        "typescript": "^5"
+        "typescript": "^5",
+        "vitest": "^3.0.5"
     }
 }

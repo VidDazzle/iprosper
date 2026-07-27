@@ -1,5 +1,6 @@
 import { prisma } from "@apex/db";
 import { appendAuditLog } from "@apex/audit";
+import { notifyOwner } from "@apex/owner-alerts";
 import type { KillResult } from "@apex/contracts";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -49,6 +50,15 @@ export async function kill(
     target: agentId,
     detail: { reason, jobsHalted: haltedJobs.count },
   });
+
+  // Only for automatic fires — a human who just clicked "kill" in the
+  // dashboard already knows; this is for the case nobody initiated it.
+  if (actor === "system:kill-switch-cron") {
+    await notifyOwner(
+      `APEX: kill-switch fired for "${agentId}"`,
+      `Agent "${agentId}" was automatically killed.\nReason: ${reason}\nJobs halted: ${haltedJobs.count}`,
+    );
+  }
 
   return {
     agentId,
