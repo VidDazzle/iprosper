@@ -6,7 +6,7 @@ import { resetDb, teardown } from "./helpers.js";
 beforeEach(resetDb);
 afterAll(teardown);
 
-async function seedJob(engine: string, agentId: string, cost: number, revenue: number) {
+async function seedJob(engine: string, agentId: string, cost: number, revenue: number, budgetCap = 1000) {
   await prisma.dispatchJob.create({
     data: {
       source: "rebrand-engine",
@@ -14,7 +14,7 @@ async function seedJob(engine: string, agentId: string, cost: number, revenue: n
       stage: "queued",
       agentId,
       task: {},
-      budgetCap: 1000,
+      budgetCap,
       costToDate: cost,
       revenueAttributed: revenue,
     },
@@ -46,6 +46,24 @@ describe("computeLedger", () => {
     const closerAgent = snapshot.byAgent.find((a) => a.agentId === "closer-agent")!;
     expect(closerAgent.spend).toBe(2);
     expect(closerAgent.revenue).toBe(0);
+  });
+
+  it("tracks credit (budgetCap) allocated and remaining per row and portfolio-wide", async () => {
+    await seedJob("client-acquisition", "a1", 10, 0, 15);
+    await seedJob("affiliate", "a2", 3, 40, 15);
+
+    const snapshot = await computeLedger();
+
+    const clientEngine = snapshot.byEngine.find((e) => e.engine === "client-acquisition")!;
+    expect(clientEngine.budgetAllocated).toBe(15);
+    expect(clientEngine.creditRemaining).toBe(5);
+
+    expect(snapshot.portfolio.spend).toBe(13);
+    expect(snapshot.portfolio.revenue).toBe(40);
+    expect(snapshot.portfolio.pnl).toBe(27);
+    expect(snapshot.portfolio.budgetAllocated).toBe(30);
+    expect(snapshot.portfolio.creditRemaining).toBe(17);
+    expect(snapshot.portfolio.jobCount).toBe(2);
   });
 
   it("filters by engine when requested", async () => {

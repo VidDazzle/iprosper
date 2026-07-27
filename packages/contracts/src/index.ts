@@ -45,11 +45,28 @@ export const ledgerEntrySchema = z.object({
   revenue: z.number(),
   pnl: z.number(),
   jobCount: z.number().int(),
+  // "Credit" = the sum of budgetCap across this row's jobs — the hard
+  // ceiling recordCost() enforces per job, not a business-model
+  // guarantee of profit. budgetAllocated - spend = what's left before
+  // every job in this row hits its own hard cap.
+  budgetAllocated: z.number(),
+  creditRemaining: z.number(),
 });
 export type LedgerEntry = z.infer<typeof ledgerEntrySchema>;
 
+export const portfolioSummarySchema = z.object({
+  spend: z.number(),
+  revenue: z.number(),
+  pnl: z.number(),
+  jobCount: z.number().int(),
+  budgetAllocated: z.number(),
+  creditRemaining: z.number(),
+});
+export type PortfolioSummary = z.infer<typeof portfolioSummarySchema>;
+
 export const ledgerSnapshotSchema = z.object({
   generatedAt: z.string().datetime(),
+  portfolio: portfolioSummarySchema,
   byEngine: z.array(ledgerEntrySchema),
   byAgent: z.array(ledgerEntrySchema),
 });

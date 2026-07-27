@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@apex/db";
 import type { WeeklyDigestContent } from "@apex/digest";
+import { computeLedgerWithZeroFill } from "@apex/spend";
 import { getLatestHeartbeat, isHeartbeatStale, heartbeatStaleAfterMs } from "@apex/health";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/adminAuth";
 import { KillAgentButton, PromoteAgentButton, OpportunityActions } from "./AdminControls";
@@ -16,13 +17,9 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const [engineTotals, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest, latestHeartbeat] =
+  const [ledger, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest, latestHeartbeat] =
     await Promise.all([
-      prisma.dispatchJob.groupBy({
-        by: ["engine"],
-        _sum: { costToDate: true, revenueAttributed: true },
-        _count: { _all: true },
-      }),
+      computeLedgerWithZeroFill(),
       prisma.auditLog.findMany({
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -75,22 +72,57 @@ export default async function AdminPage() {
         </div>
       </section>
 
+      <section className="mt-6">
+        <h2 className="text-lg font-semibold">Portfolio</h2>
+        <div className="mt-2 grid grid-cols-2 gap-4 md:grid-cols-5">
+          <div className="rounded-lg border bg-white p-4">
+            <p className="text-xs text-gray-500">Total spend</p>
+            <p className="mt-1 text-xl font-semibold">${ledger.portfolio.spend.toFixed(2)}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-4">
+            <p className="text-xs text-gray-500">Total revenue</p>
+            <p className="mt-1 text-xl font-semibold">${ledger.portfolio.revenue.toFixed(2)}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-4">
+            <p className="text-xs text-gray-500">Net P&amp;L</p>
+            <p className={`mt-1 text-xl font-semibold ${ledger.portfolio.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
+              ${ledger.portfolio.pnl.toFixed(2)}
+            </p>
+          </div>
+          <div className="rounded-lg border bg-white p-4">
+            <p className="text-xs text-gray-500">Credit allocated</p>
+            <p className="mt-1 text-xl font-semibold">${ledger.portfolio.budgetAllocated.toFixed(2)}</p>
+          </div>
+          <div className="rounded-lg border bg-white p-4">
+            <p className="text-xs text-gray-500">Credit remaining</p>
+            <p className={`mt-1 text-xl font-semibold ${ledger.portfolio.creditRemaining >= 0 ? "" : "text-red-600"}`}>
+              ${ledger.portfolio.creditRemaining.toFixed(2)}
+            </p>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-gray-400">
+          &quot;Credit&quot; = the sum of every job&apos;s hard budgetCap — the ceiling recordCost() enforces per job, not a
+          promise that any individual job is profitable. Prospecting spend on a job that never converts is expected;
+          profitability is a portfolio property (spend vs. revenue in aggregate), which is what the kill-switch
+          actually watches per agent.
+        </p>
+      </section>
+
       <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {engineTotals.map((row) => {
-          const spend = Number(row._sum.costToDate ?? 0);
-          const revenue = Number(row._sum.revenueAttributed ?? 0);
-          return (
-            <div key={row.engine} className="rounded-lg border bg-white p-4">
-              <h2 className="font-semibold capitalize">{row.engine.replace("-", " ")}</h2>
-              <p className="mt-1 text-sm text-gray-500">{row._count._all} jobs</p>
-              <p className="mt-2 text-sm">Spend: ${spend.toFixed(2)}</p>
-              <p className="text-sm">Revenue: ${revenue.toFixed(2)}</p>
-              <p className={`text-sm font-semibold ${revenue - spend >= 0 ? "text-green-600" : "text-red-600"}`}>
-                P&amp;L: ${(revenue - spend).toFixed(2)}
-              </p>
-            </div>
-          );
-        })}
+        {ledger.byEngine.map((row) => (
+          <div key={row.engine} className="rounded-lg border bg-white p-4">
+            <h2 className="font-semibold capitalize">{row.engine.replace("-", " ")}</h2>
+            <p className="mt-1 text-sm text-gray-500">{row.jobCount} jobs</p>
+            <p className="mt-2 text-sm">Spend: ${row.spend.toFixed(2)}</p>
+            <p className="text-sm">Revenue: ${row.revenue.toFixed(2)}</p>
+            <p className={`text-sm font-semibold ${row.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
+              P&amp;L: ${row.pnl.toFixed(2)}
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Credit: ${row.spend.toFixed(2)} used of ${row.budgetAllocated.toFixed(2)} (${row.creditRemaining.toFixed(2)} left)
+            </p>
+          </div>
+        ))}
       </section>
 
       <section className="mt-8">
@@ -102,31 +134,40 @@ export default async function AdminPage() {
               <th className="pb-2">Engine</th>
               <th className="pb-2">Status</th>
               <th className="pb-2">Trial Runs</th>
+              <th className="pb-2">Credit</th>
               <th className="pb-2">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {agents.map((a) => (
-              <tr key={a.id} className="border-t">
-                <td className="py-2">{a.id}</td>
-                <td className="py-2">{a.engine}</td>
-                <td className="py-2">{a.status}</td>
-                <td className="py-2">
-                  {a.trialRunsCompleted}/{a.trialRunsRequired}
-                </td>
-                <td className="py-2">
-                  {a.status !== "killed" && (
-                    <>
-                      <KillAgentButton agentId={a.id} />
-                      {a.status === "trial" && <PromoteAgentButton agentId={a.id} />}
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {agents.map((a) => {
+              const ledgerRow = ledger.byAgent.find((row) => row.engine === a.engine && row.agentId === a.id);
+              return (
+                <tr key={a.id} className="border-t">
+                  <td className="py-2">{a.id}</td>
+                  <td className="py-2">{a.engine}</td>
+                  <td className="py-2">{a.status}</td>
+                  <td className="py-2">
+                    {a.trialRunsCompleted}/{a.trialRunsRequired}
+                  </td>
+                  <td className="py-2 text-xs text-gray-500">
+                    {ledgerRow
+                      ? `$${ledgerRow.spend.toFixed(2)} of $${ledgerRow.budgetAllocated.toFixed(2)} (${ledgerRow.pnl >= 0 ? "+" : ""}$${ledgerRow.pnl.toFixed(2)} P&L)`
+                      : "—"}
+                  </td>
+                  <td className="py-2">
+                    {a.status !== "killed" && (
+                      <>
+                        <KillAgentButton agentId={a.id} />
+                        {a.status === "trial" && <PromoteAgentButton agentId={a.id} />}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
             {agents.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-2 text-gray-400">
+                <td colSpan={6} className="py-2 text-gray-400">
                   No agents yet.
                 </td>
               </tr>
