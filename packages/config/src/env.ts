@@ -20,6 +20,13 @@ const envSchema = z.object({
   VOICE_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
   EMAIL_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
 
+  // Same layering for the Gemini mock-site pipeline: generation and
+  // deployment are two separate real-world side effects (API spend,
+  // and — for deploy — a real publicly-hosted site under the
+  // prospect's name), so each gets its own switch under LIVE_MODE.
+  GEMINI_SITE_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
+  NETLIFY_DEPLOY_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
+
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   REDIS_URL: z.string().min(1, "REDIS_URL is required"),
 
@@ -36,6 +43,22 @@ const envSchema = z.object({
   ELEVENLABS_API_KEY: z.string().optional(),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+
+  // Gemini mock-site generation, constrained to real BrandKit facts
+  // only (see packages/mocksite) — not spec-defined. Model name is a
+  // placeholder, flagged the same way every other unverified default
+  // in this system is: swap it for whatever Gemini model you actually
+  // want once this is smoke-tested against a real key.
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+
+  // Per-prospect Netlify hosting for the generated mock site. One
+  // pre-created site (NETLIFY_SITE_ID) receives a new non-production
+  // deploy per prospect — each deploy gets its own unique preview
+  // subdomain from Netlify, so no per-prospect site creation is
+  // needed and the account doesn't accumulate one site per prospect.
+  NETLIFY_API_KEY: z.string().optional(),
+  NETLIFY_SITE_ID: z.string().optional(),
 
   // Generic HMAC secrets for the invoicing/affiliate revenue webhooks
   // (Section 8) — no specific provider is named in the spec for either,
@@ -121,4 +144,16 @@ export function assertChannelLive(channel: Channel, action: string, env: NodeJS.
   if (!isChannelLive(channel, env)) {
     throw new DryRunBlockedError(`[${channel}] ${action}`);
   }
+}
+
+/** Requires LIVE_MODE AND GEMINI_SITE_ENABLED — separate from Netlify deploy, see packages/mocksite/generate.ts. */
+export function isMockSiteGenerationLive(env: NodeJS.ProcessEnv = process.env): boolean {
+  const cfg = loadEnv(env);
+  return cfg.LIVE_MODE && cfg.GEMINI_SITE_ENABLED;
+}
+
+/** Requires LIVE_MODE AND NETLIFY_DEPLOY_ENABLED — this is the step that makes a real, publicly-hosted URL. */
+export function isMockSiteDeployLive(env: NodeJS.ProcessEnv = process.env): boolean {
+  const cfg = loadEnv(env);
+  return cfg.LIVE_MODE && cfg.NETLIFY_DEPLOY_ENABLED;
 }

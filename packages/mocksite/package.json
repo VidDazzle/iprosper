@@ -1,5 +1,5 @@
 {
-    "name": "@apex/pipeline",
+    "name": "@apex/mocksite",
     "version": "0.1.0",
     "private": true,
     "type": "module",
@@ -9,19 +9,14 @@
         "test": "vitest run"
     },
     "dependencies": {
-        "@apex/agents": "*",
-        "@apex/audit": "*",
         "@apex/config": "*",
         "@apex/contracts": "*",
         "@apex/db": "*",
-        "@apex/mocksite": "*",
-        "@apex/queue": "*",
-        "@apex/renderer": "*",
-        "@apex/spend": "*",
-        "playwright": "1.56.1"
+        "jszip": "^3.10.1",
+        "sanitize-html": "^2.14.0"
     },
     "devDependencies": {
-        "@types/node": "^20",
+        "@types/sanitize-html": "^2.13.0",
         "typescript": "^5",
         "vitest": "^3.0.5"
     }

@@ -19,7 +19,7 @@ model DispatchJob {
   id        String @id @default(cuid())
   source    String // "rebrand-engine" | "affiliate-agent" | "evolve"
   engine    String // "client-acquisition" | "affiliate" | "evolve"
-  stage     String // scrape|extract|render|voice|notify|closed
+  stage     String // scrape|extract|render|mocksite|voice|notify|closed
 
   // Not in the literal spec model, but required to make apex.dispatch
   // functional: which agent owns this job, what it was asked to do,
@@ -48,6 +48,7 @@ model DispatchJob {
 
   brandKit      BrandKit?
   previewResult PreviewResult?
+  mockSite      MockSite?
   lead          Lead?
   outcome       JobOutcome?
 
@@ -202,6 +203,38 @@ model PreviewResult {
   expiresAt    DateTime
   voiceAgentId String?
   watermarked  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+// Gemini-generated, Netlify-hosted per-prospect mock site — not in the
+// original spec. Deliberately separate from PreviewResult (the
+// existing, always-available, zero-external-cost APEX-hosted preview)
+// rather than replacing it: this is a strictly optional upgrade that
+// degrades gracefully to PreviewResult.previewUrl whenever Gemini/
+// Netlify aren't configured or LIVE_MODE is off.
+model MockSite {
+  id    String      @id @default(cuid())
+  jobId String      @unique
+  job   DispatchJob @relation(fields: [jobId], references: [id])
+
+  // Single-file HTML, stored verbatim for audit — the prompt is
+  // constrained to only the real facts already in BrandKit, but this
+  // is what actually got generated and (if deployed) published
+  // publicly under this business's name, so it must be inspectable.
+  html          String?
+  generatedLive Boolean  @default(false) // false in dry-run/no-key — html above is null in that case
+
+  // Best-effort structural check (business name + every listed service
+  // actually appear in the output) — NOT a hallucination detector. Real
+  // grounding is enforced by the prompt itself (only real facts given,
+  // explicit no-invention instruction); this just catches the more
+  // common failure of a generic/off-target generation.
+  groundingWarnings String[]
+
+  siteUrl      String? // live per-deploy Netlify preview URL, null until deployed
+  deployId     String? // Netlify deploy id, for audit/cleanup
+  deployedLive Boolean @default(false) // false in dry-run/no-key — siteUrl above is null in that case
 
   createdAt DateTime @default(now())
 }

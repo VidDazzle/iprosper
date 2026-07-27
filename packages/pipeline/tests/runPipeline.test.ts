@@ -26,14 +26,15 @@ describe("runPipeline", () => {
     const result = await runPipeline(job.id);
     if (result.skipped) throw new Error(`expected pipeline to run, got skipped: ${result.reason}`);
 
-    expect(result.doneChecklist).toEqual({ scrape: true, extract: true, render: true, voice: true });
+    expect(result.doneChecklist).toEqual({ scrape: true, extract: true, render: true, mocksite: true, voice: true });
     expect(result.renderResult.templateKey).toBe("built"); // "Roof Repair" -> BUILT
+    expect(result.mockSiteUrl).toBeNull(); // Gemini/Netlify unconfigured in this test env — dry-run no-op
 
     const updated = await prisma.dispatchJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(updated.status).toBe("completed");
     expect(updated.stage).toBe("closed");
     expect(Number(updated.costToDate)).toBeCloseTo(
-      STAGE_COST.scrape + STAGE_COST.extract + STAGE_COST.render + STAGE_COST.voice,
+      STAGE_COST.scrape + STAGE_COST.extract + STAGE_COST.render + STAGE_COST.geminiSite + STAGE_COST.voice,
     );
     expect(updated.inspectorVerdict).toMatchObject({ passed: true });
 
@@ -56,7 +57,13 @@ describe("runPipeline", () => {
 
     const updated = await prisma.dispatchJob.findUniqueOrThrow({ where: { id: job.id } });
     expect(updated.status).toBe("failed");
-    expect(updated.doneChecklist).toMatchObject({ scrape: true, extract: true, render: false, voice: false });
+    expect(updated.doneChecklist).toMatchObject({
+      scrape: true,
+      extract: true,
+      render: false,
+      mocksite: false,
+      voice: false,
+    });
     expect(Number(updated.costToDate)).toBeLessThanOrEqual(tooSmallCap);
   });
 

@@ -145,13 +145,16 @@ async function scheduleEscalationCheck(leadId: string) {
 export async function processCloserTouch(leadId: string, sequence: number) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    include: { job: { include: { brandKit: true, previewResult: true } } },
+    include: { job: { include: { brandKit: true, previewResult: true, mockSite: true } } },
   });
   if (!lead || !isConsentActive(lead)) return;
   if (!lead.job?.brandKit || !lead.job.previewResult) return;
 
   const businessName = lead.job.brandKit.name;
-  const previewUrl = lead.job.previewResult.previewUrl;
+  // The Gemini/Netlify mock site is the stronger pitch when it's actually
+  // live (real per-prospect hosted URL); falls back to the APEX-hosted
+  // preview whenever Gemini/Netlify aren't configured or LIVE_MODE is off.
+  const previewUrl = lead.job.mockSite?.siteUrl ?? lead.job.previewResult.previewUrl;
 
   if (sequence === 1) {
     await recordAndMaybeSend(leadId, "sms", 1, buildSmsMessage(businessName, previewUrl));

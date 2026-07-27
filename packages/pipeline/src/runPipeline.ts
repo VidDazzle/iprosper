@@ -7,11 +7,13 @@ import { extractBrandKit } from "./extract.js";
 import { render } from "./render.js";
 import { voice } from "./voice.js";
 import { STAGE_COST } from "./costs.js";
+import { generateMockSiteHtml, deployMockSite } from "@apex/mocksite";
 
 interface DoneChecklist {
   scrape: boolean;
   extract: boolean;
   render: boolean;
+  mocksite: boolean;
   voice: boolean;
 }
 
@@ -33,7 +35,7 @@ export async function runPipeline(dispatchJobId: string) {
   }
 
   const jobRequest: JobRequest = jobRequestSchema.parse(job.task);
-  const doneChecklist: DoneChecklist = { scrape: false, extract: false, render: false, voice: false };
+  const doneChecklist: DoneChecklist = { scrape: false, extract: false, render: false, mocksite: false, voice: false };
 
   await prisma.dispatchJob.update({ where: { id: dispatchJobId }, data: { status: "running", stage: "scrape" } });
 
@@ -51,6 +53,17 @@ export async function runPipeline(dispatchJobId: string) {
     await recordCost(dispatchJobId, STAGE_COST.render);
     const renderResult = await render(dispatchJobId, brandKit, jobRequest);
     doneChecklist.render = true;
+
+    await prisma.dispatchJob.update({ where: { id: dispatchJobId }, data: { stage: "mocksite" } });
+    await recordCost(dispatchJobId, STAGE_COST.geminiSite);
+    const genResult = await generateMockSiteHtml(dispatchJobId, brandKit);
+    let mockSiteUrl: string | null = null;
+    if (genResult.html) {
+      await recordCost(dispatchJobId, STAGE_COST.netlifyDeploy);
+      const deployResult = await deployMockSite(dispatchJobId, genResult.html);
+      mockSiteUrl = deployResult.siteUrl;
+    }
+    doneChecklist.mocksite = true;
 
     await prisma.dispatchJob.update({ where: { id: dispatchJobId }, data: { stage: "voice" } });
     await recordCost(dispatchJobId, STAGE_COST.voice);
@@ -78,6 +91,7 @@ export async function runPipeline(dispatchJobId: string) {
       update: {
         result: {
           previewUrl: renderResult.previewUrl,
+          mockSiteUrl,
           templateKey: renderResult.templateKey,
           voiceLive: voiceResult.live,
         } as never,
@@ -88,6 +102,7 @@ export async function runPipeline(dispatchJobId: string) {
         hypothesis: "An automated cinematic rebrand preview converts a cold prospect better than a plain pitch.",
         result: {
           previewUrl: renderResult.previewUrl,
+          mockSiteUrl,
           templateKey: renderResult.templateKey,
           voiceLive: voiceResult.live,
         } as never,
@@ -96,7 +111,7 @@ export async function runPipeline(dispatchJobId: string) {
 
     await recordSuccessfulRun(job.agentId);
 
-    return { skipped: false as const, renderResult, voiceResult, doneChecklist };
+    return { skipped: false as const, renderResult, mockSiteUrl, voiceResult, doneChecklist };
   } catch (err) {
     const inspectorVerdict = {
       passed: false,
@@ -108,7 +123,9 @@ export async function runPipeline(dispatchJobId: string) {
           ? "extract"
           : !doneChecklist.render
             ? "render"
-            : "voice",
+            : !doneChecklist.mocksite
+              ? "mocksite"
+              : "voice",
     };
 
     const isDisallowed = err instanceof ScrapeDisallowedError;

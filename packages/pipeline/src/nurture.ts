@@ -57,13 +57,13 @@ async function recordAndMaybeSend(leadId: string, channel: "sms" | "email", day:
 export async function processNurtureTouch(leadId: string, day: number) {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    include: { job: { include: { brandKit: true, previewResult: true } } },
+    include: { job: { include: { brandKit: true, previewResult: true, mockSite: true } } },
   });
   if (!lead || !isConsentActive(lead)) return;
   if (!lead.job?.brandKit || !lead.job.previewResult) return;
 
   const businessName = lead.job.brandKit.name;
-  const previewUrl = lead.job.previewResult.previewUrl;
+  const previewUrl = lead.job.mockSite?.siteUrl ?? lead.job.previewResult.previewUrl;
 
   switch (day) {
     case 2:
