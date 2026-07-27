@@ -6,6 +6,8 @@ import { NoopSignalSource } from "../src/signalSource.js";
 import {
   isAutonomouslyEligible,
   getRollingAutonomousSpend,
+  getRollingRealizedRevenue,
+  getEffectiveDispatchCap,
   runAutonomousApprovalSweep,
 } from "../src/autonomousApproval.js";
 import type { CandidateInput } from "../src/scoring.js";
@@ -17,9 +19,12 @@ afterAll(teardown);
 afterEach(() => {
   delete process.env.LIVE_MODE;
   delete process.env.AUTONOMOUS_APPROVAL_ENABLED;
-  delete process.env.AUTONOMOUS_DISPATCH_CAP;
-  delete process.env.AUTONOMOUS_WEEKLY_SPEND_CAP;
-  delete process.env.AUTONOMOUS_ESCALATION_CAP;
+  delete process.env.AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP;
+  delete process.env.AUTONOMOUS_DISPATCH_PERCENT_OF_DEAL_VALUE;
+  delete process.env.AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP;
+  delete process.env.AUTONOMOUS_SPEND_PERCENT_OF_REVENUE;
+  delete process.env.AUTONOMOUS_ESCALATION_MULTIPLE;
+  delete process.env.UNIT_ECONOMICS_MIN_SAMPLE;
   __resetEnvCacheForTests();
 });
 
@@ -106,6 +111,56 @@ describe("getRollingAutonomousSpend", () => {
   });
 });
 
+describe("getRollingRealizedRevenue", () => {
+  it("sums only confirmed revenue paid within the trailing 7 days", async () => {
+    const now = new Date();
+    await prisma.dispatchJob.create({
+      data: {
+        source: "rebrand-engine", engine: "client-acquisition", stage: "closed", agentId: "a1",
+        task: {}, budgetCap: 100, invoicePaid: true, invoicePaidAt: now, revenueAttributed: 200,
+      },
+    });
+    // Outside the window — must not count.
+    await prisma.dispatchJob.create({
+      data: {
+        source: "rebrand-engine", engine: "client-acquisition", stage: "closed", agentId: "a2",
+        task: {}, budgetCap: 100, invoicePaid: true,
+        invoicePaidAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000), revenueAttributed: 500,
+      },
+    });
+
+    expect(await getRollingRealizedRevenue(now)).toBe(200);
+  });
+});
+
+describe("getEffectiveDispatchCap", () => {
+  it("uses the fixed bootstrap floor before there's enough closed-deal history", async () => {
+    __resetEnvCacheForTests();
+    const caps = await getEffectiveDispatchCap("client-acquisition");
+    expect(caps.dataDriven).toBe(false);
+    expect(caps.dispatchCap).toBe(15); // default AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP
+  });
+
+  it("switches to a percentage of real average deal value once enough closes exist", async () => {
+    process.env.UNIT_ECONOMICS_MIN_SAMPLE = "10";
+    process.env.AUTONOMOUS_DISPATCH_PERCENT_OF_DEAL_VALUE = "0.2";
+    __resetEnvCacheForTests();
+
+    for (let i = 0; i < 10; i++) {
+      await prisma.dispatchJob.create({
+        data: {
+          source: "rebrand-engine", engine: "client-acquisition", stage: "closed", agentId: `a${i}`,
+          task: {}, budgetCap: 100, costToDate: 20, invoicePaid: true, revenueAttributed: 100,
+        },
+      });
+    }
+
+    const caps = await getEffectiveDispatchCap("client-acquisition");
+    expect(caps.dataDriven).toBe(true);
+    expect(caps.dispatchCap).toBe(20); // 20% of the real $100 avg realized revenue per close
+  });
+});
+
 describe("runAutonomousApprovalSweep", () => {
   it("no-ops entirely when not live", async () => {
     const [created] = await runScout([new FakeSignalSource([strongCandidate])]);
@@ -117,8 +172,8 @@ describe("runAutonomousApprovalSweep", () => {
     expect(candidate.status).toBe("pending_review");
   });
 
-  it("auto-approves an eligible candidate at the fixed dispatch cap when live", async () => {
-    enableAutonomy({ AUTONOMOUS_DISPATCH_CAP: "15", AUTONOMOUS_WEEKLY_SPEND_CAP: "100" });
+  it("auto-approves an eligible candidate at the bootstrap cap when live with no real data yet", async () => {
+    enableAutonomy({ AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP: "15", AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP: "100" });
     const [created] = await runScout([new FakeSignalSource([strongCandidate])]);
 
     const result = await runAutonomousApprovalSweep();
@@ -128,11 +183,11 @@ describe("runAutonomousApprovalSweep", () => {
     expect(candidate.status).toBe("approved");
 
     const job = await prisma.dispatchJob.findFirstOrThrow({ where: { agentId: `scout-auto-${created.id}` } });
-    expect(Number(job.budgetCap)).toBe(15); // the fixed hard cap, not the candidate's own revenue projection
+    expect(Number(job.budgetCap)).toBe(15); // bootstrap floor, not the candidate's own revenue projection
   });
 
   it("never auto-approves a compliance-flagged candidate, and sends an approval request instead", async () => {
-    enableAutonomy({ AUTONOMOUS_DISPATCH_CAP: "15", AUTONOMOUS_WEEKLY_SPEND_CAP: "100" });
+    enableAutonomy({ AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP: "15", AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP: "100" });
     const [created] = await runScout([new FakeSignalSource([flaggedCandidate])]);
 
     const result = await runAutonomousApprovalSweep();
@@ -144,10 +199,12 @@ describe("runAutonomousApprovalSweep", () => {
 
     const requestLog = await prisma.auditLog.findFirst({ where: { action: "approval_request_sent", target: created.id } });
     expect(requestLog).toBeTruthy();
+    const detail = requestLog!.detail as { escalationAmount: number };
+    expect(detail.escalationAmount).toBe(15 * 3); // bootstrap cap × default AUTONOMOUS_ESCALATION_MULTIPLE
   });
 
-  it("stops auto-approving once the weekly cap would be exceeded, and sends a request for the rest", async () => {
-    enableAutonomy({ AUTONOMOUS_DISPATCH_CAP: "15", AUTONOMOUS_WEEKLY_SPEND_CAP: "15" });
+  it("stops auto-approving once the (revenue-scaled) weekly cap would be exceeded, and sends a request for the rest", async () => {
+    enableAutonomy({ AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP: "15", AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP: "15" });
     const second: CandidateInput = { ...strongCandidate, name: "Second Vertical" };
     const [first, secondCreated] = await runScout([new FakeSignalSource([strongCandidate, second])]);
 
@@ -158,7 +215,7 @@ describe("runAutonomousApprovalSweep", () => {
   });
 
   it("does not resend an approval request within 24h of the last one", async () => {
-    enableAutonomy({ AUTONOMOUS_DISPATCH_CAP: "15", AUTONOMOUS_WEEKLY_SPEND_CAP: "100" });
+    enableAutonomy({ AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP: "15", AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP: "100" });
     const [created] = await runScout([new FakeSignalSource([flaggedCandidate])]);
 
     const first = await runAutonomousApprovalSweep();
@@ -169,5 +226,29 @@ describe("runAutonomousApprovalSweep", () => {
 
     const requestLogs = await prisma.auditLog.findMany({ where: { action: "approval_request_sent", target: created.id } });
     expect(requestLogs).toHaveLength(1);
+  });
+
+  it("scales the weekly cap up with real trailing revenue once it exceeds the bootstrap floor", async () => {
+    enableAutonomy({
+      AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP: "15",
+      AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP: "10",
+      AUTONOMOUS_SPEND_PERCENT_OF_REVENUE: "0.5",
+    });
+    // $200 realized revenue this week -> 50% = $100 weekly cap, well above the $10 bootstrap floor.
+    await prisma.dispatchJob.create({
+      data: {
+        source: "rebrand-engine", engine: "client-acquisition", stage: "closed", agentId: "past-close",
+        task: {}, budgetCap: 100, invoicePaid: true, invoicePaidAt: new Date(), revenueAttributed: 200,
+      },
+    });
+
+    const [first, second] = await runScout([
+      new FakeSignalSource([strongCandidate, { ...strongCandidate, name: "Second Vertical" }]),
+    ]);
+
+    const result = await runAutonomousApprovalSweep();
+    // Both fit comfortably under the $100 revenue-scaled cap (2 x $15 = $30).
+    expect(result.autoApproved).toEqual(expect.arrayContaining([first.id, second.id]));
+    expect(result.autoApproved).toHaveLength(2);
   });
 });

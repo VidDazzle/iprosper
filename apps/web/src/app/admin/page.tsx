@@ -2,7 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@apex/db";
 import type { WeeklyDigestContent } from "@apex/digest";
-import { computeLedgerWithZeroFill } from "@apex/spend";
+import { computeLedgerWithZeroFill, getRealizedUnitEconomics, suggestedMinimumPrice } from "@apex/spend";
+import { loadEnv } from "@apex/config";
+import { ENGINES } from "@apex/contracts";
 import { getLatestHeartbeat, isHeartbeatStale, heartbeatStaleAfterMs } from "@apex/health";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE } from "@/lib/adminAuth";
 import { KillAgentButton, PromoteAgentButton, OpportunityActions } from "./AdminControls";
@@ -17,7 +19,7 @@ export default async function AdminPage() {
     redirect("/admin/login");
   }
 
-  const [ledger, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest, latestHeartbeat] =
+  const [ledger, recentAudit, recentLeads, agents, pendingOpportunities, latestDigest, latestHeartbeat, unitEconomicsByEngine] =
     await Promise.all([
       computeLedgerWithZeroFill(),
       prisma.auditLog.findMany({
@@ -30,8 +32,10 @@ export default async function AdminPage() {
       prisma.opportunityCandidate.findMany({ where: { status: "pending_review" }, orderBy: { score: "desc" } }),
       prisma.weeklyDigest.findFirst({ orderBy: { weekStart: "desc" } }),
       getLatestHeartbeat(),
+      Promise.all(ENGINES.map(async (engine) => ({ engine, economics: await getRealizedUnitEconomics(engine) }))),
     ]);
 
+  const targetMargin = loadEnv().TARGET_PROFIT_MARGIN_PERCENT;
   const digestContent = latestDigest?.content as unknown as WeeklyDigestContent | undefined;
   const heartbeatChecks = latestHeartbeat?.checks as unknown as
     | { db: { ok: boolean; latencyMs: number; error?: string }; redis: { ok: boolean; latencyMs: number; error?: string } }
@@ -116,13 +120,48 @@ export default async function AdminPage() {
             <p className="mt-2 text-sm">Spend: ${row.spend.toFixed(2)}</p>
             <p className="text-sm">Revenue: ${row.revenue.toFixed(2)}</p>
             <p className={`text-sm font-semibold ${row.pnl >= 0 ? "text-green-600" : "text-red-600"}`}>
-              P&amp;L: ${row.pnl.toFixed(2)}
+              P&amp;L: ${row.pnl.toFixed(2)} {row.marginPercent !== null && `(${row.marginPercent.toFixed(1)}% margin)`}
             </p>
+            {row.roiPercent !== null && <p className="text-xs text-gray-500">ROI: {row.roiPercent.toFixed(1)}%</p>}
             <p className="mt-1 text-xs text-gray-500">
               Credit: ${row.spend.toFixed(2)} used of ${row.budgetAllocated.toFixed(2)} (${row.creditRemaining.toFixed(2)} left)
             </p>
           </div>
         ))}
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold">Unit Economics &amp; Suggested Pricing</h2>
+        <p className="mt-1 text-xs text-gray-400">
+          Computed only from real closed deals — never a candidate&apos;s own revenue projection. Shown once there are
+          enough closes to trust the number (currently {loadEnv().UNIT_ECONOMICS_MIN_SAMPLE}+). &quot;Suggested minimum
+          price&quot; targets a {targetMargin}% margin over the real blended cost of acquiring a customer, including
+          money spent on prospects who never converted.
+        </p>
+        <div className="mt-2 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {unitEconomicsByEngine.map(({ engine, economics }) => (
+            <div key={engine} className="rounded-lg border bg-white p-4">
+              <h3 className="font-semibold capitalize">{engine.replace("-", " ")}</h3>
+              {economics.eligible && economics.avgCostPerClose !== null && economics.avgRevenuePerClose !== null ? (
+                <>
+                  <p className="mt-1 text-sm text-gray-500">{economics.closedDealCount} closed deals</p>
+                  <p className="mt-2 text-sm">Real avg. cost per close: ${economics.avgCostPerClose.toFixed(2)}</p>
+                  <p className="text-sm">Real avg. revenue per close: ${economics.avgRevenuePerClose.toFixed(2)}</p>
+                  <p className="text-sm">
+                    Realized margin: {economics.realizedMarginPercent === null ? "—" : `${economics.realizedMarginPercent.toFixed(1)}%`}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-blue-700">
+                    Suggested minimum price: ${suggestedMinimumPrice(economics.avgCostPerClose, targetMargin).toFixed(2)}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-gray-400">
+                  Not enough closed deals yet ({economics.closedDealCount} of {loadEnv().UNIT_ECONOMICS_MIN_SAMPLE} needed).
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="mt-8">

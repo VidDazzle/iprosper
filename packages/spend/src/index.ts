@@ -99,3 +99,4 @@ export async function attributeRevenue(jobId: string, amount: number, confirmedA
 }
 
 export * from "./ledger.js";
+export * from "./unitEconomics.js";

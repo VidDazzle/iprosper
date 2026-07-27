@@ -83,26 +83,46 @@ const envSchema = z.object({
   // existed (always wait for a human in the admin dashboard).
   AUTONOMOUS_APPROVAL_ENABLED: z.string().optional().transform((v) => v === "true").default(false),
 
-  // Fixed ceiling for any candidate the system approves on its own —
-  // this is the hard cap. Deliberately NOT derived from a candidate's
-  // own estRevenueMonthly/estBuildHours (those are projections, not a
-  // spending authorization — same reasoning as approveOpportunity's
-  // existing human-supplied budgetCap). Conservative placeholder —
-  // raise it once you've watched a few autonomous approvals play out.
-  AUTONOMOUS_DISPATCH_CAP: z.coerce.number().positive().default(15),
+  // Ratios, not fixed dollars — explicit decision: "expenses and
+  // revenue can fluctuate... profit and revenue should always be
+  // expressed in a percentage." Every autonomous cap below is derived
+  // from REAL realized unit economics (packages/spend/unitEconomics.ts)
+  // once there's enough closed-deal history to trust it
+  // (UNIT_ECONOMICS_MIN_SAMPLE). Before that history exists, a small
+  // fixed BOOTSTRAP floor applies — the system has to be able to
+  // spend something to acquire its first customers before it has any
+  // real numbers to compute a percentage from.
+  UNIT_ECONOMICS_MIN_SAMPLE: z.coerce.number().int().positive().default(10),
+
+  // Never risk more per autonomous candidate than this fraction of
+  // what an average closed deal has actually been worth, once real
+  // data exists. Before that, AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP applies.
+  AUTONOMOUS_DISPATCH_PERCENT_OF_DEAL_VALUE: z.coerce.number().positive().max(1).default(0.15),
+  AUTONOMOUS_BOOTSTRAP_DISPATCH_CAP: z.coerce.number().positive().default(15),
 
   // Rolling 7-day ceiling on total budgetCap committed via autonomous
-  // (not human) approval — caps how fast autonomous spending can
-  // compound even if many individual candidates each pass the
-  // per-candidate cap above.
-  AUTONOMOUS_WEEKLY_SPEND_CAP: z.coerce.number().positive().default(100),
+  // (not human) approval, as a fraction of the trailing 7-day REALIZED
+  // revenue — scales down automatically if revenue drops, scales up as
+  // the business actually earns more, rather than needing manual
+  // retuning. Floored at AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP so autonomy
+  // isn't permanently $0 before the first sale closes.
+  AUTONOMOUS_SPEND_PERCENT_OF_REVENUE: z.coerce.number().positive().max(1).default(0.3),
+  AUTONOMOUS_BOOTSTRAP_WEEKLY_CAP: z.coerce.number().positive().default(50),
 
   // The budgetCap PROPOSED in a human-approval-request link, for
   // candidates that don't qualify for autonomous approval (over the
-  // weekly cap, or compliance-flagged). A one-click link can't collect
-  // a human-typed number, so the amount is stated up front in the
-  // message and committed to on approve.
-  AUTONOMOUS_ESCALATION_CAP: z.coerce.number().positive().default(50),
+  // weekly cap, or compliance-flagged) — expressed as a multiple of
+  // the CURRENT effective per-candidate cap (itself now data-driven),
+  // not an independent fixed number. A one-click link can't collect a
+  // human-typed number, so the amount is stated up front and committed
+  // to on approve.
+  AUTONOMOUS_ESCALATION_MULTIPLE: z.coerce.number().positive().default(3),
+
+  // Gross margin this system tries to price toward once it has real
+  // cost data — used only to compute a SUGGESTED minimum price shown
+  // on the admin dashboard (packages/spend/unitEconomics.ts). Not
+  // enforced anywhere yet — nothing in this build sets a client price.
+  TARGET_PROFIT_MARGIN_PERCENT: z.coerce.number().positive().max(99).default(50),
 
   // Where autonomous-approval requests and real-time kill-switch
   // alerts get sent — see packages/ownerAlerts. Unset -> those alerts

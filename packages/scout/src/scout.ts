@@ -66,7 +66,7 @@ export class OpportunityNotApprovableError extends Error {
   }
 }
 
-const CATEGORY_TO_ENGINE: Record<string, "client-acquisition" | "affiliate" | "evolve"> = {
+export const CATEGORY_TO_ENGINE: Record<string, "client-acquisition" | "affiliate" | "evolve"> = {
   "new-vertical": "client-acquisition",
   "new-app": "evolve",
   "new-affiliate-program": "affiliate",

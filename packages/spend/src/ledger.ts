@@ -80,7 +80,15 @@ function aggregate(
     jobCount: b.jobCount,
     budgetAllocated: round2(b.budgetAllocated),
     creditRemaining: round2(b.budgetAllocated - b.spend),
+    marginPercent: percent(b.revenue - b.spend, b.revenue),
+    roiPercent: percent(b.revenue - b.spend, b.spend),
   }));
+}
+
+/** Null (not 0) when the denominator is zero — "no data yet" is not the same as "0%." */
+function percent(numerator: number, denominator: number): number | null {
+  if (denominator === 0) return null;
+  return round2((numerator / denominator) * 100);
 }
 
 /**
@@ -104,6 +112,8 @@ function summarizePortfolio(jobs: JobRow[]): PortfolioSummary {
     jobCount: jobs.length,
     budgetAllocated: round2(budgetAllocated),
     creditRemaining: round2(budgetAllocated - spend),
+    marginPercent: percent(revenue - spend, revenue),
+    roiPercent: percent(revenue - spend, spend),
   };
 }
 
@@ -126,6 +136,8 @@ export async function computeLedgerWithZeroFill(): Promise<LedgerSnapshot> {
         jobCount: 0,
         budgetAllocated: 0,
         creditRemaining: 0,
+        marginPercent: null,
+        roiPercent: null,
       });
     }
   }

@@ -51,6 +51,13 @@ export const ledgerEntrySchema = z.object({
   // every job in this row hits its own hard cap.
   budgetAllocated: z.number(),
   creditRemaining: z.number(),
+  // Ratios, not fixed dollars, per explicit decision — costs and
+  // prices both fluctuate, so profitability is expressed as a
+  // percentage of revenue/spend rather than an absolute figure. Null
+  // when the denominator is zero (nothing to divide by yet), never 0
+  // standing in for "unknown."
+  marginPercent: z.number().nullable(), // pnl / revenue
+  roiPercent: z.number().nullable(), // pnl / spend
 });
 export type LedgerEntry = z.infer<typeof ledgerEntrySchema>;
 
@@ -61,6 +68,8 @@ export const portfolioSummarySchema = z.object({
   jobCount: z.number().int(),
   budgetAllocated: z.number(),
   creditRemaining: z.number(),
+  marginPercent: z.number().nullable(),
+  roiPercent: z.number().nullable(),
 });
 export type PortfolioSummary = z.infer<typeof portfolioSummarySchema>;
 

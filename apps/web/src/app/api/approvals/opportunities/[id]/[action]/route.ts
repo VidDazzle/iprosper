@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@apex/db";
-import { verifyApprovalSignature, loadEnv } from "@apex/config";
+import { verifyApprovalSignature } from "@apex/config";
 import { approveOpportunity, rejectOpportunity, OpportunityNotApprovableError } from "@apex/scout";
 
 export const dynamic = "force-dynamic";
@@ -43,9 +43,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     if (action === "approve") {
-      const env = loadEnv();
-      await approveOpportunity(id, "owner:approval-link", `scout-owner-${id}`, env.AUTONOMOUS_ESCALATION_CAP);
-      return htmlResponse(`Approved "${candidate.name}" at $${env.AUTONOMOUS_ESCALATION_CAP}.`, 200);
+      // The amount stated in the SMS/email IS the amount this commits
+      // to — read back the figure stored when that message was sent
+      // (packages/scout/autonomousApproval.ts), not whatever the
+      // effective cap happens to be right now.
+      const request = await prisma.auditLog.findFirst({
+        where: { action: "approval_request_sent", target: id },
+        orderBy: { createdAt: "desc" },
+      });
+      const detail = request?.detail as { escalationAmount?: number } | null;
+      const amount = detail?.escalationAmount;
+      if (!amount) {
+        return htmlResponse("This opportunity has no recorded approval request to honor. Use the admin dashboard instead.", 409);
+      }
+
+      await approveOpportunity(id, "owner:approval-link", `scout-owner-${id}`, amount);
+      return htmlResponse(`Approved "${candidate.name}" at $${amount}.`, 200);
     } else {
       await rejectOpportunity(id, "owner:approval-link", "rejected via approval link");
       return htmlResponse(`Rejected "${candidate.name}".`, 200);

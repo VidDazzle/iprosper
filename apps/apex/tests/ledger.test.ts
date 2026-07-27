@@ -83,6 +83,26 @@ describe("computeLedger", () => {
     expect(row.revenue).toBe(0);
     expect(row.pnl).toBe(-50);
   });
+
+  it("expresses profit as margin%/ROI% ratios, not fixed dollars", async () => {
+    await seedJob("affiliate", "a1", 50, 100); // 50 profit on 100 revenue = 50% margin, 100% ROI
+
+    const snapshot = await computeLedger("affiliate");
+    const row = snapshot.byEngine.find((e) => e.engine === "affiliate")!;
+    expect(row.marginPercent).toBe(50);
+    expect(row.roiPercent).toBe(100);
+    expect(snapshot.portfolio.marginPercent).toBe(50);
+    expect(snapshot.portfolio.roiPercent).toBe(100);
+  });
+
+  it("reports null (not 0) margin/ROI when there's no revenue or spend yet to divide by", async () => {
+    await seedJob("affiliate", "a1", 10, 0); // spend with no revenue yet
+
+    const snapshot = await computeLedger("affiliate");
+    const row = snapshot.byEngine.find((e) => e.engine === "affiliate")!;
+    expect(row.marginPercent).toBeNull(); // 0 revenue — nothing to express as a % of
+    expect(row.roiPercent).toBe(-100); // -10 pnl / 10 spend
+  });
 });
 
 describe("computeLedgerWithZeroFill", () => {
