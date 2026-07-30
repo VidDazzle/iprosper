@@ -2,6 +2,7 @@ import type { Platform } from '../types';
 import type { Connector } from './base';
 import { xConnector } from './x';
 import { redditConnector } from './reddit';
+import { rssConnector } from './rss';
 
 // Registry of implemented connectors. YouTube / Instagram / TikTok / LinkedIn
 // slots exist in the data model and policy table; their connectors plug in here
@@ -9,6 +10,7 @@ import { redditConnector } from './reddit';
 const REGISTRY: Partial<Record<Platform, Connector>> = {
   x: xConnector,
   reddit: redditConnector,
+  web: rssConnector,
 };
 
 export function getConnector(platform: Platform): Connector | undefined {

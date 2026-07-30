@@ -15,6 +15,13 @@
       "when": 1785110400000,
       "tag": "0001_social_prospecting",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785196800000,
+      "tag": "0002_optimizer_opportunities_pod",
+      "breakpoints": true
     }
   ]
 }

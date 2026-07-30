@@ -184,12 +184,69 @@ export const products = sqliteTable('products', {
   // Embedding vector (JSON array) for semantic matching against pain points
   embedding: text('embedding'),
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  // Autonomous performance optimizer fields. `priorityScore` biases which
+  // products get promoted; `autoManaged` lets the optimizer pause chronic
+  // non-sellers (operator can pin a product by setting this false).
+  priorityScore: real('priority_score').notNull().default(0),
+  autoManaged: integer('auto_managed', { mode: 'boolean' }).notNull().default(true),
+  // Print-on-demand linkage (image put onto a physical product)
+  imageUrl: text('image_url'),
+  podProvider: text('pod_provider'),
+  podExternalId: text('pod_external_id'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 }, (t) => ({
   sourceIdx: index('products_source_idx').on(t.source),
   activeIdx: index('products_active_idx').on(t.active),
+  priorityIdx: index('products_priority_idx').on(t.priorityScore),
 }));
+
+/**
+ * Discovered affiliate programs and business/money-making opportunities, with
+ * an AI-generated rationale and revenue estimate. Enrollment is a human action:
+ * status moves discovered -> reviewing -> enrolled/rejected under operator
+ * control. The pipeline never silently signs the operator up for anything.
+ */
+export const opportunities = sqliteTable('opportunities', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  // 'affiliate' | 'business' | 'dropship_niche'
+  kind: text('kind').notNull(),
+  name: text('name').notNull(),
+  url: text('url'),
+  network: text('network'),
+  category: text('category'),
+  description: text('description'),
+  // Why the AI thinks it's a good opportunity
+  rationale: text('rationale'),
+  estRevenueLowUsd: real('est_revenue_low_usd'),
+  estRevenueHighUsd: real('est_revenue_high_usd'),
+  // 'low' | 'medium' | 'high'
+  effortLevel: text('effort_level'),
+  // 0..100 attractiveness score
+  score: real('score').notNull().default(0),
+  // 'discovered' | 'reviewing' | 'enrolled' | 'rejected'
+  status: text('status').notNull().default('discovered'),
+  // How it surfaced: 'manual' | 'discovery' | 'performance'
+  source: text('source').notNull().default('discovery'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+}, (t) => ({
+  statusIdx: index('opportunities_status_idx').on(t.status),
+  scoreIdx: index('opportunities_score_idx').on(t.score),
+}));
+
+/**
+ * Uploaded creative used for print-on-demand. One design can spawn many POD
+ * products (t-shirt, mug, etc.), each recorded in `products` with source 'pod'.
+ */
+export const podDesigns = sqliteTable('pod_designs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  imageUrl: text('image_url').notNull(),
+  sourcePrompt: text('source_prompt'),
+  provider: text('provider'),
+  createdAt: text('created_at').notNull(),
+});
 
 /**
  * A drafted (and possibly sent) outreach message. Always starts life in the

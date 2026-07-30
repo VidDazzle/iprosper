@@ -67,6 +67,15 @@ export const PLATFORM_POLICIES: Record<Platform, PlatformPolicy> = {
     maxDmsPerDay: 0,
     perProspectCooldownHours: 24 * 90,
   },
+  web: {
+    // Listen-only. We read public RSS/forums but never auto-post to arbitrary
+    // third-party sites; surfaced prospects route to a human or an owned channel.
+    automatedOutreachAllowed: false,
+    requiresBotDisclosure: true,
+    maxPublicRepliesPerDay: 0,
+    maxDmsPerDay: 0,
+    perProspectCooldownHours: 24 * 90,
+  },
 };
 
 /** Standard affiliate disclosure required by the FTC endorsement guides. */

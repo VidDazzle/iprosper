@@ -96,10 +96,19 @@ export function matchProducts(opts: MatchOptions): ScoredProduct[] {
     const marginFactor = normalizeMargin(product);
     const shipFactor = normalizeShip(product.shipDaysMax);
     const reviewFactor = normalizeReviews(product.reviewScore, product.reviewCount);
+    // Proven performers (set by the optimizer) get a modest promotion boost.
+    const priorityFactor =
+      typeof product.priorityScore === 'number'
+        ? Math.max(0, Math.min(1, product.priorityScore / 100))
+        : 0.4;
 
-    // Relevance dominates; commercial factors break ties.
+    // Relevance dominates; commercial + performance factors break ties.
     const score =
-      relevance * 0.6 + marginFactor * 0.18 + reviewFactor * 0.14 + shipFactor * 0.08;
+      relevance * 0.55 +
+      priorityFactor * 0.15 +
+      marginFactor * 0.15 +
+      reviewFactor * 0.1 +
+      shipFactor * 0.05;
 
     return { product, relevance, score };
   });

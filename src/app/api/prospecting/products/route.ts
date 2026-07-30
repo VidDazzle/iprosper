@@ -4,7 +4,7 @@ import { products } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 
 const VALID_SOURCES = [
-  'alibaba', 'cj', 'aliexpress', 'amazon_associates', 'shareasale', 'impact', 'clickbank', 'own',
+  'alibaba', 'cj', 'aliexpress', 'amazon_associates', 'shareasale', 'impact', 'clickbank', 'own', 'pod',
 ];
 
 export async function GET(request: NextRequest) {

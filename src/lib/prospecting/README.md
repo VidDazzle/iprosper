@@ -1,9 +1,9 @@
-# Social Prospecting Pipeline
+# ProsperPilot — Social Prospecting Pipeline
 
-A compliant social-listening and outreach system: it finds people publicly
-expressing a need on social platforms, scores their buying intent, matches a
-product/affiliate offer, and drafts an outreach message that a human approves
-before anything is sent.
+A compliant, autonomous prospecting copilot. It finds people publicly expressing
+a need across social platforms and blogs/forums, scores their buying intent,
+matches a product/affiliate offer, optimizes toward what actually sells, and
+drafts an outreach message that a human approves before anything is sent.
 
 ## What it does — and deliberately does not do
 
@@ -20,6 +20,23 @@ before anything is sent.
   **your own accounts** through official endpoints, after a **human review**.
 - Self-optimizing feedback loop (A/B template outcomes, conversion tracking),
   global suppression/opt-out list, and an append-only audit log.
+- **Autonomous performance optimizer** (`optimizer.ts`): rescores products from
+  real sales/click data, auto-pauses chronic non-sellers, reactivates recovering
+  ones, and biases the matcher toward proven winners via `priorityScore`.
+- **Opportunity finder** (`opportunityFinder.ts`): evaluates affiliate programs
+  and business/money-making opportunities, returning a rationale, revenue
+  estimate, effort level, and 0–100 score. Flags MLM/get-rich-quick red flags.
+- **Print-on-demand studio** (`pod.ts`): puts an operator image onto physical
+  products (tees, mugs, etc.) via a POD provider (Printful wired; Printify/Gooten
+  pluggable); successful items become promotable products automatically.
+- **Web/RSS listening** (`connectors/rss.ts`): a listen-only `web` source that
+  reads public RSS/Atom feeds from blogs, forums, and Q&A sites.
+- **Operator assistant** (`assistant.ts`): a conversational agent *for you* — ask
+  it about your products, metrics, and which opportunities to pursue. One
+  endpoint backs text now and voice/email adapters. It identifies as AI.
+
+**Enrollment is human-authorized.** The opportunity finder never signs you up
+for anything on its own; you move an opportunity to `enrolled` yourself.
 
 **Does not**
 - No scraping, no reading private DMs, no evading platform bot detection, no

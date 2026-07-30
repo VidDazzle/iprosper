@@ -6,7 +6,10 @@ export type Platform =
   | 'youtube'
   | 'instagram'
   | 'tiktok'
-  | 'linkedin';
+  | 'linkedin'
+  // Listen-only aggregate source: blogs, forums, and Q&A sites via public
+  // RSS/Atom feeds and official APIs. Never used for automated outreach.
+  | 'web';
 
 export const PLATFORMS: Platform[] = [
   'x',
@@ -15,6 +18,7 @@ export const PLATFORMS: Platform[] = [
   'instagram',
   'tiktok',
   'linkedin',
+  'web',
 ];
 
 /** A normalized public item returned by any connector. */
@@ -53,6 +57,7 @@ export interface ProductLike {
   reviewCount?: number | null;
   affiliatePayoutUsd?: number | null;
   embedding?: string | null; // JSON array
+  priorityScore?: number | null; // set by the performance optimizer (0..100)
 }
 
 export interface ScoredProduct {
