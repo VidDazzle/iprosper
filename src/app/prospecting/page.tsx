@@ -249,7 +249,7 @@ export default function ProsperPilotConsole() {
           {statBlocks.map((b) => (
             <Card key={b.label} className="bg-[#222] border-gray-800">
               <CardContent className="pt-6">
-                <div className="text-3xl font-bold">{b.value}</div>
+                <div className="text-3xl font-bold text-white">{b.value}</div>
                 <div className="text-sm text-gray-400 flex items-center gap-1 mt-1">{b.icon}{b.label}</div>
               </CardContent>
             </Card>
