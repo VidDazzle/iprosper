@@ -162,7 +162,7 @@ export default function SignUpPage() {
           <div className="text-center mb-8">
             <img
               src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-              alt="iProsper.io"
+              alt="iProsper"
               className="h-12 mx-auto mb-4"
             />
             <ColorfulBars />
@@ -207,7 +207,7 @@ export default function SignUpPage() {
         <div className="text-center mb-8">
           <img
             src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-            alt="iProsper.io"
+            alt="iProsper"
             className="h-12 mx-auto mb-4"
           />
           <ColorfulBars />

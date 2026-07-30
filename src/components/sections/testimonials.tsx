@@ -12,7 +12,7 @@ const testimonials = [
   title: "CEO", 
   company: "GoodCall",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/iQG8esj7GEya0w96I0RpYNM0-32.svg?",
-  quote: "iProsper.io is the only product in existence with model latency of less than 100 ms, outperforming its next best alternative by a factor of four and without a doubt the smartest LLM we have ever communicated with",
+  quote: "iProsper is the only product in existence with model latency of less than 100 ms, outperforming its next best alternative by a factor of four and without a doubt the smartest LLM we have ever communicated with",
   href: "#",
   gradient: "from-[#ffc107] to-[#ff6b00]"
 },
@@ -21,7 +21,7 @@ const testimonials = [
   title: "CEO",
   company: "Daily",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/vQ6VEl7pEqIyw0a02LyNu5njpg-33.svg?",
-  quote: "iProsper.io is hands down the best voice model today for real-time multimodal use cases. I have used other competitors but now that I have experienced iProsper.io I will never go back",
+  quote: "iProsper is hands down the best voice model today for real-time multimodal use cases. I have used other competitors but now that I have experienced iProsper I will never go back",
   href: "#",
   gradient: "from-[#00bcd4] to-[#0099ff]"
 },
@@ -30,7 +30,7 @@ const testimonials = [
   title: "Head of Poe Product",
   company: "Quora",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/wsqyBHycBWFGly4vievVAqfauiI-34.svg?",
-  quote: "With iProsper.io model, users can interact with a wide range of high-quality, human-like voices in multiple languages, enhancing their experience on our platform.",
+  quote: "With iProsper model, users can interact with a wide range of high-quality, human-like voices in multiple languages, enhancing their experience on our platform.",
   href: "#",
   gradient: "from-[#9c27b0] to-[#4a148c]"
 },
@@ -39,7 +39,7 @@ const testimonials = [
   title: "CEO",
   company: "Together AI",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/aZLO4U73p9NITNL1VAzSI61WUq4-35.svg?",
-  quote: "iProsper.io is leading the charge of building efficient, multimodal models from first principles, starting with their advanced TTS model.",
+  quote: "iProsper is leading the charge of building efficient, multimodal models from first principles, starting with their advanced TTS model.",
   href: "#",
   gradient: "from-[#ff4081] to-[#d50000]"
 },
@@ -48,7 +48,7 @@ const testimonials = [
   title: "CEO",
   company: "Tavus",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/CAb434VZrVJMXEMmYMb6DpG8-36.svg?",
-  quote: "iProsper.io model is a game-changer. Its ultra-low latency of 90ms and high-quality voice generation have enabled us to create truly immersive real-time conversations.",
+  quote: "iProsper model is a game-changer. Its ultra-low latency of 90ms and high-quality voice generation have enabled us to create truly immersive real-time conversations.",
   href: "#",
   gradient: "from-[#00c853] to-[#00695c]"
 },
@@ -57,7 +57,7 @@ const testimonials = [
   title: "CTO",
   company: "VoiceTech",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/iQG8esj7GEya0w96I0RpYNM0-32.svg?",
-  quote: "The quality and speed of voice synthesis with iProsper.io has revolutionized our customer service platform. Our clients are amazed by the natural-sounding conversations.",
+  quote: "The quality and speed of voice synthesis with iProsper has revolutionized our customer service platform. Our clients are amazed by the natural-sounding conversations.",
   href: "#",
   gradient: "from-[#e91e63] to-[#ad1457]"
 },
@@ -66,7 +66,7 @@ const testimonials = [
   title: "VP of Engineering",
   company: "AudioFlow",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/vQ6VEl7pEqIyw0a02LyNu5njpg-33.svg?",
-  quote: "Implementing iProsper.io's voice AI into our workflow automation reduced our processing time by 60%. The multilingual support is exceptional.",
+  quote: "Implementing iProsper's voice AI into our workflow automation reduced our processing time by 60%. The multilingual support is exceptional.",
   href: "#",
   gradient: "from-[#3f51b5] to-[#1a237e]"
 },
@@ -84,7 +84,7 @@ const testimonials = [
   title: "Founder",
   company: "TalkBot",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/aZLO4U73p9NITNL1VAzSI61WUq4-35.svg?",
-  quote: "As a startup, we needed reliable, cost-effective voice AI. iProsper.io delivered beyond our expectations with seamless API integration and stellar performance.",
+  quote: "As a startup, we needed reliable, cost-effective voice AI. iProsper delivered beyond our expectations with seamless API integration and stellar performance.",
   href: "#",
   gradient: "from-[#4caf50] to-[#1b5e20]"
 },
@@ -93,7 +93,7 @@ const testimonials = [
   title: "Director of Innovation",
   company: "MediaCorp",
   companyLogoUrl: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/test-clones/7faa4423-29cc-4b27-a117-d33c42640a6e-delphi-ai-clone-vercel-app/assets/svgs/CAb434VZrVJMXEMmYMb6DpG8-36.svg?",
-  quote: "The emotional nuance and natural flow in iProsper.io's generated speech has transformed our content creation process. Our audience engagement has increased significantly.",
+  quote: "The emotional nuance and natural flow in iProsper's generated speech has transformed our content creation process. Our audience engagement has increased significantly.",
   href: "#",
   gradient: "from-[#607d8b] to-[#263238]"
 }];

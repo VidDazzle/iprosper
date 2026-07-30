@@ -27,7 +27,7 @@ export default function AgentsPage() {
               <br />
               development platform
             </h1>
-            <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto animate-fade-in-delay !whitespace-pre-line">iProsper.io is a code-first ecosystem to get from zero—to your first agent—to your best agent, in record time.
+            <p className="text-xl text-gray-400 mb-8 max-w-3xl mx-auto animate-fade-in-delay !whitespace-pre-line">iProsper is a code-first ecosystem to get from zero—to your first agent—to your best agent, in record time.
 
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12 animate-fade-in-delay-2">
@@ -128,7 +128,7 @@ export default function AgentsPage() {
               <h2 className="text-4xl font-bold text-white mb-6">
                 Start from anywhere. We'll meet you there
               </h2>
-              <p className="text-xl text-gray-400 mb-8 max-w-4xl mx-auto !whitespace-pre-line">Bring your own code, start with a url, or even a prompt. iProsper.io meets you where you are and gets you live fast. All roads lead to a code file that's written in the Line SDK, so you can use the ecosystem to iterate.
+              <p className="text-xl text-gray-400 mb-8 max-w-4xl mx-auto !whitespace-pre-line">Bring your own code, start with a url, or even a prompt. iProsper meets you where you are and gets you live fast. All roads lead to a code file that's written in the Line SDK, so you can use the ecosystem to iterate.
 
               </p>
               <Link href="/pricing">
@@ -315,7 +315,7 @@ agent.start();`}
               <h2 className="text-4xl font-bold text-white mb-6">
                 Complete voice agent ecosystem
               </h2>
-              <p className="text-xl text-gray-400 max-w-3xl mx-auto !whitespace-pre-line !whitespace-pre-line">From development to deployment, iProsper.io provides 1000+  integration you need to build, test, and scale production-ready voice agents.
+              <p className="text-xl text-gray-400 max-w-3xl mx-auto !whitespace-pre-line !whitespace-pre-line">From development to deployment, iProsper provides 1000+  integration you need to build, test, and scale production-ready voice agents.
 
               </p>
             </div>

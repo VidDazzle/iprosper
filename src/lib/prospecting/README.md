@@ -69,6 +69,28 @@ API routes live under `src/app/api/prospecting/*`; the operator dashboard is at
 | `X_ACCESS_TOKEN`, `X_ACCESS_SECRET` | X posting (user context) |
 | `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT` | Reddit search |
 | `REDDIT_ACCESS_TOKEN` | Reddit posting (user context) |
+| `RSS_FEED_URLS` | Comma-separated public RSS/Atom feeds for the `web` source |
+| `PRINTFUL_API_KEY` / `PRINTIFY_API_KEY` / `GOOTEN_API_KEY` | Print-on-demand providers |
+| `CRON_SECRET` | Bearer token the scheduled cadence requires (Vercel Cron sends it automatically) |
+
+## Scheduled cadence
+
+`vercel.json` defines two Vercel Cron jobs hitting `GET /api/prospecting/cron`:
+
+| Job | Schedule (UTC) | What it does |
+| --- | --- | --- |
+| `?job=listen` | every 6 hours (`0 */6 * * *`) | ingest → classify → draft for every configured connector |
+| `?job=optimize` | daily 09:00 (`0 9 * * *`) | run the autonomous performance optimizer |
+
+The endpoint is auth-gated by `CRON_SECRET`; Vercel Cron attaches
+`Authorization: Bearer $CRON_SECRET` automatically when the env var is set.
+Drafting never sends — the human review queue still gates all outreach — so the
+cadence keeps the funnel full and the catalog optimized without any message
+going out unattended. You can also trigger it manually:
+`curl -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/prospecting/cron?job=all`.
+
+Note: Vercel Cron frequency depends on your plan (Hobby is limited to daily);
+adjust the schedules to fit. The jobs are idempotent and safe to run more often.
 
 Connectors are only active when their credentials are present; otherwise the
 dashboard shows them as "no credentials" and they are skipped.

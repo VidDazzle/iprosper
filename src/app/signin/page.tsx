@@ -137,7 +137,7 @@ export default function SignInPage() {
                 <div className="flex items-center justify-center mb-6">
                   <Image
                     src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-                    alt="iProsper.io"
+                    alt="iProsper"
                     width={140}
                     height={40}
                     className="h-8 w-auto brightness-100 contrast-100"
@@ -169,7 +169,7 @@ export default function SignInPage() {
             <div className="flex items-center justify-center mb-6">
               <Image
                 src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-                alt="iProsper.io"
+                alt="iProsper"
                 width={140}
                 height={40}
                 className="h-8 w-auto brightness-100 contrast-100"

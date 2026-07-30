@@ -50,7 +50,7 @@ export default function ScheduleDemo() {
               </h1>
             </div>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Book a personalized demonstration of iProsper.io ultra-realistic voice AI platform. 
+              Book a personalized demonstration of iProsper ultra-realistic voice AI platform. 
               Our team will show you how to integrate our State Space Model technology into your applications.
             </p>
           </div>

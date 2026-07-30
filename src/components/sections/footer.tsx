@@ -89,7 +89,7 @@ const IProsperLogo = () => (
   <Link href="/" className="flex items-center">
     <Image
       src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-      alt="iProsper.io"
+      alt="iProsper"
       width={160}
       height={50}
       className="h-10 w-auto brightness-100 contrast-100"
@@ -219,7 +219,7 @@ export default function Footer() {
             <div className="flex flex-col md:flex-row items-center gap-4">
               <PartnerLogo />
               <p className="text-sm text-text-secondary text-center md:text-right">
-                © 2024 iProsper.io. All rights reserved.
+                © 2024 iProsper. All rights reserved.
               </p>
             </div>
           </div>

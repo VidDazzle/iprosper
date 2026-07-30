@@ -3,5 +3,9 @@
   "installCommand": "npm ci",
   "buildCommand": "next build",
   "outputDirectory": ".next",
-  "routes": []
+  "routes": [],
+  "crons": [
+    { "path": "/api/prospecting/cron?job=listen", "schedule": "0 */6 * * *" },
+    { "path": "/api/prospecting/cron?job=optimize", "schedule": "0 9 * * *" }
+  ]
 }

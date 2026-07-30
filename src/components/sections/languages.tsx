@@ -41,7 +41,7 @@ const LanguagesSection = () => {
           <h2 className="text-4xl font-semibold tracking-tighter text-white md:text-5xl">
             Speak every language
           </h2>
-          <p className="mt-4 text-lg leading-[1.6] text-secondary !whitespace-pre-line">iProsper.io supports native speech in Over 150 languages. Localize a given voice to any accent or language.
+          <p className="mt-4 text-lg leading-[1.6] text-secondary !whitespace-pre-line">iProsper supports native speech in Over 150 languages. Localize a given voice to any accent or language.
 
           </p>
           <Link

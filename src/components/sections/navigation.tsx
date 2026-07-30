@@ -16,7 +16,7 @@ export default function Navigation() {
         <Link href="/" className="flex items-center">
           <Image
             src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/document-uploads/1757009205035-fx2gim7laip.png"
-            alt="iProsper.io"
+            alt="iProsper"
             width={140}
             height={40}
             className="h-8 w-auto brightness-100 contrast-100"

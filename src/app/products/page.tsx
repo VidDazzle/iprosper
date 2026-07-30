@@ -196,7 +196,7 @@ export default function ProductPage() {
     name: "Sarah Johnson",
     title: "CEO",
     company: "MedCare Clinic",
-    quote: "iProsper.io has revolutionized our patient communications. We've reduced no-shows by 40% and our staff can focus on patient care instead of answering basic questions.",
+    quote: "iProsper has revolutionized our patient communications. We've reduced no-shows by 40% and our staff can focus on patient care instead of answering basic questions.",
     avatar: "/api/placeholder/64/64"
   },
   {
@@ -360,10 +360,10 @@ export default function ProductPage() {
         </div>
       </section>
 
-      {/* Why Choose iProsper.io Section */}
+      {/* Why Choose iProsper Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto">
-          <h2 className="text-5xl font-semibold text-center mb-16">Why Choose iProsper.io</h2>
+          <h2 className="text-5xl font-semibold text-center mb-16">Why Choose iProsper</h2>
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {whyChooseReasons.map((reason, index) =>
