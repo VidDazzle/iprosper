@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 340" fill="none" role="img" aria-label="Three apps, one platform">
+  <defs>
+    <linearGradient id="op-aqua" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38E4C9"/><stop offset="1" stop-color="#12907E"/></linearGradient>
+    <linearGradient id="op-amber" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFC46B"/><stop offset="1" stop-color="#C77D18"/></linearGradient>
+    <linearGradient id="op-violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8B7BFF"/><stop offset="1" stop-color="#5B49D6"/></linearGradient>
+    <radialGradient id="op-core" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff" stop-opacity=".6"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g transform="translate(180 180)">
+    <!-- connectors to core -->
+    <g stroke-width="2" stroke-opacity=".5" fill="none">
+      <path d="M0 0L0 -104" stroke="#38E4C9"/><path d="M0 0L90 52" stroke="#FFC46B"/><path d="M0 0L-90 52" stroke="#8B7BFF"/>
+    </g>
+    <!-- three app tiles -->
+    <g transform="translate(0 -104)"><rect x="-34" y="-34" width="68" height="68" rx="16" fill="url(#op-aqua)"/>
+      <rect x="-16" y="-10" width="32" height="22" rx="4" fill="none" stroke="#04120f" stroke-width="2.4"/><path d="M-14 -7l14 10 14-10" stroke="#04120f" stroke-width="2.4" fill="none"/></g>
+    <g transform="translate(90 52)"><rect x="-34" y="-34" width="68" height="68" rx="16" fill="url(#op-amber)"/>
+      <rect x="-15" y="-16" width="30" height="30" rx="5" fill="none" stroke="#241704" stroke-width="2.4"/><path d="M-15 -6h30M-7 -22v8M7 -22v8" stroke="#241704" stroke-width="2.4"/></g>
+    <g transform="translate(-90 52)"><rect x="-34" y="-34" width="68" height="68" rx="16" fill="url(#op-violet)"/>
+      <path d="M-16 -10h20a3 3 0 013 3v14a3 3 0 01-3 3h-20z" fill="none" stroke="#160f2e" stroke-width="2.4"/><path d="M7 -3l10 -6v18l-10 -6z" fill="none" stroke="#160f2e" stroke-width="2.4"/></g>
+    <!-- core -->
+    <circle r="40" fill="url(#op-core)"/>
+    <path d="M0 -26L23 -13V13L0 26L-23 13V-13Z" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2"/>
+    <circle r="8" fill="#fff" opacity=".9"/>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" fill="none" role="img" aria-label="Flowing signal waves">
+  <defs>
+    <linearGradient id="fw-a" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#38E4C9" stop-opacity="0"/><stop offset=".5" stop-color="#38E4C9"/><stop offset="1" stop-color="#38E4C9" stop-opacity="0"/></linearGradient>
+    <linearGradient id="fw-b" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#FFC46B" stop-opacity="0"/><stop offset=".5" stop-color="#FFC46B"/><stop offset="1" stop-color="#FFC46B" stop-opacity="0"/></linearGradient>
+    <linearGradient id="fw-c" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#8B7BFF" stop-opacity="0"/><stop offset=".5" stop-color="#8B7BFF"/><stop offset="1" stop-color="#8B7BFF" stop-opacity="0"/></linearGradient>
+  </defs>
+  <path d="M0 120 C 120 60, 200 60, 320 120 S 520 180, 640 120" fill="none" stroke="url(#fw-a)" stroke-width="2.5"/>
+  <path d="M0 130 C 120 80, 220 80, 320 130 S 540 190, 640 130" fill="none" stroke="url(#fw-b)" stroke-width="2" stroke-opacity=".8"/>
+  <path d="M0 110 C 140 50, 220 50, 320 110 S 520 170, 640 110" fill="none" stroke="url(#fw-c)" stroke-width="2" stroke-opacity=".8"/>
+  <path d="M0 150 C 120 110, 240 110, 320 150 S 540 200, 640 150" fill="none" stroke="url(#fw-a)" stroke-width="1.5" stroke-opacity=".5"/>
+  <path d="M0 96 C 140 40, 240 40, 320 96 S 520 150, 640 96" fill="none" stroke="url(#fw-c)" stroke-width="1.5" stroke-opacity=".4"/>
+</svg>

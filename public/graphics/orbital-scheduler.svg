@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 320" fill="none" role="img" aria-label="Orbital scheduler">
+  <defs>
+    <linearGradient id="os-g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFC46B"/><stop offset="1" stop-color="#C77D18"/></linearGradient>
+    <radialGradient id="os-node" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC46B"/><stop offset="100%" stop-color="#FFC46B" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g transform="translate(220 160)">
+    <ellipse rx="180" ry="76" stroke="#FFC46B" stroke-opacity=".22" stroke-width="1.5"/>
+    <ellipse rx="132" ry="56" stroke="#FFC46B" stroke-opacity=".4" stroke-width="1.5" stroke-dasharray="3 8"/>
+    <ellipse rx="84" ry="36" stroke="#FFC46B" stroke-opacity=".62" stroke-width="1.5"/>
+    <circle r="32" fill="url(#os-g)"/>
+    <path d="M-11 0l7 8 15-17" stroke="#241704" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g><circle cx="180" cy="0" r="16" fill="url(#os-node)"/><circle cx="180" cy="0" r="6" fill="#FFC46B"/></g>
+    <g><circle cx="-114" cy="33" r="13" fill="url(#os-node)"/><circle cx="-114" cy="33" r="5" fill="#FFC46B" opacity=".9"/></g>
+    <g><circle cx="66" cy="-30" r="12" fill="url(#os-node)"/><circle cx="66" cy="-30" r="4.5" fill="#FFC46B" opacity=".8"/></g>
+    <g><circle cx="-70" cy="-25" r="10" fill="url(#os-node)"/><circle cx="-70" cy="-25" r="4" fill="#FFC46B" opacity=".6"/></g>
+  </g>
+  <g font-family="ui-monospace, monospace" font-size="12" fill="#FFC46B" opacity=".85">
+    <text x="34" y="44">09:00</text><text x="360" y="44">14:30</text>
+    <text x="34" y="292">FREE</text><text x="352" y="292">BOOKED</text>
+  </g>
+</svg>

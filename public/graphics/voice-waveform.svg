@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" fill="none" role="img" aria-label="Voice agent waveform">
+  <defs>
+    <linearGradient id="vw-g" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#38E4C9"/><stop offset=".5" stop-color="#FFC46B"/><stop offset="1" stop-color="#8B7BFF"/></linearGradient>
+  </defs>
+  <g fill="url(#vw-g)">
+    <rect x="20"  y="86"  width="7" height="28"  rx="3.5"/>
+    <rect x="38"  y="70"  width="7" height="60"  rx="3.5"/>
+    <rect x="56"  y="48"  width="7" height="104" rx="3.5"/>
+    <rect x="74"  y="76"  width="7" height="48"  rx="3.5"/>
+    <rect x="92"  y="30"  width="7" height="140" rx="3.5"/>
+    <rect x="110" y="60"  width="7" height="80"  rx="3.5"/>
+    <rect x="128" y="88"  width="7" height="24"  rx="3.5"/>
+    <rect x="146" y="52"  width="7" height="96"  rx="3.5"/>
+    <rect x="164" y="20"  width="7" height="160" rx="3.5"/>
+    <rect x="182" y="64"  width="7" height="72"  rx="3.5"/>
+    <rect x="200" y="82"  width="7" height="36"  rx="3.5"/>
+    <rect x="218" y="44"  width="7" height="112" rx="3.5"/>
+    <rect x="236" y="70"  width="7" height="60"  rx="3.5"/>
+    <rect x="254" y="34"  width="7" height="132" rx="3.5"/>
+    <rect x="272" y="80"  width="7" height="40"  rx="3.5"/>
+    <rect x="290" y="56"  width="7" height="88"  rx="3.5"/>
+    <rect x="308" y="26"  width="7" height="148" rx="3.5"/>
+    <rect x="326" y="74"  width="7" height="52"  rx="3.5"/>
+    <rect x="344" y="60"  width="7" height="80"  rx="3.5"/>
+    <rect x="362" y="40"  width="7" height="120" rx="3.5"/>
+    <rect x="380" y="84"  width="7" height="32"  rx="3.5"/>
+    <rect x="398" y="66"  width="7" height="68"  rx="3.5"/>
+    <rect x="416" y="50"  width="7" height="100" rx="3.5"/>
+    <rect x="434" y="78"  width="7" height="44"  rx="3.5"/>
+    <rect x="452" y="88"  width="7" height="24"  rx="3.5"/>
+  </g>
+</svg>

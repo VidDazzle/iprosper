@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 380" fill="none" role="img" aria-label="AI neural core">
+  <defs>
+    <linearGradient id="nc-g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38E4C9"/><stop offset="1" stop-color="#8B7BFF"/></linearGradient>
+    <radialGradient id="nc-core" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#38E4C9"/><stop offset="60%" stop-color="#8B7BFF"/><stop offset="100%" stop-color="#8B7BFF" stop-opacity="0"/></radialGradient>
+    <radialGradient id="nc-node" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#38E4C9"/><stop offset="100%" stop-color="#38E4C9" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g transform="translate(190 190)">
+    <!-- synapse links -->
+    <g stroke="url(#nc-g)" stroke-width="1.4" stroke-opacity=".55">
+      <path d="M0 0L118 -40"/><path d="M0 0L138 46"/><path d="M0 0L36 -132"/><path d="M0 0L-96 -92"/>
+      <path d="M0 0L-140 24"/><path d="M0 0L-70 118"/><path d="M0 0L64 128"/><path d="M0 0L-24 -140"/>
+    </g>
+    <g stroke="url(#nc-g)" stroke-width="1" stroke-opacity=".28">
+      <path d="M118 -40L138 46"/><path d="M-96 -92L36 -132"/><path d="M-140 24L-70 118"/><path d="M64 128L138 46"/>
+    </g>
+    <!-- hex core -->
+    <path d="M0 -52L45 -26V26L0 52L-45 26V-26Z" fill="url(#nc-core)" opacity=".9"/>
+    <path d="M0 -40L35 -20V20L0 40L-35 20V-20Z" fill="none" stroke="url(#nc-g)" stroke-width="2"/>
+    <circle r="9" fill="#fff" opacity=".92"/>
+    <!-- outer nodes -->
+    <g>
+      <g><circle cx="118" cy="-40" r="15" fill="url(#nc-node)"/><circle cx="118" cy="-40" r="5.5" fill="#38E4C9"/></g>
+      <g><circle cx="138" cy="46" r="13" fill="url(#nc-node)"/><circle cx="138" cy="46" r="5" fill="#8B7BFF"/></g>
+      <g><circle cx="36" cy="-132" r="13" fill="url(#nc-node)"/><circle cx="36" cy="-132" r="5" fill="#FFC46B"/></g>
+      <g><circle cx="-96" cy="-92" r="14" fill="url(#nc-node)"/><circle cx="-96" cy="-92" r="5" fill="#38E4C9"/></g>
+      <g><circle cx="-140" cy="24" r="13" fill="url(#nc-node)"/><circle cx="-140" cy="24" r="5" fill="#8B7BFF"/></g>
+      <g><circle cx="-70" cy="118" r="12" fill="url(#nc-node)"/><circle cx="-70" cy="118" r="4.5" fill="#38E4C9"/></g>
+      <g><circle cx="64" cy="128" r="12" fill="url(#nc-node)"/><circle cx="64" cy="128" r="4.5" fill="#FFC46B"/></g>
+      <g><circle cx="-24" cy="-140" r="11" fill="url(#nc-node)"/><circle cx="-24" cy="-140" r="4" fill="#8B7BFF"/></g>
+    </g>
+  </g>
+</svg>

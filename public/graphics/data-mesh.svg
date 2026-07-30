@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 320" fill="none" role="img" aria-label="Connected data mesh">
+  <defs>
+    <radialGradient id="dm-a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#38E4C9"/><stop offset="100%" stop-color="#38E4C9" stop-opacity="0"/></radialGradient>
+    <radialGradient id="dm-b" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC46B"/><stop offset="100%" stop-color="#FFC46B" stop-opacity="0"/></radialGradient>
+    <radialGradient id="dm-c" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#8B7BFF"/><stop offset="100%" stop-color="#8B7BFF" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g stroke-width="1.3" fill="none">
+    <path d="M70 90L200 60" stroke="#38E4C9" stroke-opacity=".45"/>
+    <path d="M200 60L340 100" stroke="#FFC46B" stroke-opacity=".4"/>
+    <path d="M70 90L150 200" stroke="#38E4C9" stroke-opacity=".4"/>
+    <path d="M200 60L230 180" stroke="#8B7BFF" stroke-opacity=".4"/>
+    <path d="M340 100L370 230" stroke="#FFC46B" stroke-opacity=".35"/>
+    <path d="M150 200L230 180" stroke="#8B7BFF" stroke-opacity=".45"/>
+    <path d="M230 180L370 230" stroke="#8B7BFF" stroke-opacity=".35"/>
+    <path d="M150 200L280 270" stroke="#38E4C9" stroke-opacity=".35"/>
+    <path d="M280 270L370 230" stroke="#FFC46B" stroke-opacity=".35"/>
+  </g>
+  <g>
+    <g><circle cx="70" cy="90" r="16" fill="url(#dm-a)"/><circle cx="70" cy="90" r="6" fill="#38E4C9"/></g>
+    <g><circle cx="200" cy="60" r="20" fill="url(#dm-a)"/><circle cx="200" cy="60" r="8" fill="#38E4C9"/></g>
+    <g><circle cx="340" cy="100" r="16" fill="url(#dm-b)"/><circle cx="340" cy="100" r="6" fill="#FFC46B"/></g>
+    <g><circle cx="150" cy="200" r="15" fill="url(#dm-a)"/><circle cx="150" cy="200" r="5.5" fill="#38E4C9"/></g>
+    <g><circle cx="230" cy="180" r="17" fill="url(#dm-c)"/><circle cx="230" cy="180" r="6.5" fill="#8B7BFF"/></g>
+    <g><circle cx="370" cy="230" r="15" fill="url(#dm-b)"/><circle cx="370" cy="230" r="5.5" fill="#FFC46B"/></g>
+    <g><circle cx="280" cy="270" r="13" fill="url(#dm-c)"/><circle cx="280" cy="270" r="5" fill="#8B7BFF"/></g>
+  </g>
+</svg>

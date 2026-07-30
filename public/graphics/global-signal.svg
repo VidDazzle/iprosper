@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 360" fill="none" role="img" aria-label="Global timezone signal">
+  <defs>
+    <linearGradient id="gs-g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38E4C9"/><stop offset="1" stop-color="#8B7BFF"/></linearGradient>
+    <radialGradient id="gs-ping" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC46B"/><stop offset="100%" stop-color="#FFC46B" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g transform="translate(200 180)">
+    <circle r="120" fill="none" stroke="url(#gs-g)" stroke-width="2"/>
+    <!-- latitude/longitude -->
+    <g stroke="url(#gs-g)" stroke-width="1.2" stroke-opacity=".45" fill="none">
+      <ellipse rx="120" ry="42"/><ellipse rx="120" ry="82"/>
+      <ellipse rx="42" ry="120"/><ellipse rx="82" ry="120"/>
+      <line x1="-120" y1="0" x2="120" y2="0"/>
+    </g>
+    <!-- orbit -->
+    <ellipse rx="158" ry="64" stroke="#FFC46B" stroke-opacity=".4" stroke-width="1.5" stroke-dasharray="4 8" transform="rotate(-18)"/>
+    <!-- location pings -->
+    <g>
+      <g><circle cx="-58" cy="-40" r="16" fill="url(#gs-ping)"/><circle cx="-58" cy="-40" r="5" fill="#FFC46B"/></g>
+      <g><circle cx="46" cy="30" r="16" fill="url(#gs-ping)"/><circle cx="46" cy="30" r="5" fill="#FFC46B"/></g>
+      <g><circle cx="70" cy="-58" r="13" fill="url(#gs-ping)"/><circle cx="70" cy="-58" r="4" fill="#FFC46B"/></g>
+    </g>
+    <!-- satellite on orbit -->
+    <g transform="rotate(-18)"><circle cx="158" cy="0" r="6" fill="#38E4C9"/></g>
+  </g>
+</svg>

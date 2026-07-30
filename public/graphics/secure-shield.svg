@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" fill="none" role="img" aria-label="Security shield">
+  <defs>
+    <linearGradient id="ss-g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#38E4C9"/><stop offset="1" stop-color="#8B7BFF"/></linearGradient>
+    <radialGradient id="ss-glow" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#38E4C9" stop-opacity=".22"/><stop offset="100%" stop-color="#38E4C9" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="20" y="20" width="280" height="320" rx="20" fill="url(#ss-glow)"/>
+  <g transform="translate(160 180)">
+    <path d="M0 -140L108 -100V-8C108 78 62 130 0 160C-62 130 -108 78 -108 -8V-100Z" fill="none" stroke="url(#ss-g)" stroke-width="2.5"/>
+    <path d="M0 -110L80 -80V-8C80 58 46 100 0 122C-46 100 -80 58 -80 -8V-80Z" fill="none" stroke="url(#ss-g)" stroke-width="1" stroke-opacity=".4" stroke-dasharray="4 6"/>
+    <!-- circuit traces -->
+    <g stroke="#38E4C9" stroke-opacity=".5" stroke-width="1.4" fill="none">
+      <path d="M-108 -40H-70V-70"/><path d="M108 -40H70V-70"/><path d="M-108 30H-60"/><path d="M108 30H60"/>
+    </g>
+    <g fill="#38E4C9"><circle cx="-70" cy="-70" r="3.5"/><circle cx="70" cy="-70" r="3.5"/><circle cx="-60" cy="30" r="3"/><circle cx="60" cy="30" r="3"/></g>
+    <!-- check -->
+    <path d="M-34 4l24 26 46-54" stroke="url(#ss-g)" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
