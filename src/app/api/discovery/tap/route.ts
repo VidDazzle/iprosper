@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCreateProfile } from '@/lib/life';
-import { isVerified } from '@/lib/together';
+import { isAdultVerified } from '@/lib/safety';
 import { tap } from '@/lib/discovery';
 
 /**
@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const me = await getOrCreateProfile(body.email);
-    if (!(await isVerified(me.id))) {
-      return NextResponse.json({ error: 'identity_required', message: 'Verify your identity before tapping.' }, { status: 403 });
+    if (!(await isAdultVerified(me.id))) {
+      return NextResponse.json({ error: 'identity_required', message: 'Verify your identity (18+) before tapping.' }, { status: 403 });
     }
     if (!me.discoveryPhotoUrl) {
       return NextResponse.json({ error: 'photo_required', message: 'Add a discovery photo first — tapping reveals it to them.' }, { status: 400 });

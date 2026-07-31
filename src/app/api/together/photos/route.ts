@@ -3,7 +3,8 @@ import { db } from '@/db';
 import { sharedPhotos } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getOrCreateProfile } from '@/lib/life';
-import { activeConnectionFor, isVerified } from '@/lib/together';
+import { activeConnectionFor } from '@/lib/together';
+import { isAdultVerified } from '@/lib/safety';
 import { storageConfigured, createUpload, makeStorageKey, getDownloadUrl } from '@/lib/storage';
 
 /**
@@ -49,9 +50,9 @@ export async function POST(request: NextRequest) {
     const conn = await activeConnectionFor(me.id);
     if (!conn) return NextResponse.json({ error: 'No active connection' }, { status: 400 });
 
-    // Gate: identity verification is required before sharing photos.
-    if (!(await isVerified(me.id))) {
-      return NextResponse.json({ error: 'identity_required', message: 'Verify your identity (driver’s license + face match) before sharing photos.' }, { status: 403 });
+    // Gate: 18+ identity verification is required before sharing photos.
+    if (!(await isAdultVerified(me.id))) {
+      return NextResponse.json({ error: 'identity_required', message: 'Verify your identity (18+, driver’s license + face match) before sharing photos.' }, { status: 403 });
     }
 
     const now = new Date().toISOString();

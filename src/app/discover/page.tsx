@@ -5,6 +5,7 @@ import Navigation from "@/components/sections/navigation";
 import {
   Compass, Loader2, MapPin, ShieldCheck, ShieldAlert, Lock, Sparkles,
   Users, Hand, Heart, Eye, Radar, Phone, CalendarClock, Check, X,
+  Flag, Ban, UserX,
 } from "lucide-react";
 
 interface Settings { discoverable: boolean; discoveryRadiusMiles: number; discoveryPhotoUrl: string | null; displayName: string | null; hasLocation: boolean; verified: boolean; }
@@ -66,6 +67,17 @@ export default function DiscoverPage() {
     if (d.error) alert(d.message || d.error); else if (d.matched) alert(d.message);
     load();
   };
+  const block = async (toProfileId: number) => {
+    if (!confirm("Block this person? They’ll be hidden from you both ways and unmatched.")) return;
+    await fetch("/api/discovery/block", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ toProfileId })) });
+    load();
+  };
+  const report = async (toProfileId: number) => {
+    const reason = prompt("What's wrong? (e.g. harassment, fake profile, inappropriate)");
+    if (!reason) return;
+    const res = await fetch("/api/discovery/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ toProfileId, reason })) });
+    const d = await res.json(); alert(d.message || "Reported."); load();
+  };
 
   return (
     <div className="min-h-screen bg-[#070a10] text-white font-sans"><Navigation />
@@ -121,7 +133,7 @@ export default function DiscoverPage() {
               <div className="rounded-2xl border border-rose-400/20 bg-rose-400/5 p-6">
                 <h3 className="font-semibold flex items-center gap-2 mb-4"><Heart className="w-4 h-4 text-rose-400" /> Your matches</h3>
                 <div className="space-y-4">
-                  {matches.map((m) => <MatchCard key={m.profileId} m={m} withEmail={withEmail} onChange={load} />)}
+                  {matches.map((m) => <MatchCard key={m.profileId} m={m} withEmail={withEmail} onChange={load} onBlock={block} onReport={report} />)}
                 </div>
               </div>
             )}
@@ -147,10 +159,14 @@ export default function DiscoverPage() {
                           <div className="flex flex-wrap gap-1 mt-2">
                             {p.sharedInterests.slice(0, 4).map((i) => <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-300">{i}</span>)}
                           </div>
-                          <button onClick={() => tap(p.profileId)} disabled={p.iTappedThem}
-                            className={`mt-3 w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 ${p.matched ? "bg-rose-400 text-black" : p.iTappedThem ? "border border-white/10 text-slate-500" : "bg-cyan-400 text-black"}`}>
-                            {p.matched ? <><Heart className="w-4 h-4" /> Matched</> : p.iTappedThem ? <><Eye className="w-4 h-4" /> Tapped — photo shared</> : <><Hand className="w-4 h-4" /> Tap {p.theyTappedMe ? "back" : ""}</>}
-                          </button>
+                          <div className="flex items-center gap-2 mt-3">
+                            <button onClick={() => tap(p.profileId)} disabled={p.iTappedThem}
+                              className={`flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 ${p.matched ? "bg-rose-400 text-black" : p.iTappedThem ? "border border-white/10 text-slate-500" : "bg-cyan-400 text-black"}`}>
+                              {p.matched ? <><Heart className="w-4 h-4" /> Matched</> : p.iTappedThem ? <><Eye className="w-4 h-4" /> Tapped — photo shared</> : <><Hand className="w-4 h-4" /> Tap {p.theyTappedMe ? "back" : ""}</>}
+                            </button>
+                            <button onClick={() => report(p.profileId)} title="Report" className="p-2 rounded-lg border border-white/10 text-slate-400 hover:text-amber-300 hover:border-amber-300/40"><Flag className="w-4 h-4" /></button>
+                            <button onClick={() => block(p.profileId)} title="Block" className="p-2 rounded-lg border border-white/10 text-slate-400 hover:text-red-300 hover:border-red-300/40"><Ban className="w-4 h-4" /></button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -164,10 +180,16 @@ export default function DiscoverPage() {
   );
 }
 
-function MatchCard({ m, withEmail, onChange }: { m: Match; withEmail: (b: Record<string, unknown>) => Record<string, unknown>; onChange: () => void; }) {
+function MatchCard({ m, withEmail, onChange, onBlock, onReport }: { m: Match; withEmail: (b: Record<string, unknown>) => Record<string, unknown>; onChange: () => void; onBlock: (id: number) => void; onReport: (id: number) => void; }) {
   const [when, setWhen] = useState(toLocalInput(new Date(Date.now() + 86400_000)));
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const unmatch = async () => {
+    if (!confirm(`Unmatch with ${m.name}?`)) return;
+    await fetch("/api/discovery/unmatch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ toProfileId: m.profileId })) });
+    onChange();
+  };
 
   const sharePhone = async () => {
     setBusy(true);
@@ -199,10 +221,15 @@ function MatchCard({ m, withEmail, onChange }: { m: Match; withEmail: (b: Record
             {m.partnerPhone ? <span className="flex items-center gap-1 text-emerald-300"><Phone className="w-3 h-3" />{m.partnerPhone}</span> : <span className="text-slate-600">number not shared yet</span>}
           </div>
         </div>
-        <button onClick={sharePhone} disabled={busy || m.iSharedPhone}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 ${m.iSharedPhone ? "border border-white/10 text-slate-500" : "bg-cyan-400 text-black"}`}>
-          <Phone className="w-3.5 h-3.5" />{m.iSharedPhone ? "Number shared" : "Share my number"}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button onClick={sharePhone} disabled={busy || m.iSharedPhone}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 ${m.iSharedPhone ? "border border-white/10 text-slate-500" : "bg-cyan-400 text-black"}`}>
+            <Phone className="w-3.5 h-3.5" />{m.iSharedPhone ? "Number shared" : "Share my number"}
+          </button>
+          <button onClick={unmatch} title="Unmatch" className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-slate-200"><UserX className="w-4 h-4" /></button>
+          <button onClick={() => onReport(m.profileId)} title="Report" className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-amber-300"><Flag className="w-4 h-4" /></button>
+          <button onClick={() => onBlock(m.profileId)} title="Block" className="p-1.5 rounded-lg border border-white/10 text-slate-400 hover:text-red-300"><Ban className="w-4 h-4" /></button>
+        </div>
       </div>
 
       {/* incoming/outgoing meetup requests */}

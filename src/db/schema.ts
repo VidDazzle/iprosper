@@ -683,8 +683,33 @@ export const identityVerifications = sqliteTable('identity_verifications', {
   sessionId: text('session_id'),
   status: text('status').notNull().default('pending'), // pending | verified | failed
   method: text('method').notNull().default('document+selfie'),
+  // Age assurance from the provider's verified DOB (>= 18). We store only the
+  // boolean — never the date of birth.
+  adult: integer('adult', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
   verifiedAt: text('verified_at'),
+});
+
+/**
+ * A member blocking another in Evolve Discover. Blocking is one-directional in
+ * intent but hides the pair from each other both ways, and unmatches them.
+ */
+export const blocks = sqliteTable('blocks', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  blockerProfileId: integer('blocker_profile_id').notNull(),
+  blockedProfileId: integer('blocked_profile_id').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+/** An abuse report. Reporting also blocks the reported person by default. */
+export const reports = sqliteTable('reports', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  reporterProfileId: integer('reporter_profile_id').notNull(),
+  reportedProfileId: integer('reported_profile_id').notNull(),
+  reason: text('reason').notNull(),
+  detail: text('detail'),
+  status: text('status').notNull().default('open'), // open | reviewed | actioned | dismissed
+  createdAt: text('created_at').notNull(),
 });
 
 /**

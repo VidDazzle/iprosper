@@ -61,14 +61,26 @@ football/baseball/basketball, plus activities/entertainment/food). Built
   - `POST /api/discovery/meetup { toProfileId, whenAt, note? }` + `PATCH { id, action }`
     — request a time / accept | decline (match only).
 
-## Privacy & safety (by design — keep these)
+## Privacy & safety (built + verified)
 
 - Exact location is **never** exposed to other users; only bucketed distance.
-- Discovery is opt-in; photos are per-person reveals; identity verification
-  gates both being discoverable and tapping (anti-catfishing + age assurance).
-- **Recommended before public launch (not yet built)**: block/report + unmatch,
-  a minimum-age (18+) gate enforced via the KYC result, rate-limiting on taps,
-  and abuse monitoring. I'd wire these next.
+- Discovery is opt-in; photos are per-person reveals.
+- **18+ gate**: being discoverable, tapping, and sharing photos all require
+  `isAdultVerified` — the KYC provider's verified **date of birth** must be 18+.
+  We store only the boolean `adult` (never the DOB). Under-18 is recorded as a
+  failed verification. (`src/lib/safety.ts`, `identity/webhook` derives age.)
+- **Block / report / unmatch** (`src/lib/safety.ts`, routes
+  `/api/discovery/{block,report,unmatch}`, buttons on every Discover card):
+  - Block hides the pair from each other **both ways** and unmatches them;
+    further taps/requests are refused.
+  - Report files an abuse `report` row **and** blocks the person.
+  - Unmatch severs taps + pending meetup requests without blocking.
+- **Rate limits** (anti-spam/harassment, in `src/lib/discovery.ts`): taps
+  capped at 8/min and 100/day; meetup requests at 5/day per match and 20/day
+  overall.
+- **Reports queue for Codex**: the `reports` table is written on every report
+  (status `open`). Wire an admin/moderation view + actioning (suspend, ban) and
+  connect to your trust-and-safety workflow.
 
 ## Free mapping
 

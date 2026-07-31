@@ -11,10 +11,27 @@
 
 import { db } from '@/db';
 import { lifeProfiles, lifePreferences, taps, meetupRequests } from '@/db/schema';
-import { and, eq, ne, or } from 'drizzle-orm';
+import { and, eq, ne, or, gte } from 'drizzle-orm';
 import { notify } from '@/lib/notify';
+import { blockedSet, isBlockedEither } from '@/lib/safety';
 
 type Profile = typeof lifeProfiles.$inferSelect;
+
+// Abuse rate limits (anti-spam / anti-harassment).
+const TAP_DAILY_CAP = 100;
+const TAP_BURST_PER_MIN = 8;
+const MEETUP_DAILY_CAP = 20;
+const MEETUP_PER_MATCH_DAILY = 5;
+
+async function countTapsSince(profileId: number, sinceIso: string): Promise<number> {
+  const rows = await db.select().from(taps).where(and(eq(taps.fromProfileId, profileId), gte(taps.createdAt, sinceIso)));
+  return rows.length;
+}
+async function countMeetupsSince(profileId: number, sinceIso: string, toProfileId?: number): Promise<number> {
+  const rows = await db.select().from(meetupRequests).where(and(eq(meetupRequests.fromProfileId, profileId), gte(meetupRequests.createdAt, sinceIso)));
+  return toProfileId ? rows.filter((r) => r.toProfileId === toProfileId).length : rows.length;
+}
+function isoAgo(ms: number): string { return new Date(Date.now() - ms).toISOString(); }
 
 /** True only when BOTH people have tapped each other (mutual interest). */
 async function areMatched(aId: number, bId: number): Promise<boolean> {
@@ -77,8 +94,12 @@ export async function nearby(me: Profile): Promise<NearbyPerson[]> {
     .from(taps)
     .where(or(eq(taps.fromProfileId, me.id), eq(taps.toProfileId, me.id)));
 
+  // People I've blocked or who blocked me are hidden both ways.
+  const blocked = await blockedSet(me.id);
+
   const out: NearbyPerson[] = [];
   for (const c of candidates) {
+    if (blocked.has(c.id)) continue;
     if (c.lastLat == null || c.lastLng == null) continue;
     const mi = haversineMiles(me.lastLat, me.lastLng, c.lastLat, c.lastLng);
     if (mi > radius) continue;
@@ -120,6 +141,14 @@ export async function tap(me: Profile, toProfileId: number, message?: string): P
   const targetRows = await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, toProfileId)).limit(1);
   const target = targetRows[0];
   if (!target) return { ok: false, matched: false, message: 'Person not found.' };
+  if (await isBlockedEither(me.id, toProfileId)) return { ok: false, matched: false, message: 'This person is unavailable.' };
+
+  // Rate limits (anti-spam). Skip counting duplicate taps to the same person.
+  const alreadyTapped = await db.select().from(taps).where(and(eq(taps.fromProfileId, me.id), eq(taps.toProfileId, toProfileId))).limit(1);
+  if (!alreadyTapped[0]) {
+    if (await countTapsSince(me.id, isoAgo(60_000)) >= TAP_BURST_PER_MIN) return { ok: false, matched: false, message: 'Slow down — too many taps at once. Try again in a minute.' };
+    if (await countTapsSince(me.id, isoAgo(86_400_000)) >= TAP_DAILY_CAP) return { ok: false, matched: false, message: 'You’ve reached today’s tap limit.' };
+  }
 
   const now = new Date().toISOString();
   // Idempotent: ignore if I already tapped them.
@@ -204,7 +233,10 @@ export async function sharePhone(me: Profile, toProfileId: number): Promise<{ ok
 
 /** After a match, request a specific time to meet. */
 export async function requestMeetup(me: Profile, toProfileId: number, whenAt: string, note?: string): Promise<{ ok: boolean; message: string; id?: number }> {
+  if (await isBlockedEither(me.id, toProfileId)) return { ok: false, message: 'This person is unavailable.' };
   if (!(await areMatched(me.id, toProfileId))) return { ok: false, message: 'You can only request a time with a match.' };
+  if (await countMeetupsSince(me.id, isoAgo(86_400_000), toProfileId) >= MEETUP_PER_MATCH_DAILY) return { ok: false, message: 'Too many time requests to this match today.' };
+  if (await countMeetupsSince(me.id, isoAgo(86_400_000)) >= MEETUP_DAILY_CAP) return { ok: false, message: 'You’ve reached today’s meetup-request limit.' };
   const now = new Date().toISOString();
   const inserted = await db.insert(meetupRequests).values({
     fromProfileId: me.id, toProfileId, whenAt: new Date(whenAt).toISOString(), note: note || null, status: 'proposed', createdAt: now, updatedAt: now,
