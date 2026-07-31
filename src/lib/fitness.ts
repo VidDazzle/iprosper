@@ -100,6 +100,8 @@ export interface FitnessSummary {
   goals: GoalProgress[];
   recentLogs: { id: number; kind: string; label: string | null; value: number | null; unit: string | null; loggedAt: string }[];
   personalBests: { label: string; value: number; unit: string | null }[];
+  weightSeries: { at: string; value: number }[];
+  weeklyVolume: { weekStart: string; label: string; count: number }[];
 }
 
 export async function summary(profileId: number, tz = 'America/New_York'): Promise<FitnessSummary> {
@@ -122,6 +124,24 @@ export async function summary(profileId: number, tz = 'America/New_York'): Promi
   }
   const personalBests = Object.entries(best).map(([label, v]) => ({ label, value: v.value, unit: v.unit })).slice(0, 6);
 
+  // Weight trend: weigh-ins oldest→newest (last 12).
+  const weightSeries = logs
+    .filter((l) => l.kind === 'weigh_in' && l.value != null)
+    .sort((a, b) => a.loggedAt.localeCompare(b.loggedAt))
+    .slice(-12)
+    .map((l) => ({ at: l.loggedAt, value: l.value as number }));
+
+  // Weekly volume: workouts per week for the last 8 weeks (oldest→newest).
+  const weekMs = 7 * 86400_000;
+  const thisWeekStart = new Date(startOfWeekIso());
+  const weeklyVolume: FitnessSummary['weeklyVolume'] = [];
+  for (let i = 7; i >= 0; i--) {
+    const start = new Date(thisWeekStart.getTime() - i * weekMs);
+    const end = new Date(start.getTime() + weekMs);
+    const count = logs.filter((l) => WORKOUT_KINDS.includes(l.kind) && l.loggedAt >= start.toISOString() && l.loggedAt < end.toISOString()).length;
+    weeklyVolume.push({ weekStart: start.toISOString(), label: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), count });
+  }
+
   return {
     streakDays: streakDays(logs, tz),
     workoutsThisWeek,
@@ -130,6 +150,8 @@ export async function summary(profileId: number, tz = 'America/New_York'): Promi
     goals: goals.filter((g) => g.status !== 'archived').map((g) => progressFor(g, logs)),
     recentLogs: logs.slice(0, 12).map((l) => ({ id: l.id, kind: l.kind, label: l.label, value: l.value, unit: l.unit, loggedAt: l.loggedAt })),
     personalBests,
+    weightSeries,
+    weeklyVolume,
   };
 }
 
