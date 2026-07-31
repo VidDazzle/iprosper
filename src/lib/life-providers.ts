@@ -238,3 +238,36 @@ function normalizeActivity(a: string): string {
   if (s.includes('fish')) return 'Fishing';
   return a.charAt(0).toUpperCase() + a.slice(1);
 }
+
+// ---------------------------------------------------------------------------
+// Reverse geocoding — free OpenStreetMap (Nominatim). No key required. Used to
+// resolve which state/area a lat/lng is in (for seasonal hunting/fishing info),
+// including when the person is traveling out of state.
+// ---------------------------------------------------------------------------
+
+export interface GeoPlace {
+  state: string | null;
+  city: string | null;
+  country: string | null;
+  label: string | null;
+}
+
+export async function reverseGeocode(lat: number, lng: number): Promise<GeoPlace> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=8&addressdetails=1`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'Evolve/1.0 (life concierge)', 'Accept-Language': 'en' } });
+    if (res.ok) {
+      const d = await res.json();
+      const a = d.address || {};
+      return {
+        state: a.state || a.region || null,
+        city: a.city || a.town || a.village || a.county || null,
+        country: a.country || null,
+        label: d.display_name || null,
+      };
+    }
+  } catch (err) {
+    console.error('reverseGeocode failed:', err);
+  }
+  return { state: null, city: null, country: null, label: null };
+}

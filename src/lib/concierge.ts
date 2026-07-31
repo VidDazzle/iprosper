@@ -11,7 +11,8 @@ import { calendarEvents, lifePreferences } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { findFreeSlots, type AvailabilityRule, type BusyEvent } from '@/lib/scheduling';
 import { parseLifeIntent, type ParsedLifeIntent, type LifeIntentCategory } from '@/lib/ai';
-import { findPlaces, findMovies, findRecreation, type GeoPoint } from '@/lib/life-providers';
+import { findPlaces, findMovies, findRecreation, reverseGeocode, type GeoPoint } from '@/lib/life-providers';
+import { outdoorsReport } from '@/lib/outdoors';
 
 export interface ConciergeProfile {
   id: number;
@@ -121,7 +122,43 @@ async function prefsByCategory(profileId: number): Promise<Record<string, string
   return out;
 }
 
+/** Detect "what's in season / can I catch / is deer season open" style asks. */
+function seasonQuery(text: string): 'fishing' | 'hunting' | null {
+  const t = text.toLowerCase();
+  const season = /\bseason\b|in season|what.*(catch|bit(e|ing)|hunt)|whats? biting/.test(t);
+  const hunt = /hunt|deer|turkey|duck|waterfowl|elk|pheasant|dove|bear|game\b/.test(t);
+  const fish = /fish|catch|bass|trout|walleye|crappie|catfish|salmon|bite|biting/.test(t);
+  if (!season && !hunt && !fish) return null;
+  if (hunt && !fish) return 'hunting';
+  if (fish) return 'fishing';
+  return season ? 'fishing' : null;
+}
+
+async function seasonResult(profile: ConciergeProfile, activity: 'fishing' | 'hunting', text: string): Promise<ConciergeResult> {
+  let region = profile.city || 'your area';
+  if (profile.homeLat != null && profile.homeLng != null) {
+    const geo = await reverseGeocode(profile.homeLat, profile.homeLng);
+    if (geo.state) region = geo.state;
+  }
+  const report = outdoorsReport(activity, region);
+  const suggestions: Suggestion[] = report.inSeasonNow.map((s) => ({
+    kind: 'recreation', title: s.name, subtitle: `In season now · ${report.region}`, rating: null, reviewCount: null,
+    distanceKm: null, url: null, detail: s.note || null, why: null,
+  }));
+  for (const s of report.comingSoon.slice(0, 3)) {
+    suggestions.push({ kind: 'recreation', title: s.name, subtitle: 'Coming soon', rating: null, reviewCount: null, distanceKm: null, url: null, detail: s.note || null, why: null });
+  }
+  const verb = activity === 'fishing' ? 'catch' : 'hunt';
+  const msg = report.inSeasonNow.length
+    ? `${report.monthName} in ${report.region}: you can ${verb} ${report.inSeasonNow.slice(0, 4).map((s) => s.name).join(', ')}. ${report.disclaimer}`
+    : `Not much ${activity} is open in ${report.region} right now. ${report.disclaimer}`;
+  return { category: activity === 'fishing' ? 'recreation' : 'recreation', intent: { category: 'recreation', query: null, activity, keywords: [], wantsReminder: false, timeframe: 'unspecified' }, freeSlots: [], suggestions, message: msg };
+}
+
 export async function runConcierge(profile: ConciergeProfile, text: string): Promise<ConciergeResult> {
+  const season = seasonQuery(text);
+  if (season) return seasonResult(profile, season, text);
+
   const intent = await parseLifeIntent(text);
   const prefs = await prefsByCategory(profile.id);
   const near: GeoPoint | null = profile.homeLat != null && profile.homeLng != null

@@ -573,6 +573,12 @@ export const lifeProfiles = sqliteTable('life_profiles', {
   lastLng: real('last_lng'),
   lastLocationAt: text('last_location_at'),
   shareLocation: integer('share_location', { mode: 'boolean' }).notNull().default(true),
+  // Evolve Discover (opt-in local discovery). Exact location is never exposed
+  // to others — only coarse distance. Requires identity verification to enable.
+  discoverable: integer('discoverable', { mode: 'boolean' }).notNull().default(false),
+  discoveryRadiusMiles: integer('discovery_radius_miles').notNull().default(5),
+  discoveryPhotoUrl: text('discovery_photo_url'),
+  displayName: text('display_name'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
@@ -696,5 +702,20 @@ export const sharedPhotos = sqliteTable('shared_photos', {
   caption: text('caption'),
   revealed: integer('revealed', { mode: 'boolean' }).notNull().default(false),
   revealRequested: integer('reveal_requested', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A "tap" — expressing interest in another person in Evolve Discover. A tap
+ * reveals the tapper's photo to the tapped person (you must reveal to see).
+ * When both people have tapped each other it's a match (`matched`), and both
+ * are notified. Exact locations are never stored here or exposed.
+ */
+export const taps = sqliteTable('taps', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  fromProfileId: integer('from_profile_id').notNull(),
+  toProfileId: integer('to_profile_id').notNull(),
+  message: text('message'),
+  matched: integer('matched', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
 });

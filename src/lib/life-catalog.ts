@@ -46,8 +46,9 @@ export const CATALOG: Record<LifeCategory, string[]> = {
     'MMA & boxing', 'Cycling', 'Running', 'Swimming', 'Yoga', 'Weightlifting', 'Climbing',
   ],
   activity: [
-    'Biking', 'Running', 'Hiking', 'Camping', 'Fishing', 'Kayaking', 'Parks & recreation',
-    'Beach', 'Skiing & snowboarding', 'Photography', 'Gardening', 'Road trips',
+    'Biking', 'Running', 'Hiking', 'Camping', 'Fishing', 'Hunting', 'Kayaking',
+    'Parks & recreation', 'Beach', 'Skiing & snowboarding', 'Golfing', 'Photography',
+    'Gardening', 'Road trips',
   ],
   cuisine: [
     'Italian', 'Mexican', 'Japanese', 'Chinese', 'Thai', 'Indian', 'Mediterranean',
