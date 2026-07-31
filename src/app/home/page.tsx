@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Navigation from "@/components/sections/navigation";
 import {
   Loader2, Sparkles, Mail, CalendarClock, Video, Heart, Compass,
-  MessageSquare, Bell, Clock, MapPin, ArrowRight, Users2, LayoutGrid,
+  MessageSquare, Bell, Clock, MapPin, ArrowRight, Users2, LayoutGrid, Dumbbell,
 } from "lucide-react";
 
 interface Home {
@@ -26,6 +26,7 @@ const MODULES = [
   { href: "/calendar/dashboard", label: "Calendar", icon: CalendarClock, hue: "#FFC46B", desc: "AI scheduling" },
   { href: "/meetings", label: "Meet", icon: Video, hue: "#8B7BFF", desc: "Video + webinars" },
   { href: "/life", label: "Life", icon: Sparkles, hue: "#38E4C9", desc: "Personal concierge" },
+  { href: "/fitness", label: "Fitness", icon: Dumbbell, hue: "#FF8A3D", desc: "Goals + tracker" },
   { href: "/together", label: "Together", icon: Heart, hue: "#FF6B8A", desc: "You + your partner" },
   { href: "/discover", label: "Discover", icon: Compass, hue: "#5BC8FF", desc: "Meet people nearby" },
   { href: "/chat", label: "Messages", icon: MessageSquare, hue: "#38E4C9", desc: "Chat" },

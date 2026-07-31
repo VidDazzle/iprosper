@@ -797,3 +797,40 @@ export const dmMessages = sqliteTable('dm_messages', {
   readAt: text('read_at'),
   createdAt: text('created_at').notNull(),
 });
+
+/**
+ * Evolve Fitness — measurable goals a person is working toward. Progress is
+ * computed from the fitness log (see fitness.ts), so most goals don't store a
+ * mutable "current" — the source of truth is what you've logged.
+ * kind: weight_loss | weight_gain | workouts | distance | steps | custom.
+ */
+export const fitnessGoals = sqliteTable('fitness_goals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  kind: text('kind').notNull(),
+  label: text('label').notNull(),
+  targetValue: real('target_value').notNull(),
+  baselineValue: real('baseline_value'), // e.g. starting weight
+  unit: text('unit'),
+  deadline: text('deadline'),
+  status: text('status').notNull().default('active'), // active | achieved | archived
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+  achievedAt: text('achieved_at'),
+});
+
+/**
+ * A logged accomplishment — a workout done, a run, a weigh-in, steps, etc.
+ * kind: workout | strength | cardio | run | weigh_in | steps | custom.
+ */
+export const fitnessLogs = sqliteTable('fitness_logs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  kind: text('kind').notNull(),
+  label: text('label'),
+  value: real('value'), // miles, lbs, minutes, steps, reps…
+  unit: text('unit'),
+  note: text('note'),
+  loggedAt: text('logged_at').notNull(), // ISO
+  createdAt: text('created_at').notNull(),
+});
