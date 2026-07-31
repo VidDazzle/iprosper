@@ -4,6 +4,7 @@ import { runFullMaintenance } from '@/lib/maintenance';
 import { runBirthdayGreetings } from '@/lib/birthday';
 import { runLeadFollowups } from '@/lib/crm-followups';
 import { runEventReminders } from '@/lib/reminders';
+import { runLifeReminders } from '@/lib/life-reminders';
 
 /**
  * GET /api/maintenance/cron
@@ -53,6 +54,14 @@ export async function GET(request: NextRequest) {
       console.error('Reminder error during cron:', rErr);
     }
 
+    // Dispatch due personal (Evolve Life) reminders (best-effort).
+    let lifeReminders = null;
+    try {
+      lifeReminders = await runLifeReminders();
+    } catch (lErr) {
+      console.error('Life reminder error during cron:', lErr);
+    }
+
     return NextResponse.json(
       {
         ranAt: new Date().toISOString(),
@@ -64,6 +73,7 @@ export async function GET(request: NextRequest) {
         birthday,
         followups,
         reminders,
+        lifeReminders,
       },
       { status: 200 },
     );

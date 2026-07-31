@@ -1,4 +1,4 @@
-import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, integer, text, real } from 'drizzle-orm/sqlite-core';
 
 export const emailCaptures = sqliteTable('email_captures', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -537,5 +537,81 @@ export const voiceAgentLog = sqliteTable('voice_agent_log', {
   status: text('status').notNull().default('ok'), // ok | error | rejected
   callId: text('call_id'),
   callerNumber: text('caller_number'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * Evolve Life — personal AI concierge.
+ *
+ * A person's profile: where "near me" is, what timezone their free time is in,
+ * and which channel they want to be reminded on. One row per person (keyed by
+ * email); the desktop and phone PWAs share this same row, so the two apps stay
+ * in sync automatically.
+ */
+export const lifeProfiles = sqliteTable('life_profiles', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  email: text('email').notNull(),
+  name: text('name'),
+  city: text('city'),
+  homeLat: real('home_lat'),
+  homeLng: real('home_lng'),
+  timezone: text('timezone').notNull().default('America/New_York'),
+  // How this person wants to be reminded: email | sms | push | voice.
+  reminderChannel: text('reminder_channel').notNull().default('email'),
+  phone: text('phone'),
+  // JSON web-push subscription (for the 'push' channel).
+  pushEndpoint: text('push_endpoint'),
+  quietHoursStart: text('quiet_hours_start'), // HH:MM, no reminders before
+  quietHoursEnd: text('quiet_hours_end'), // HH:MM, no reminders after
+  onboarded: integer('onboarded', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+/**
+ * The things a person likes, chosen from the catalog during onboarding — one
+ * row per (category, value). This is what the concierge matches suggestions
+ * against. Categories: movie_genre, tv_genre, entertainment, sport, activity,
+ * cuisine, favorite_place, dietary, fitness_goal.
+ */
+export const lifePreferences = sqliteTable('life_preferences', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  category: text('category').notNull(),
+  value: text('value').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A log of every concierge request ("I want to see a movie") and the
+ * suggestions returned — plus what the person chose. Memory the concierge
+ * learns from over time.
+ */
+export const lifeIntents = sqliteTable('life_intents', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  rawText: text('raw_text').notNull(),
+  category: text('category').notNull(), // movie | dining | recreation | fitness | tv | event | errand | other
+  suggestions: text('suggestions'), // JSON array
+  chosen: text('chosen'), // JSON of the picked suggestion
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * Cross-domain personal reminders (health, workouts, work, entertainment,
+ * errands…). Dispatched on the cron over the person's chosen channel — or a
+ * per-reminder override.
+ */
+export const lifeReminders = sqliteTable('life_reminders', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  title: text('title').notNull(),
+  detail: text('detail'),
+  category: text('category').notNull().default('personal'), // health | workout | work | entertainment | errand | personal | other
+  whenAt: text('when_at').notNull(), // ISO
+  channel: text('channel').notNull().default('inherit'), // inherit | email | sms | push | voice
+  recurrence: text('recurrence').notNull().default('none'), // none | daily | weekly | monthly
+  status: text('status').notNull().default('scheduled'), // scheduled | sent | done | cancelled
+  sentAt: text('sent_at'),
   createdAt: text('created_at').notNull(),
 });

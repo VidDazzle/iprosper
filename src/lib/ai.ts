@@ -488,3 +488,98 @@ export async function generateFollowupEmail(lead: {
   const parsed = await structuredCall<FollowupEmail>(system, prompt, schema, 500);
   return parsed && parsed.body ? parsed : null;
 }
+
+// ---------------------------------------------------------------------------
+// Evolve Life — personal concierge intent
+// ---------------------------------------------------------------------------
+
+export type LifeIntentCategory =
+  | 'movie' | 'tv' | 'dining' | 'recreation' | 'fitness' | 'entertainment' | 'errand' | 'other';
+
+export interface ParsedLifeIntent {
+  category: LifeIntentCategory;
+  // A concrete search term for a place/activity, e.g. "Sprouts", "sushi",
+  // "mountain biking". Null when the request is generic ("see a movie").
+  query: string | null;
+  activity: string | null; // biking | running | camping | fishing | ... when recreation/fitness
+  keywords: string[];
+  wantsReminder: boolean;
+  timeframe: 'today' | 'tonight' | 'tomorrow' | 'this_week' | 'weekend' | 'unspecified';
+}
+
+/**
+ * Turn a free-form request ("I want to see a movie", "where's the closest
+ * Sprouts", "I feel like biking this weekend") into a routed intent the
+ * concierge can act on. Falls back to keyword heuristics with no API key.
+ */
+export async function parseLifeIntent(text: string): Promise<ParsedLifeIntent> {
+  const system =
+    `You route a person's casual request about their personal life into one ` +
+    `category and pull out what they want. Categories: movie, tv, dining, ` +
+    `recreation (outdoor/sports activities), fitness, entertainment, errand ` +
+    `(a specific store/place like "closest Sprouts"), other. "query" is a ` +
+    `concrete place or thing to search for, or null. "activity" is the outdoor/` +
+    `sport activity (biking, running, hiking, camping, fishing…) or null.`;
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      category: { type: 'string', enum: ['movie', 'tv', 'dining', 'recreation', 'fitness', 'entertainment', 'errand', 'other'] },
+      query: { type: ['string', 'null'] },
+      activity: { type: ['string', 'null'] },
+      keywords: { type: 'array', items: { type: 'string' } },
+      wantsReminder: { type: 'boolean' },
+      timeframe: { type: 'string', enum: ['today', 'tonight', 'tomorrow', 'this_week', 'weekend', 'unspecified'] },
+    },
+    required: ['category', 'query', 'activity', 'keywords', 'wantsReminder', 'timeframe'],
+  };
+  const parsed = await structuredCall<ParsedLifeIntent>(system, `Request: "${text}"`, schema, 400);
+  if (parsed) return parsed;
+  return heuristicLifeIntent(text);
+}
+
+function heuristicLifeIntent(text: string): ParsedLifeIntent {
+  const t = text.toLowerCase();
+  const has = (...w: string[]) => w.some((x) => t.includes(x));
+  let category: LifeIntentCategory = 'other';
+  let activity: string | null = null;
+  let query: string | null = null;
+
+  if (has('movie', 'cinema', 'film', 'theater')) category = 'movie';
+  else if (has('tv', 'show', 'series', 'episode', 'stream', 'watch')) category = 'tv';
+  else if (has('eat', 'food', 'restaurant', 'dinner', 'lunch', 'brunch', 'coffee', 'hungry', 'sushi', 'pizza', 'tacos')) category = 'dining';
+  else if (has('bike', 'bik', 'cycl', 'run', 'jog', 'hike', 'camp', 'fish', 'kayak', 'trail', 'park', 'recreation', 'outdoors')) category = 'recreation';
+  else if (has('workout', 'gym', 'exercise', 'yoga', 'lift', 'train', 'fitness', 'walk')) category = 'fitness';
+  else if (has('concert', 'music', 'comedy', 'museum', 'festival', 'game night', 'nightlife')) category = 'entertainment';
+  else if (has('closest', 'nearest', 'near me', 'store', 'grocery', 'sprouts', 'target', 'pharmacy', 'gas')) category = 'errand';
+
+  if (category === 'recreation' || category === 'fitness') {
+    for (const a of ['biking', 'bike', 'cycling', 'running', 'run', 'jogging', 'hiking', 'hike', 'camping', 'camp', 'fishing', 'fish', 'kayak', 'yoga', 'swim']) {
+      if (t.includes(a)) { activity = a; break; }
+    }
+  }
+  if (category === 'errand' || category === 'dining') {
+    // Pull the noun after "closest/nearest" or a known brand as the query.
+    const m = t.match(/(?:closest|nearest|find|where.*is)\s+([a-z' ]{3,30})/);
+    if (m) query = m[1].replace(/\b(to|near|me|located|the)\b/g, '').trim();
+    for (const brand of ['sprouts', 'whole foods', 'trader joe', 'starbucks', 'chipotle']) {
+      if (t.includes(brand)) { query = brand; break; }
+    }
+  }
+
+  let timeframe: ParsedLifeIntent['timeframe'] = 'unspecified';
+  if (has('tonight')) timeframe = 'tonight';
+  else if (has('today')) timeframe = 'today';
+  else if (has('tomorrow')) timeframe = 'tomorrow';
+  else if (has('weekend')) timeframe = 'weekend';
+  else if (has('this week', 'week')) timeframe = 'this_week';
+
+  return {
+    category,
+    query,
+    activity,
+    keywords: t.split(/\s+/).filter((w) => w.length > 3).slice(0, 6),
+    wantsReminder: has('remind', 'reminder', 'don’t let me forget', 'dont let me forget', 'notify'),
+    timeframe,
+  };
+}
