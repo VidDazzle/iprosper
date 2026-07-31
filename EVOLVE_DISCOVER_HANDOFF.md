@@ -44,14 +44,22 @@ football/baseball/basketball, plus activities/entertainment/food). Built
   - A person's photo is shown to you **only if they tapped you** — reveal is
     scoped to that one person, not public.
   - **Mutual taps = a match**; both people are **notified** ("the person is also
-    interested in you") over their chosen channel (`notify`).
+    interested in you") over their chosen channel (`notify`). Interest is only
+    ever revealed to the two people, and only when BOTH have tapped.
+  - **After a match**, each person may OPT IN to **share their phone number**
+    (independently — a number is visible to the other only once shared) and
+    **request a specific time to meet** (accept / decline, both notified).
 - **API**:
   - `GET/PUT /api/discovery/settings` — discoverable toggle, radius, photo,
     display name (PUT enforces verify + photo + location before ON).
   - `GET /api/discovery/nearby` — coarse, interest-matched list.
   - `POST /api/discovery/tap { toProfileId }` — tap (reveals your photo; matches
     + notifies on mutual).
-  - `GET /api/discovery/matches` — mutual matches.
+  - `GET /api/discovery/matches` — matches, each with `partnerPhone` (only if
+    they shared), `iSharedPhone`, and `meetups[]`.
+  - `POST /api/discovery/share-phone { toProfileId }` — share your number (match only).
+  - `POST /api/discovery/meetup { toProfileId, whenAt, note? }` + `PATCH { id, action }`
+    — request a time / accept | decline (match only).
 
 ## Privacy & safety (by design — keep these)
 

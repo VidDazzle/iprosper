@@ -4,12 +4,16 @@ import { useEffect, useState, useCallback } from "react";
 import Navigation from "@/components/sections/navigation";
 import {
   Compass, Loader2, MapPin, ShieldCheck, ShieldAlert, Lock, Sparkles,
-  Users, Hand, Heart, Eye, Radar,
+  Users, Hand, Heart, Eye, Radar, Phone, CalendarClock, Check, X,
 } from "lucide-react";
 
 interface Settings { discoverable: boolean; discoveryRadiusMiles: number; discoveryPhotoUrl: string | null; displayName: string | null; hasLocation: boolean; verified: boolean; }
 interface Person { profileId: number; name: string; distance: string; sharedInterests: string[]; photoUrl: string | null; theyTappedMe: boolean; iTappedThem: boolean; matched: boolean; }
-interface Match { profileId: number; name: string; photoUrl: string | null; }
+interface Meetup { id: number; fromMe: boolean; whenAt: string; note: string | null; status: string; }
+interface Match { profileId: number; name: string; photoUrl: string | null; iSharedPhone: boolean; partnerPhone: string | null; meetups: Meetup[]; }
+
+function toLocalInput(d: Date) { const p = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fmtWhen(iso: string) { return new Date(iso).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
 
 export default function DiscoverPage() {
   const [actingAs, setActingAs] = useState("");
@@ -115,14 +119,9 @@ export default function DiscoverPage() {
             {/* matches */}
             {matches.length > 0 && (
               <div className="rounded-2xl border border-rose-400/20 bg-rose-400/5 p-6">
-                <h3 className="font-semibold flex items-center gap-2 mb-3"><Heart className="w-4 h-4 text-rose-400" /> Your matches</h3>
-                <div className="flex flex-wrap gap-3">
-                  {matches.map((m) => (
-                    <div key={m.profileId} className="flex items-center gap-2 rounded-full bg-black/40 border border-white/10 pl-1 pr-3 py-1">
-                      {m.photoUrl ? <img src={m.photoUrl} alt={m.name} className="w-7 h-7 rounded-full object-cover" /> : <div className="w-7 h-7 rounded-full bg-rose-400/20" />}
-                      <span className="text-sm">{m.name}</span>
-                    </div>
-                  ))}
+                <h3 className="font-semibold flex items-center gap-2 mb-4"><Heart className="w-4 h-4 text-rose-400" /> Your matches</h3>
+                <div className="space-y-4">
+                  {matches.map((m) => <MatchCard key={m.profileId} m={m} withEmail={withEmail} onChange={load} />)}
                 </div>
               </div>
             )}
@@ -161,6 +160,75 @@ export default function DiscoverPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function MatchCard({ m, withEmail, onChange }: { m: Match; withEmail: (b: Record<string, unknown>) => Record<string, unknown>; onChange: () => void; }) {
+  const [when, setWhen] = useState(toLocalInput(new Date(Date.now() + 86400_000)));
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const sharePhone = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/discovery/share-phone", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ toProfileId: m.profileId })) });
+      const d = await res.json(); if (d.message && !d.ok) alert(d.message);
+      onChange();
+    } finally { setBusy(false); }
+  };
+  const requestTime = async () => {
+    setBusy(true);
+    try {
+      await fetch("/api/discovery/meetup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ toProfileId: m.profileId, whenAt: new Date(when).toISOString(), note })) });
+      setNote(""); onChange();
+    } finally { setBusy(false); }
+  };
+  const respond = async (id: number, action: string) => {
+    await fetch("/api/discovery/meetup", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ id, action })) });
+    onChange();
+  };
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+      <div className="flex items-center gap-3">
+        {m.photoUrl ? <img src={m.photoUrl} alt={m.name} className="w-11 h-11 rounded-full object-cover" /> : <div className="w-11 h-11 rounded-full bg-rose-400/20" />}
+        <div className="flex-1 min-w-0">
+          <div className="font-medium">{m.name}</div>
+          <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+            {m.partnerPhone ? <span className="flex items-center gap-1 text-emerald-300"><Phone className="w-3 h-3" />{m.partnerPhone}</span> : <span className="text-slate-600">number not shared yet</span>}
+          </div>
+        </div>
+        <button onClick={sharePhone} disabled={busy || m.iSharedPhone}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 ${m.iSharedPhone ? "border border-white/10 text-slate-500" : "bg-cyan-400 text-black"}`}>
+          <Phone className="w-3.5 h-3.5" />{m.iSharedPhone ? "Number shared" : "Share my number"}
+        </button>
+      </div>
+
+      {/* incoming/outgoing meetup requests */}
+      {m.meetups.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {m.meetups.map((r) => (
+            <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg bg-white/[0.03] border border-white/10 px-3 py-2">
+              <div className="text-sm flex items-center gap-2"><CalendarClock className="w-3.5 h-3.5 text-slate-400" />{fmtWhen(r.whenAt)}{r.note && <span className="text-slate-500">· “{r.note}”</span>}</div>
+              {r.status === "proposed" ? (
+                r.fromMe ? <span className="text-xs text-slate-500">waiting…</span>
+                  : <div className="flex gap-1">
+                      <button onClick={() => respond(r.id, "accept")} className="p-1.5 rounded bg-emerald-400/15 text-emerald-300"><Check className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => respond(r.id, "decline")} className="p-1.5 rounded border border-white/10 text-slate-400"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+              ) : <span className={`text-xs px-2 py-0.5 rounded-full ${r.status === "accepted" ? "bg-emerald-400/15 text-emerald-300" : "bg-slate-500/20 text-slate-400"}`}>{r.status}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* request a time */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} className="bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-cyan-400/60 [color-scheme:dark]" />
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Idea (optional)" className="flex-1 min-w-[120px] bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm outline-none focus:border-cyan-400/60" />
+        <button onClick={requestTime} disabled={busy} className="px-3 py-1.5 rounded-lg bg-rose-400 text-black text-sm font-medium flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" /> Request a time</button>
+      </div>
     </div>
   );
 }

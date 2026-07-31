@@ -10,11 +10,21 @@
  */
 
 import { db } from '@/db';
-import { lifeProfiles, lifePreferences, taps } from '@/db/schema';
+import { lifeProfiles, lifePreferences, taps, meetupRequests } from '@/db/schema';
 import { and, eq, ne, or } from 'drizzle-orm';
 import { notify } from '@/lib/notify';
 
 type Profile = typeof lifeProfiles.$inferSelect;
+
+/** True only when BOTH people have tapped each other (mutual interest). */
+async function areMatched(aId: number, bId: number): Promise<boolean> {
+  const rows = await db
+    .select()
+    .from(taps)
+    .where(and(eq(taps.fromProfileId, aId), eq(taps.toProfileId, bId), eq(taps.matched, true)))
+    .limit(1);
+  return rows.length > 0;
+}
 
 const MILE_KM = 1.60934;
 
@@ -141,12 +151,79 @@ function sharedLine(a: Profile, b: Profile): string {
   return 'you have interests in common';
 }
 
-export async function matches(me: Profile): Promise<{ profileId: number; name: string; photoUrl: string | null }[]> {
-  const rows = await db.select().from(taps).where(and(eq(taps.fromProfileId, me.id), eq(taps.matched, true)));
-  const out: { profileId: number; name: string; photoUrl: string | null }[] = [];
-  for (const t of rows) {
-    const p = await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, t.toProfileId)).limit(1);
-    if (p[0]) out.push({ profileId: p[0].id, name: p[0].displayName || p[0].name || 'Match', photoUrl: p[0].discoveryPhotoUrl });
+export interface MatchInfo {
+  profileId: number;
+  name: string;
+  photoUrl: string | null;
+  iSharedPhone: boolean;
+  partnerPhone: string | null; // visible only if the partner shared it
+  meetups: { id: number; fromMe: boolean; whenAt: string; note: string | null; status: string }[];
+}
+
+export async function matches(me: Profile): Promise<MatchInfo[]> {
+  const mine = await db.select().from(taps).where(and(eq(taps.fromProfileId, me.id), eq(taps.matched, true)));
+  const out: MatchInfo[] = [];
+  for (const t of mine) {
+    const p = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, t.toProfileId)).limit(1))[0];
+    if (!p) continue;
+    // Did the partner share their phone with me?
+    const theirTap = (await db.select().from(taps).where(and(eq(taps.fromProfileId, p.id), eq(taps.toProfileId, me.id))).limit(1))[0];
+    const partnerShared = theirTap?.sharedPhone;
+    const reqs = await db
+      .select()
+      .from(meetupRequests)
+      .where(or(
+        and(eq(meetupRequests.fromProfileId, me.id), eq(meetupRequests.toProfileId, p.id)),
+        and(eq(meetupRequests.fromProfileId, p.id), eq(meetupRequests.toProfileId, me.id)),
+      ));
+    out.push({
+      profileId: p.id,
+      name: p.displayName || p.name || 'Match',
+      photoUrl: p.discoveryPhotoUrl,
+      iSharedPhone: t.sharedPhone,
+      partnerPhone: partnerShared ? p.phone : null,
+      meetups: reqs
+        .sort((a, b) => a.whenAt.localeCompare(b.whenAt))
+        .map((r) => ({ id: r.id, fromMe: r.fromProfileId === me.id, whenAt: r.whenAt, note: r.note, status: r.status })),
+    });
   }
   return out;
+}
+
+/** After a match, opt to share your phone number with that person. */
+export async function sharePhone(me: Profile, toProfileId: number): Promise<{ ok: boolean; message: string }> {
+  if (!(await areMatched(me.id, toProfileId))) return { ok: false, message: 'You can only share your number with a match.' };
+  if (!me.phone) return { ok: false, message: 'Add your phone number to your profile first.' };
+  await db.update(taps).set({ sharedPhone: true }).where(and(eq(taps.fromProfileId, me.id), eq(taps.toProfileId, toProfileId)));
+  const target = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, toProfileId)).limit(1))[0];
+  if (target) {
+    await notify({ channel: (target.reminderChannel as any) || 'email', title: '📱 Your match shared their number', body: `${me.displayName || me.name || 'Your match'} shared their phone number with you on Evolve Discover.`, to: target.email, phone: target.phone });
+  }
+  return { ok: true, message: 'Number shared with your match.' };
+}
+
+/** After a match, request a specific time to meet. */
+export async function requestMeetup(me: Profile, toProfileId: number, whenAt: string, note?: string): Promise<{ ok: boolean; message: string; id?: number }> {
+  if (!(await areMatched(me.id, toProfileId))) return { ok: false, message: 'You can only request a time with a match.' };
+  const now = new Date().toISOString();
+  const inserted = await db.insert(meetupRequests).values({
+    fromProfileId: me.id, toProfileId, whenAt: new Date(whenAt).toISOString(), note: note || null, status: 'proposed', createdAt: now, updatedAt: now,
+  }).returning();
+  const target = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, toProfileId)).limit(1))[0];
+  if (target) {
+    await notify({ channel: (target.reminderChannel as any) || 'email', title: '📅 Your match suggested a time', body: `${me.displayName || me.name || 'Your match'} wants to meet ${new Date(whenAt).toLocaleString('en-US')}${note ? ` — “${note}”` : ''}.`, to: target.email, phone: target.phone });
+  }
+  return { ok: true, message: 'Time requested.', id: inserted[0].id };
+}
+
+export async function respondMeetup(me: Profile, id: number, action: 'accept' | 'decline'): Promise<{ ok: boolean; status: string }> {
+  const req = (await db.select().from(meetupRequests).where(eq(meetupRequests.id, id)).limit(1))[0];
+  if (!req || req.toProfileId !== me.id) return { ok: false, status: 'not_found' };
+  const status = action === 'accept' ? 'accepted' : 'declined';
+  await db.update(meetupRequests).set({ status, updatedAt: new Date().toISOString() }).where(eq(meetupRequests.id, id));
+  const other = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, req.fromProfileId)).limit(1))[0];
+  if (other) {
+    await notify({ channel: (other.reminderChannel as any) || 'email', title: status === 'accepted' ? '✅ Your match said yes!' : 'Your match passed on that time', body: status === 'accepted' ? `${me.displayName || me.name || 'Your match'} accepted your time to meet.` : `${me.displayName || me.name || 'Your match'} can't make that time — try another.`, to: other.email, phone: other.phone });
+  }
+  return { ok: true, status };
 }

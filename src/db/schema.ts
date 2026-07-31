@@ -717,5 +717,23 @@ export const taps = sqliteTable('taps', {
   toProfileId: integer('to_profile_id').notNull(),
   message: text('message'),
   matched: integer('matched', { mode: 'boolean' }).notNull().default(false),
+  // After a match, this person opted to share their phone number with the other.
+  sharedPhone: integer('shared_phone', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
+});
+
+/**
+ * A "let's meet" request between two matched people in Evolve Discover — a
+ * specific proposed time the other can accept or decline. Only allowed once the
+ * two have matched.
+ */
+export const meetupRequests = sqliteTable('meetup_requests', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  fromProfileId: integer('from_profile_id').notNull(),
+  toProfileId: integer('to_profile_id').notNull(),
+  whenAt: text('when_at').notNull(),
+  note: text('note'),
+  status: text('status').notNull().default('proposed'), // proposed | accepted | declined
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 });
