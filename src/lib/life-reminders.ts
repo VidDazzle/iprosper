@@ -60,6 +60,9 @@ export async function runLifeReminders(): Promise<LifeReminderResult> {
       to: profile.email,
       phone: profile.phone,
       pushEndpoint: profile.pushEndpoint,
+      profileId: profile.id,
+      inAppType: 'reminder',
+      link: '/life',
     });
     byChannel[channel] = (byChannel[channel] || 0) + 1;
     if (res.delivered || res.queued) sent++;

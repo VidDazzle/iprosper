@@ -166,13 +166,13 @@ export async function tap(me: Profile, toProfileId: number, message?: string): P
     await db.update(taps).set({ matched: true }).where(and(eq(taps.fromProfileId, me.id), eq(taps.toProfileId, toProfileId)));
     await db.update(taps).set({ matched: true }).where(and(eq(taps.fromProfileId, toProfileId), eq(taps.toProfileId, me.id)));
     // Notify BOTH — "the person is also interested in you."
-    await notify({ channel: (me.reminderChannel as any) || 'email', title: "🎉 It's a match!", body: `You and ${theirName} both tapped each other. You can chat now.`, to: me.email, phone: me.phone });
-    await notify({ channel: (target.reminderChannel as any) || 'email', title: "🎉 It's a match!", body: `You and ${myName} both tapped each other. You can chat now.`, to: target.email, phone: target.phone });
+    await notify({ channel: (me.reminderChannel as any) || 'email', title: "🎉 It's a match!", body: `You and ${theirName} both tapped each other. You can chat now.`, to: me.email, phone: me.phone, profileId: me.id, inAppType: 'match', link: '/chat' });
+    await notify({ channel: (target.reminderChannel as any) || 'email', title: "🎉 It's a match!", body: `You and ${myName} both tapped each other. You can chat now.`, to: target.email, phone: target.phone, profileId: target.id, inAppType: 'match', link: '/chat' });
     return { ok: true, matched: true, message: `It's a match with ${theirName}!` };
   }
 
   // Otherwise notify the target that someone is interested.
-  await notify({ channel: (target.reminderChannel as any) || 'email', title: 'Someone is interested in you', body: `${myName} tapped you on Evolve Discover — ${sharedLine(me, target)}. Tap back to match.`, to: target.email, phone: target.phone });
+  await notify({ channel: (target.reminderChannel as any) || 'email', title: 'Someone is interested in you', body: `${myName} tapped you on Evolve Discover — ${sharedLine(me, target)}. Tap back to match.`, to: target.email, phone: target.phone, profileId: target.id, inAppType: 'tap', link: '/discover' });
   return { ok: true, matched: false, message: `You tapped ${theirName}. They’ll be notified.` };
 }
 
@@ -226,7 +226,7 @@ export async function sharePhone(me: Profile, toProfileId: number): Promise<{ ok
   await db.update(taps).set({ sharedPhone: true }).where(and(eq(taps.fromProfileId, me.id), eq(taps.toProfileId, toProfileId)));
   const target = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, toProfileId)).limit(1))[0];
   if (target) {
-    await notify({ channel: (target.reminderChannel as any) || 'email', title: '📱 Your match shared their number', body: `${me.displayName || me.name || 'Your match'} shared their phone number with you on Evolve Discover.`, to: target.email, phone: target.phone });
+    await notify({ channel: (target.reminderChannel as any) || 'email', title: '📱 Your match shared their number', body: `${me.displayName || me.name || 'Your match'} shared their phone number with you on Evolve Discover.`, to: target.email, phone: target.phone, profileId: target.id, inAppType: 'message', link: '/discover' });
   }
   return { ok: true, message: 'Number shared with your match.' };
 }
@@ -243,7 +243,7 @@ export async function requestMeetup(me: Profile, toProfileId: number, whenAt: st
   }).returning();
   const target = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, toProfileId)).limit(1))[0];
   if (target) {
-    await notify({ channel: (target.reminderChannel as any) || 'email', title: '📅 Your match suggested a time', body: `${me.displayName || me.name || 'Your match'} wants to meet ${new Date(whenAt).toLocaleString('en-US')}${note ? ` — “${note}”` : ''}.`, to: target.email, phone: target.phone });
+    await notify({ channel: (target.reminderChannel as any) || 'email', title: '📅 Your match suggested a time', body: `${me.displayName || me.name || 'Your match'} wants to meet ${new Date(whenAt).toLocaleString('en-US')}${note ? ` — “${note}”` : ''}.`, to: target.email, phone: target.phone, profileId: target.id, inAppType: 'meetup', link: '/discover' });
   }
   return { ok: true, message: 'Time requested.', id: inserted[0].id };
 }
@@ -255,7 +255,7 @@ export async function respondMeetup(me: Profile, id: number, action: 'accept' | 
   await db.update(meetupRequests).set({ status, updatedAt: new Date().toISOString() }).where(eq(meetupRequests.id, id));
   const other = (await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, req.fromProfileId)).limit(1))[0];
   if (other) {
-    await notify({ channel: (other.reminderChannel as any) || 'email', title: status === 'accepted' ? '✅ Your match said yes!' : 'Your match passed on that time', body: status === 'accepted' ? `${me.displayName || me.name || 'Your match'} accepted your time to meet.` : `${me.displayName || me.name || 'Your match'} can't make that time — try another.`, to: other.email, phone: other.phone });
+    await notify({ channel: (other.reminderChannel as any) || 'email', title: status === 'accepted' ? '✅ Your match said yes!' : 'Your match passed on that time', body: status === 'accepted' ? `${me.displayName || me.name || 'Your match'} accepted your time to meet.` : `${me.displayName || me.name || 'Your match'} can't make that time — try another.`, to: other.email, phone: other.phone, profileId: other.id, inAppType: 'meetup', link: '/discover' });
   }
   return { ok: true, status };
 }

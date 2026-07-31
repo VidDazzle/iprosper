@@ -9,6 +9,7 @@ import { deliverEmail } from '@/lib/mailer';
 import { mailboxAddress } from '@/lib/mailbox';
 import { db } from '@/db';
 import { voiceAgentLog } from '@/db/schema';
+import { pushNotification, type NotificationType } from '@/lib/notifications';
 
 export type NotifyChannel = 'email' | 'sms' | 'push' | 'voice';
 
@@ -19,6 +20,11 @@ export interface NotifyInput {
   to?: string | null; // email address (email channel)
   phone?: string | null; // E.164 (sms / voice)
   pushEndpoint?: string | null; // JSON web-push subscription (push)
+  // When set, the notification is also recorded in the in-app feed for this
+  // person (so it shows in the bell even if they never open the email/text).
+  profileId?: number | null;
+  inAppType?: NotificationType;
+  link?: string | null;
 }
 
 export interface NotifyResult {
@@ -30,6 +36,10 @@ export interface NotifyResult {
 }
 
 export async function notify(input: NotifyInput): Promise<NotifyResult> {
+  // Always record in the in-app feed when we know who it's for.
+  if (input.profileId) {
+    await pushNotification(input.profileId, input.inAppType || 'general', input.title, input.body, input.link || undefined);
+  }
   switch (input.channel) {
     case 'email':
       return viaEmail(input);

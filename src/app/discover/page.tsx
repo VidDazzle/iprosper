@@ -5,7 +5,7 @@ import Navigation from "@/components/sections/navigation";
 import {
   Compass, Loader2, MapPin, ShieldCheck, ShieldAlert, Lock, Sparkles,
   Users, Hand, Heart, Eye, Radar, Phone, CalendarClock, Check, X,
-  Flag, Ban, UserX,
+  Flag, Ban, UserX, MessageSquare,
 } from "lucide-react";
 
 interface Settings { discoverable: boolean; discoveryRadiusMiles: number; discoveryPhotoUrl: string | null; displayName: string | null; hasLocation: boolean; verified: boolean; }
@@ -222,6 +222,7 @@ function MatchCard({ m, withEmail, onChange, onBlock, onReport }: { m: Match; wi
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <a href="/chat" title="Message" className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-400 text-black flex items-center gap-1"><MessageSquare className="w-3.5 h-3.5" /> Message</a>
           <button onClick={sharePhone} disabled={busy || m.iSharedPhone}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1 ${m.iSharedPhone ? "border border-white/10 text-slate-500" : "bg-cyan-400 text-black"}`}>
             <Phone className="w-3.5 h-3.5" />{m.iSharedPhone ? "Number shared" : "Share my number"}

@@ -762,3 +762,33 @@ export const meetupRequests = sqliteTable('meetup_requests', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
+
+/**
+ * In-app notification feed. Every external notification (reminder, tap, match,
+ * meetup, message…) is also recorded here so the person has one place to see
+ * everything, even if they never opened the email/text.
+ */
+export const notifications = sqliteTable('notifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  type: text('type').notNull().default('general'), // reminder | tap | match | meetup | message | system
+  title: text('title').notNull(),
+  body: text('body'),
+  link: text('link'), // in-app route to open
+  readAt: text('read_at'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * In-app direct messages between two people who are allowed to talk — a Discover
+ * match or an active Together connection. Lets people chat without sharing a
+ * phone number.
+ */
+export const dmMessages = sqliteTable('dm_messages', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  fromProfileId: integer('from_profile_id').notNull(),
+  toProfileId: integer('to_profile_id').notNull(),
+  body: text('body').notNull(),
+  readAt: text('read_at'),
+  createdAt: text('created_at').notNull(),
+});
