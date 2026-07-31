@@ -224,6 +224,9 @@ export default function ProsperPilotConsole() {
     }
   }
 
+  // Bright red styling for important call-to-action buttons.
+  const RED = "bg-red-600 hover:bg-red-700 text-white border-transparent font-semibold";
+
   const statBlocks = summarizeStats(stats);
 
   return (
@@ -292,8 +295,8 @@ export default function ProsperPilotConsole() {
                     </p>
                   )}
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => review(m.id, "approve")}>Approve</Button>
-                    <Button size="sm" variant="outline" className="border-gray-600" onClick={() => review(m.id, "send")}>
+                    <Button size="sm" className={RED} onClick={() => review(m.id, "approve")}>Approve</Button>
+                    <Button size="sm" className={RED} onClick={() => review(m.id, "send")}>
                       <Send className="w-3 h-3 mr-1" /> Approve &amp; Send
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => review(m.id, "reject")}>Reject</Button>
@@ -336,7 +339,7 @@ export default function ProsperPilotConsole() {
                   <option value="dropship_niche">dropship niche</option>
                 </select>
                 <Input className="bg-[#1a1a1a] border-gray-700 w-40" placeholder="Network (optional)" value={oppNetwork} onChange={(e) => setOppNetwork(e.target.value)} />
-                <Button onClick={addOpportunity}>Evaluate</Button>
+                <Button className={RED} onClick={addOpportunity}>Evaluate</Button>
               </CardContent>
             </Card>
             {opportunities.length === 0 && <p className="text-gray-500">No opportunities yet. Evaluate one above.</p>}
@@ -362,7 +365,7 @@ export default function ProsperPilotConsole() {
                   </div>
                   <div className="flex gap-2 mt-3">
                     <Button size="sm" variant="outline" className="border-gray-600" onClick={() => setOppStatus(o.id, "reviewing")}>Review</Button>
-                    <Button size="sm" onClick={() => setOppStatus(o.id, "enrolled")}>Mark enrolled</Button>
+                    <Button size="sm" className={RED} onClick={() => setOppStatus(o.id, "enrolled")}>Mark enrolled</Button>
                     <Button size="sm" variant="destructive" onClick={() => setOppStatus(o.id, "rejected")}>Reject</Button>
                   </div>
                 </CardContent>
@@ -376,7 +379,7 @@ export default function ProsperPilotConsole() {
               <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="w-4 h-4" /> Autonomous performance optimizer</CardTitle></CardHeader>
               <CardContent className="space-y-4 text-sm text-gray-400">
                 <p>Rescore products from real sales/click data, pause chronic non-sellers, and reactivate recovering ones. Winners get promoted more; losers get retired automatically.</p>
-                <Button disabled={loading} onClick={runOptimizer}>Run optimizer now</Button>
+                <Button disabled={loading} className={RED} onClick={runOptimizer}>Run optimizer now</Button>
                 {performance.length > 0 && (
                   <div className="space-y-1 mt-4">
                     {performance.map((p) => (
@@ -405,7 +408,7 @@ export default function ProsperPilotConsole() {
                   <option value="printify">printify</option>
                   <option value="gooten">gooten</option>
                 </select>
-                <div><Button onClick={createPod}>Create POD products</Button></div>
+                <div><Button className={RED} onClick={createPod}>Create POD products</Button></div>
                 <p className="text-xs text-gray-600">Requires the provider&apos;s API key in env; otherwise creation reports &quot;not configured.&quot;</p>
               </CardContent>
             </Card>
@@ -432,7 +435,7 @@ export default function ProsperPilotConsole() {
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && sendChat()}
                   />
-                  <Button disabled={chatBusy} onClick={sendChat}>{chatBusy ? "…" : "Send"}</Button>
+                  <Button disabled={chatBusy} className={RED} onClick={sendChat}>{chatBusy ? "…" : "Send"}</Button>
                 </div>
                 <p className="text-xs text-gray-600">Text now; the same endpoint backs voice and email adapters.</p>
               </CardContent>
@@ -468,9 +471,9 @@ export default function ProsperPilotConsole() {
               <CardContent className="space-y-4 text-sm text-gray-400">
                 <p>Stages run against configured connectors only. Ingest reads public posts, classify scores intent, draft fills the review queue. Nothing sends here.</p>
                 <div className="flex flex-wrap gap-2">
-                  <Button disabled={loading} onClick={() => runStage("cycle", "reddit")}>Run cycle · Reddit</Button>
-                  <Button disabled={loading} onClick={() => runStage("cycle", "x")}>Run cycle · X</Button>
-                  <Button disabled={loading} onClick={() => runStage("cycle", "web")}>Run cycle · Web/RSS</Button>
+                  <Button disabled={loading} className={RED} onClick={() => runStage("cycle", "reddit")}>Run cycle · Reddit</Button>
+                  <Button disabled={loading} className={RED} onClick={() => runStage("cycle", "x")}>Run cycle · X</Button>
+                  <Button disabled={loading} className={RED} onClick={() => runStage("cycle", "web")}>Run cycle · Web/RSS</Button>
                   <Button disabled={loading} variant="outline" className="border-gray-600" onClick={() => runStage("classify")}>Classify pending</Button>
                   <Button disabled={loading} variant="outline" className="border-gray-600" onClick={() => runStage("draft")}>Draft for queue</Button>
                 </div>
