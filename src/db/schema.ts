@@ -35,6 +35,9 @@ export const calendarEvents = sqliteTable('calendar_events', {
   // Minutes before start to fire a reminder (null = no reminder).
   reminderMinutes: integer('reminder_minutes'),
   reminderSent: integer('reminder_sent', { mode: 'boolean' }).notNull().default(false),
+  // Which Life profile owns this event (null = the primary owner). Lets two
+  // connected people each have their own calendar in the shared view.
+  ownerProfileId: integer('owner_profile_id'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
@@ -564,6 +567,12 @@ export const lifeProfiles = sqliteTable('life_profiles', {
   quietHoursStart: text('quiet_hours_start'), // HH:MM, no reminders before
   quietHoursEnd: text('quiet_hours_end'), // HH:MM, no reminders after
   onboarded: integer('onboarded', { mode: 'boolean' }).notNull().default(false),
+  // Last known location (for the "where are they" view), only shared with a
+  // connected partner when share_location is on.
+  lastLat: real('last_lat'),
+  lastLng: real('last_lng'),
+  lastLocationAt: text('last_location_at'),
+  shareLocation: integer('share_location', { mode: 'boolean' }).notNull().default(true),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
@@ -613,5 +622,79 @@ export const lifeReminders = sqliteTable('life_reminders', {
   recurrence: text('recurrence').notNull().default('none'), // none | daily | weekly | monthly
   status: text('status').notNull().default('scheduled'), // scheduled | sent | done | cancelled
   sentAt: text('sent_at'),
+  createdAt: text('created_at').notNull(),
+});
+
+/**
+ * Evolve Together — a link between two people (often at separate locations) who
+ * want to share calendars + location and plan dates together. One row per pair;
+ * the inviter creates it (pending), the invitee accepts (active).
+ */
+export const connections = sqliteTable('connections', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  inviterProfileId: integer('inviter_profile_id').notNull(),
+  inviteeEmail: text('invitee_email').notNull(),
+  inviteeProfileId: integer('invitee_profile_id'),
+  status: text('status').notNull().default('pending'), // pending | active | declined | paused
+  shareLocation: integer('share_location', { mode: 'boolean' }).notNull().default(true),
+  shareCalendar: integer('share_calendar', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+/**
+ * A date proposal in a connection: an activity + place + time one partner sends
+ * the other. The other can accept, decline, or counter (which creates a child
+ * proposal). A proposal is "confirmed" only once the non-proposer accepts — i.e.
+ * both parties have agreed — at which point it's placed on both calendars.
+ */
+export const dateProposals = sqliteTable('date_proposals', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  connectionId: integer('connection_id').notNull(),
+  fromProfileId: integer('from_profile_id').notNull(),
+  parentId: integer('parent_id'), // set when this is a counter-proposal
+  activity: text('activity').notNull(),
+  location: text('location'), // e.g. a hotel or venue
+  startsAt: text('starts_at').notNull(),
+  endsAt: text('ends_at').notNull(),
+  note: text('note'),
+  status: text('status').notNull().default('proposed'), // proposed | confirmed | declined | countered | cancelled
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
+
+/**
+ * Identity-verification status for a person. Uploading photos requires a
+ * verified status. IMPORTANT: the driver's-license image and the selfie/face
+ * match are performed by the KYC provider (Stripe Identity / Persona / Onfido /
+ * Veriff). We store ONLY the provider session id + pass/fail — never the ID
+ * document or biometric data.
+ */
+export const identityVerifications = sqliteTable('identity_verifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  provider: text('provider').notNull().default('none'),
+  sessionId: text('session_id'),
+  status: text('status').notNull().default('pending'), // pending | verified | failed
+  method: text('method').notNull().default('document+selfie'),
+  createdAt: text('created_at').notNull(),
+  verifiedAt: text('verified_at'),
+});
+
+/**
+ * Private photos shared inside a connection. Stored via the encrypted object
+ * store. A photo is locked until the owner reveals it (or the partner requests
+ * a reveal and the owner approves) — "ask for a photo or reveal one when they
+ * choose." Uploading requires the owner to be identity-verified.
+ */
+export const sharedPhotos = sqliteTable('shared_photos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  connectionId: integer('connection_id').notNull(),
+  ownerProfileId: integer('owner_profile_id').notNull(),
+  storageKey: text('storage_key'),
+  url: text('url'),
+  caption: text('caption'),
+  revealed: integer('revealed', { mode: 'boolean' }).notNull().default(false),
+  revealRequested: integer('reveal_requested', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
 });
