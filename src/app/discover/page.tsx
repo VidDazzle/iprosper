@@ -8,8 +8,8 @@ import {
   Flag, Ban, UserX, MessageSquare,
 } from "lucide-react";
 
-interface Settings { discoverable: boolean; discoveryRadiusMiles: number; discoveryPhotoUrl: string | null; displayName: string | null; hasLocation: boolean; verified: boolean; }
-interface Person { profileId: number; name: string; distance: string; sharedInterests: string[]; photoUrl: string | null; theyTappedMe: boolean; iTappedThem: boolean; matched: boolean; }
+interface Settings { discoverable: boolean; discoveryRadiusMiles: number; discoveryPhotoUrl: string | null; displayName: string | null; bio: string | null; hasLocation: boolean; verified: boolean; screened: boolean; }
+interface Person { profileId: number; name: string; bio: string | null; distance: string; sharedInterests: string[]; photoUrl: string | null; theyTappedMe: boolean; iTappedThem: boolean; matched: boolean; }
 interface Meetup { id: number; fromMe: boolean; whenAt: string; note: string | null; status: string; }
 interface Match { profileId: number; name: string; photoUrl: string | null; iSharedPhone: boolean; partnerPhone: string | null; meetups: Meetup[]; }
 
@@ -61,6 +61,16 @@ export default function DiscoverPage() {
       load();
     } finally { setBusy(false); }
   };
+  const runScreening = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/discovery/screening/start", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({})) });
+      const d = await res.json();
+      if (d.error) { alert(d.message || d.error); return; }
+      if (d.sandbox) await fetch("/api/discovery/screening/webhook", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sandbox: true, email: actingAs || undefined }) });
+      load();
+    } finally { setBusy(false); }
+  };
   const tap = async (toProfileId: number) => {
     const res = await fetch("/api/discovery/tap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(withEmail({ toProfileId })) });
     const d = await res.json();
@@ -108,10 +118,15 @@ export default function DiscoverPage() {
               </div>
 
               {/* prerequisites */}
-              <div className="grid sm:grid-cols-3 gap-3 mt-5">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
                 <div className={`rounded-lg border p-3 ${settings.verified ? "border-emerald-400/30 bg-emerald-400/5" : "border-amber-400/30 bg-amber-400/5"}`}>
-                  <div className="flex items-center gap-2 text-sm">{settings.verified ? <ShieldCheck className="w-4 h-4 text-emerald-400" /> : <ShieldAlert className="w-4 h-4 text-amber-300" />} Identity</div>
+                  <div className="flex items-center gap-2 text-sm">{settings.verified ? <ShieldCheck className="w-4 h-4 text-emerald-400" /> : <ShieldAlert className="w-4 h-4 text-amber-300" />} Identity (18+)</div>
                   {settings.verified ? <div className="text-xs text-emerald-300 mt-1">Verified</div> : <button onClick={verify} disabled={busy} className="text-xs mt-1.5 px-2 py-1 rounded bg-amber-400 text-black font-medium">{busy ? "…" : "Verify now"}</button>}
+                </div>
+                <div className={`rounded-lg border p-3 ${settings.screened ? "border-emerald-400/30 bg-emerald-400/5" : settings.verified ? "border-amber-400/30 bg-amber-400/5" : "border-white/10 opacity-60"}`}>
+                  <div className="flex items-center gap-2 text-sm">{settings.screened ? <ShieldCheck className="w-4 h-4 text-emerald-400" /> : <ShieldAlert className="w-4 h-4 text-amber-300" />} Background check</div>
+                  {settings.screened ? <div className="text-xs text-emerald-300 mt-1">Cleared</div>
+                    : <button onClick={runScreening} disabled={busy || !settings.verified} title={!settings.verified ? "Verify identity first" : ""} className="text-xs mt-1.5 px-2 py-1 rounded bg-amber-400 text-black font-medium disabled:opacity-50">{busy ? "…" : "Run check"}</button>}
                 </div>
                 <div className={`rounded-lg border p-3 ${settings.hasLocation ? "border-emerald-400/30 bg-emerald-400/5" : "border-white/10"}`}>
                   <div className="flex items-center gap-2 text-sm"><MapPin className="w-4 h-4 text-slate-400" /> Location</div>
@@ -122,9 +137,11 @@ export default function DiscoverPage() {
                   <input type="range" min={1} max={25} value={settings.discoveryRadiusMiles} onChange={(e) => put({ discoveryRadiusMiles: Number(e.target.value) })} className="w-full mt-2 accent-cyan-400" />
                 </div>
               </div>
+              <p className="text-xs text-slate-600 mt-2">To keep everyone safe, being discoverable requires a verified ID (18+) and a background check that screens sex-offender registries and criminal watchlists.</p>
               <div className="grid sm:grid-cols-2 gap-3 mt-3">
                 <input defaultValue={settings.displayName || ""} onBlur={(e) => put({ displayName: e.target.value })} placeholder="Display name" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/60" />
                 <input defaultValue={settings.discoveryPhotoUrl || ""} onBlur={(e) => put({ discoveryPhotoUrl: e.target.value })} placeholder="Discovery photo URL" className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/60" />
+                <input defaultValue={settings.bio || ""} maxLength={160} onBlur={(e) => put({ bio: e.target.value })} placeholder="Short bio (160 chars) — e.g. Angler, dog dad, always down for a hike" className="sm:col-span-2 bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-cyan-400/60" />
               </div>
             </div>
 
@@ -156,6 +173,7 @@ export default function DiscoverPage() {
                             <div className="font-medium">{p.name}</div>
                             <div className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{p.distance}</div>
                           </div>
+                          {p.bio && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{p.bio}</p>}
                           <div className="flex flex-wrap gap-1 mt-2">
                             {p.sharedInterests.slice(0, 4).map((i) => <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-300">{i}</span>)}
                           </div>

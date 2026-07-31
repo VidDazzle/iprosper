@@ -17,6 +17,25 @@ export async function isAdultVerified(profileId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
+/** Background screening passed (no disqualifying offense — sex crimes, trafficking, etc.). */
+export async function isScreenedClear(profileId: number): Promise<boolean> {
+  const rows = await db
+    .select()
+    .from(identityVerifications)
+    .where(and(eq(identityVerifications.profileId, profileId), eq(identityVerifications.status, 'verified'), eq(identityVerifications.screening, 'clear')))
+    .limit(1);
+  return rows.length > 0;
+}
+
+/**
+ * Full eligibility for Discover: 18+ identity-verified AND background-screening
+ * cleared. This is the anti-trafficking / offender gate — required to be
+ * discoverable, tap, or match.
+ */
+export async function isEligibleForDiscovery(profileId: number): Promise<boolean> {
+  return (await isAdultVerified(profileId)) && (await isScreenedClear(profileId));
+}
+
 /** Ids this person can't see / interact with (they blocked, or were blocked by). */
 export async function blockedSet(profileId: number): Promise<Set<number>> {
   const rows = await db

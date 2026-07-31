@@ -61,6 +61,35 @@ football/baseball/basketball, plus activities/entertainment/food). Built
   - `POST /api/discovery/meetup { toProfileId, whenAt, note? }` + `PATCH { id, action }`
     — request a time / accept | decline (match only).
 
+## Background screening (anti-trafficking / offender gate) — built + verified
+
+To keep felons — especially anyone with sex offenses or trafficking history —
+off the platform, being discoverable / tapping now requires a **background
+screening pass** on top of the 18+ identity check.
+
+- Flow: `POST /api/discovery/screening/start` (must be identity-verified first —
+  the check uses the verified legal name + DOB) → provider runs the report →
+  `POST /api/discovery/screening/webhook` returns the outcome. `src/lib/screening.ts`
+  evaluates flagged categories; any disqualifying one → `flagged` and the person
+  is immediately set non-discoverable.
+- Gate: `isEligibleForDiscovery = isAdultVerified AND isScreenedClear`
+  (`src/lib/safety.ts`). Enforced on going discoverable and on tapping.
+- Disqualifying categories (env `SCREENING_DISQUALIFIERS`, default):
+  `sex_offense, human_trafficking, violent_felony, kidnapping, child_abuse`.
+- We store **only** the outcome + flagged category names — never the records.
+- Verified: unscreened → blocked; clean → allowed; `sex_offense` flag → barred.
+
+**⚖️ Codex must handle before launch (documented in `src/lib/screening.ts`):**
+- Use a real **FCRA-compliant CRA** (Checkr / Sterling) or an identity provider's
+  watchlist product; wire `CHECKR_API_KEY` (or `STERLING_API_KEY`). The package
+  must include the **national sex-offender registry + criminal search**.
+- FCRA requires consent, permissible purpose, and **adverse-action notices** when
+  denying someone. Some jurisdictions restrict blanket criminal bans
+  ("ban-the-box"/fair-chance) — sex-offender-registry denials for a dating/
+  meetup context are broadly defensible; confirm per market with counsel.
+- No screen is perfect (incomplete records, name-match false positives/negatives)
+  — keep block/report + human moderation as backstops.
+
 ## Privacy & safety (built + verified)
 
 - Exact location is **never** exposed to other users; only bucketed distance.

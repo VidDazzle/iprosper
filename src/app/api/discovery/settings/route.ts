@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { lifeProfiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getOrCreateProfile } from '@/lib/life';
-import { isAdultVerified } from '@/lib/safety';
+import { isAdultVerified, isScreenedClear, isEligibleForDiscovery } from '@/lib/safety';
 
 /**
  * GET /api/discovery/settings?email= -> my discovery settings + verified state.
@@ -19,8 +19,10 @@ export async function GET(request: NextRequest) {
       discoveryRadiusMiles: me.discoveryRadiusMiles,
       discoveryPhotoUrl: me.discoveryPhotoUrl,
       displayName: me.displayName,
+      bio: me.bio,
       hasLocation: me.lastLat != null && me.lastLng != null,
       verified: await isAdultVerified(me.id),
+      screened: await isScreenedClear(me.id),
     }, { status: 200 });
   } catch (err) {
     console.error('GET /discovery/settings error:', err);
@@ -39,6 +41,9 @@ export async function PUT(request: NextRequest) {
         if (!(await isAdultVerified(me.id))) {
           return NextResponse.json({ error: 'identity_required', message: 'Verify your identity (18+, driver’s license + face match) before making your profile discoverable.' }, { status: 403 });
         }
+        if (!(await isScreenedClear(me.id))) {
+          return NextResponse.json({ error: 'screening_required', message: 'Complete the background check before making your profile discoverable.' }, { status: 403 });
+        }
         if (!(body.discoveryPhotoUrl || me.discoveryPhotoUrl)) {
           return NextResponse.json({ error: 'photo_required', message: 'Add a discovery photo before going discoverable.' }, { status: 400 });
         }
@@ -51,6 +56,7 @@ export async function PUT(request: NextRequest) {
     if (body.discoveryRadiusMiles !== undefined) patch.discoveryRadiusMiles = Math.max(1, Math.min(50, Number(body.discoveryRadiusMiles)));
     if (body.discoveryPhotoUrl !== undefined) patch.discoveryPhotoUrl = body.discoveryPhotoUrl || null;
     if (body.displayName !== undefined) patch.displayName = body.displayName || null;
+    if (body.bio !== undefined) patch.bio = body.bio ? String(body.bio).slice(0, 160) : null;
     if (body.lat !== undefined && body.lng !== undefined) { patch.lastLat = Number(body.lat); patch.lastLng = Number(body.lng); patch.lastLocationAt = new Date().toISOString(); }
 
     const updated = await db.update(lifeProfiles).set(patch).where(eq(lifeProfiles.id, me.id)).returning();

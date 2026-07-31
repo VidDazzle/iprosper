@@ -579,6 +579,7 @@ export const lifeProfiles = sqliteTable('life_profiles', {
   discoveryRadiusMiles: integer('discovery_radius_miles').notNull().default(5),
   discoveryPhotoUrl: text('discovery_photo_url'),
   displayName: text('display_name'),
+  bio: text('bio'), // short, self-written intro shown on Discover
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
@@ -686,6 +687,10 @@ export const identityVerifications = sqliteTable('identity_verifications', {
   // Age assurance from the provider's verified DOB (>= 18). We store only the
   // boolean — never the date of birth.
   adult: integer('adult', { mode: 'boolean' }).notNull().default(false),
+  // Background screening outcome (sex-offender registry + criminal watchlist),
+  // run by a compliant provider. Only the outcome is stored, never the records.
+  screening: text('screening').notNull().default('unscreened'), // unscreened | pending | clear | flagged
+  screeningFlags: text('screening_flags'), // JSON array of flagged categories
   createdAt: text('created_at').notNull(),
   verifiedAt: text('verified_at'),
 });

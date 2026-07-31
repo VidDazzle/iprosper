@@ -70,6 +70,7 @@ async function interestsOf(profileId: number): Promise<Set<string>> {
 export interface NearbyPerson {
   profileId: number;
   name: string;
+  bio: string | null;
   distance: string;
   sharedInterests: string[];
   photoUrl: string | null; // only if they've tapped me (revealed to me)
@@ -115,6 +116,7 @@ export async function nearby(me: Profile): Promise<NearbyPerson[]> {
     out.push({
       profileId: c.id,
       name: c.displayName || (c.name ? c.name.split(' ')[0] : 'Someone'),
+      bio: c.bio,
       distance: coarseDistance(mi),
       // Preserve original-case interest labels from my set where possible.
       sharedInterests: shared.map((s) => s.replace(/\b\w/g, (m) => m.toUpperCase())),

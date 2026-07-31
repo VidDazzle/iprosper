@@ -13,6 +13,7 @@ import { findFreeSlots, type AvailabilityRule, type BusyEvent } from '@/lib/sche
 import { parseLifeIntent, type ParsedLifeIntent, type LifeIntentCategory } from '@/lib/ai';
 import { findPlaces, findMovies, findRecreation, reverseGeocode, type GeoPoint } from '@/lib/life-providers';
 import { outdoorsReport } from '@/lib/outdoors';
+import { getWorkoutPlan, workoutGoalFromText } from '@/lib/workouts';
 
 export interface ConciergeProfile {
   id: number;
@@ -155,7 +156,27 @@ async function seasonResult(profile: ConciergeProfile, activity: 'fishing' | 'hu
   return { category: activity === 'fishing' ? 'recreation' : 'recreation', intent: { category: 'recreation', query: null, activity, keywords: [], wantsReminder: false, timeframe: 'unspecified' }, freeSlots: [], suggestions, message: msg };
 }
 
+function workoutResult(text: string): ConciergeResult {
+  const goal = workoutGoalFromText(text)!;
+  const plan = getWorkoutPlan(goal, 'beginner');
+  const suggestions: Suggestion[] = plan.days.map((d) => ({
+    kind: 'generic', title: `${d.day} — ${d.focus}`, subtitle: d.exercises.map((e) => e.name).join(' · '),
+    rating: null, reviewCount: null, distanceKm: null, url: null,
+    detail: d.exercises.map((e) => `${e.name}: ${e.detail}`).join('  •  '), why: null,
+  }));
+  suggestions.push({ kind: 'generic', title: 'Tips', subtitle: null, rating: null, reviewCount: null, distanceKm: null, url: null, detail: plan.tips.join('  •  '), why: null });
+  return {
+    category: 'fitness',
+    intent: { category: 'fitness', query: null, activity: goal, keywords: [], wantsReminder: false, timeframe: 'this_week' },
+    freeSlots: [],
+    suggestions,
+    message: `${plan.goalLabel} — ${plan.daysPerWeek} days/week (${plan.level}). ${plan.summary} ${plan.safety}`,
+  };
+}
+
 export async function runConcierge(profile: ConciergeProfile, text: string): Promise<ConciergeResult> {
+  if (workoutGoalFromText(text)) return workoutResult(text);
+
   const season = seasonQuery(text);
   if (season) return seasonResult(profile, season, text);
 
