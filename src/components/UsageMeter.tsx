@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { Gauge, X, Zap, ArrowUpRight, Loader2, ChevronUp, ChevronDown } from "lucide-react";
+
+// The usage meter tracks Evolve BUSINESS consumption. Keep it off the Orbit
+// (personal) app + all marketing/sales pages, where a billing bar is noise.
+const HIDE_PREFIXES = [
+  "/orbit", "/orbit-os", "/life", "/fitness", "/together", "/discover", "/chat", "/moderation",
+  "/suite", "/pricing", "/signin", "/signup", "/schedule-demo", "/solutions", "/company",
+  "/careers", "/blog", "/docs", "/team", "/agents",
+];
 
 interface Usage {
   product: "calendar" | "email" | "meet";
@@ -23,10 +32,12 @@ interface Usage {
  * buy-credits / upgrade actions.
  */
 export default function UsageMeter() {
+  const pathname = usePathname();
   const [usage, setUsage] = useState<Usage[]>([]);
   const [open, setOpen] = useState(true);
   const [hidden, setHidden] = useState(false);
   const [topUp, setTopUp] = useState<Usage | null>(null);
+  const suppressed = HIDE_PREFIXES.some((p) => pathname === p || pathname?.startsWith(p + "/")) || pathname === "/";
 
   const load = useCallback(async () => {
     try {
@@ -43,7 +54,7 @@ export default function UsageMeter() {
     return () => clearInterval(id);
   }, [load]);
 
-  if (hidden || usage.length === 0) return null;
+  if (suppressed || hidden || usage.length === 0) return null;
 
   const anyCap = usage.some((u) => u.capReached);
   const anyWarn = usage.some((u) => u.pctUsed >= 80);

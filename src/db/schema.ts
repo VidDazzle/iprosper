@@ -865,3 +865,29 @@ export const personalEvents = sqliteTable('personal_events', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
+
+/**
+ * A link to a person's EXISTING external calendar (Google Calendar or Microsoft
+ * Outlook/365) so Orbit can see those events as "busy" for availability-aware
+ * planning, and optionally push Orbit events back out. OAuth tokens are stored
+ * sealed (AES-GCM) when encryption is configured. We keep only the tokens + the
+ * account email — never a copy of the remote calendar's contents.
+ */
+export const calendarConnections = sqliteTable('calendar_connections', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  provider: text('provider').notNull(), // google | microsoft
+  accountEmail: text('account_email'),
+  accessToken: text('access_token'), // sealed
+  refreshToken: text('refresh_token'), // sealed
+  expiresAt: text('expires_at'), // ISO
+  scope: text('scope'),
+  calendarId: text('calendar_id').notNull().default('primary'),
+  syncInbound: integer('sync_inbound', { mode: 'boolean' }).notNull().default(true),
+  syncOutbound: integer('sync_outbound', { mode: 'boolean' }).notNull().default(false),
+  status: text('status').notNull().default('active'), // active | error | revoked
+  lastSyncedAt: text('last_synced_at'),
+  lastError: text('last_error'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});

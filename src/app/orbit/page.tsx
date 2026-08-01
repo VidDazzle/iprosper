@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Navigation from "@/components/sections/navigation";
-import { CalendarDays, Loader2, Plus, Trash2, MapPin, Bell, RefreshCw, Lock, Clock } from "lucide-react";
+import { CalendarDays, Loader2, Plus, Trash2, MapPin, Bell, RefreshCw, Lock, Clock, Link2, Check, X, AlertTriangle } from "lucide-react";
 
 interface Ev { id: number; title: string; description: string | null; location: string | null; startsAt: string; endsAt: string; timezone: string; allDay: boolean; category: string; source: string; reminderMinutes: number | null; }
 interface Sync { subscribed: boolean; syncing: boolean; }
+interface Conn { id: number; provider: "google" | "microsoft"; label: string; accountEmail: string | null; syncInbound: boolean; syncOutbound: boolean; status: string; lastSyncedAt: string | null; lastError: string | null; }
+interface ConnState { connections: Conn[]; providers: { google: boolean; microsoft: boolean; anyConfigured: boolean }; }
 
 const CAT_COLOR: Record<string, string> = { personal: "#38E4C9", health: "#5BC8FF", fitness: "#FF8A3D", family: "#FFC46B", social: "#8B7BFF", date: "#FF6B8A", errand: "#93A1B4", other: "#93A1B4" };
 function toLocalInput(d: Date) { const p = (n: number) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
@@ -15,18 +17,36 @@ function timeOnly(iso: string, tz: string) { return new Date(iso).toLocaleTimeSt
 export default function OrbitPage() {
   const [events, setEvents] = useState<Ev[]>([]);
   const [sync, setSync] = useState<Sync | null>(null);
+  const [conns, setConns] = useState<ConnState | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [flag, setFlag] = useState<{ kind: "connected" | "denied" | "error"; provider?: string } | null>(null);
   const tz = "America/New_York";
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [e, s] = await Promise.all([fetch("/api/orbit/events").then((r) => r.json()), fetch("/api/orbit/sync").then((r) => r.json())]);
-      setEvents(e.events || []); setSync(s);
+      const [e, s, c] = await Promise.all([
+        fetch("/api/orbit/events").then((r) => r.json()),
+        fetch("/api/orbit/sync").then((r) => r.json()),
+        fetch("/api/orbit/calendar/connections").then((r) => r.json()),
+      ]);
+      setEvents(e.events || []); setSync(s); setConns(c);
     } finally { setLoading(false); }
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  // Surface the OAuth return status (?calendar=connected|denied|error), then clean the URL.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const cal = p.get("calendar");
+    if (cal === "connected" || cal === "denied" || cal === "error") {
+      setFlag({ kind: cal, provider: p.get("provider") || undefined });
+      window.history.replaceState({}, "", "/orbit");
+      const t = setTimeout(() => setFlag(null), 6000);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   const del = async (id: number) => { await fetch(`/api/orbit/events/${id}`, { method: "DELETE" }); load(); };
   const toggleSync = async () => {
@@ -63,6 +83,17 @@ export default function OrbitPage() {
           </div>
         )}
 
+        {/* OAuth return status */}
+        {flag && (
+          <div className={`rounded-xl border p-3 mb-6 flex items-center gap-2 text-sm ${flag.kind === "connected" ? "border-emerald-400/30 bg-emerald-400/[0.06] text-emerald-200" : "border-amber-400/30 bg-amber-400/[0.06] text-amber-200"}`}>
+            {flag.kind === "connected" ? <Check className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+            {flag.kind === "connected" ? `${flag.provider || "Your calendar"} connected — your events now shape your availability.` : flag.kind === "denied" ? "Connection cancelled." : "Couldn't connect that calendar. Please try again."}
+          </div>
+        )}
+
+        {/* connected calendars */}
+        <ConnectedCalendars conns={conns} onChange={load} />
+
         {showAdd && <AddEvent tz={tz} onDone={() => { setShowAdd(false); load(); }} />}
 
         {loading ? <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /></div>
@@ -92,6 +123,90 @@ export default function OrbitPage() {
               ))}
             </div>}
       </main>
+    </div>
+  );
+}
+
+function GoogleGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
+      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8z" />
+      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.9-3a7.2 7.2 0 0 1-10.8-3.8H1.3v3.1A12 12 0 0 0 12 24z" />
+      <path fill="#FBBC05" d="M5.3 14.2a7.1 7.1 0 0 1 0-4.5V6.6H1.3a12 12 0 0 0 0 10.8l4-3.2z" />
+      <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1A7.2 7.2 0 0 1 12 4.8z" />
+    </svg>
+  );
+}
+function MicrosoftGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
+      <path fill="#F25022" d="M2 2h9.3v9.3H2z" /><path fill="#7FBA00" d="M12.7 2H22v9.3h-9.3z" />
+      <path fill="#00A4EF" d="M2 12.7h9.3V22H2z" /><path fill="#FFB900" d="M12.7 12.7H22V22h-9.3z" />
+    </svg>
+  );
+}
+
+function ConnectedCalendars({ conns, onChange }: { conns: ConnState | null; onChange: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  if (!conns) return null;
+
+  const connect = async (provider: "google" | "microsoft") => {
+    setBusy(provider);
+    try {
+      const r = await fetch(`/api/orbit/calendar/connect?provider=${provider}`);
+      const d = await r.json();
+      if (r.ok && d.url) { window.location.href = d.url; return; }
+      alert(d.message || "This calendar isn't available yet.");
+    } finally { setBusy(null); }
+  };
+  const disconnect = async (id: number) => { setBusy(`d${id}`); try { await fetch(`/api/orbit/calendar/connections/${id}`, { method: "DELETE" }); onChange(); } finally { setBusy(null); } };
+  const toggleOut = async (c: Conn) => {
+    setBusy(`o${c.id}`);
+    try { await fetch("/api/orbit/calendar/connections", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: c.id, syncOutbound: !c.syncOutbound }) }); onChange(); }
+    finally { setBusy(null); }
+  };
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 mb-6">
+      <div className="flex items-center gap-2 mb-1"><Link2 className="w-4 h-4 text-sky-400" /><h3 className="font-semibold text-sm">Connected calendars</h3></div>
+      <p className="text-xs text-slate-500 mb-3">Link the calendar you already use — Orbit plans around it so nothing double-books.</p>
+
+      {conns.connections.length > 0 && (
+        <div className="space-y-2 mb-3">
+          {conns.connections.map((c) => (
+            <div key={c.id} className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 p-2.5">
+              {c.provider === "google" ? <GoogleGlyph /> : <MicrosoftGlyph />}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium truncate">{c.label}</div>
+                <div className="text-xs text-slate-500 truncate flex items-center gap-1.5">
+                  {c.accountEmail || "connected"}
+                  {c.status === "error" ? <span className="text-amber-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> needs reconnect</span>
+                    : <span className="text-emerald-400 flex items-center gap-1"><Check className="w-3 h-3" /> busy imported</span>}
+                </div>
+              </div>
+              <button onClick={() => toggleOut(c)} disabled={busy === `o${c.id}`} title="Also push Orbit events to this calendar"
+                className={`text-xs px-2 py-1 rounded-lg border ${c.syncOutbound ? "border-sky-400/40 text-sky-300 bg-sky-400/10" : "border-white/10 text-slate-400"}`}>
+                {c.syncOutbound ? "2-way" : "1-way"}
+              </button>
+              <button onClick={() => disconnect(c.id)} disabled={busy === `d${c.id}`} className="text-slate-500 hover:text-red-400" title="Disconnect"><X className="w-4 h-4" /></button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => connect("google")} disabled={busy === "google"}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-sm disabled:opacity-50">
+          {busy === "google" ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleGlyph />} Connect Google
+        </button>
+        <button onClick={() => connect("microsoft")} disabled={busy === "microsoft"}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/15 bg-white/5 hover:bg-white/10 text-sm disabled:opacity-50">
+          {busy === "microsoft" ? <Loader2 className="w-4 h-4 animate-spin" /> : <MicrosoftGlyph />} Connect Outlook
+        </button>
+      </div>
+      {!conns.providers.anyConfigured && (
+        <p className="text-[11px] text-slate-600 mt-2">Calendar connect activates once your Google / Microsoft OAuth keys are configured.</p>
+      )}
     </div>
   );
 }

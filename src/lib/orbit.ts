@@ -10,6 +10,7 @@ import { personalEvents, calendarEvents, productSubscriptions, lifeProfiles } fr
 import { and, eq, gte, lte, inArray, isNotNull } from 'drizzle-orm';
 import { findFreeSlots, type AvailabilityRule, type BusyEvent } from '@/lib/scheduling';
 import { notify } from '@/lib/notify';
+import { busyForConnections } from '@/lib/calendar-connect';
 
 export type PersonalEvent = typeof personalEvents.$inferSelect;
 
@@ -32,6 +33,13 @@ export async function busyFor(profileId: number, from: Date, to: Date): Promise<
       .from(calendarEvents)
       .where(and(eq(calendarEvents.ownerProfileId, profileId), gte(calendarEvents.startsAt, from.toISOString()), lte(calendarEvents.startsAt, to.toISOString())));
     for (const e of biz) blocks.push({ startsAt: e.startsAt, endsAt: e.endsAt, status: e.status });
+  }
+
+  // Plus any external calendars the person has connected (Google / Outlook).
+  try {
+    blocks.push(...(await busyForConnections(profileId, from, to)));
+  } catch (err) {
+    console.error('external calendar busy import failed:', err);
   }
   return blocks;
 }
