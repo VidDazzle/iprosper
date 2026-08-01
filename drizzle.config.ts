@@ -1,7 +1,7 @@
 // drizzle.config.ts
 
 const config = {
-  schema: "./src/lib/schema.ts",   // adjust path to your schema
+  schema: "./src/db/schema.ts",
   out: "./drizzle",
   driver: "better-sqlite",         // v0.18.1 uses driver
   dbCredentials: {

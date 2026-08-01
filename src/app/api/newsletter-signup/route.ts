@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/db';
+import { birthdaySubscribers } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 // Types for request validation
 interface NewsletterSignupData {
   name: string;
   email: string;
   phone: string;
+  birthdate?: string;
 }
 
 interface ValidationError {
@@ -59,6 +63,18 @@ function validateSignupData(data: any): { isValid: boolean; errors: ValidationEr
     errors.push({ field: 'phone', message: 'Phone number is required and must be a string' });
   } else if (!validatePhone(data.phone)) {
     errors.push({ field: 'phone', message: 'Please provide a valid phone number (7-16 digits)' });
+  }
+
+  // Birthday is optional. Only validate when provided.
+  if (data.birthdate !== undefined && data.birthdate !== null && data.birthdate !== '') {
+    if (typeof data.birthdate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(data.birthdate)) {
+      errors.push({ field: 'birthdate', message: 'Birthday must be a valid date (YYYY-MM-DD)' });
+    } else {
+      const d = new Date(data.birthdate);
+      if (isNaN(d.getTime()) || d.getTime() > Date.now()) {
+        errors.push({ field: 'birthdate', message: 'Please provide a valid birthday' });
+      }
+    }
   }
 
   return {
@@ -147,8 +163,42 @@ export async function POST(request: NextRequest) {
     const sanitizedData: NewsletterSignupData = {
       name: sanitizeInput(requestData.name),
       email: sanitizeInput(requestData.email.toLowerCase()),
-      phone: sanitizeInput(requestData.phone)
+      phone: sanitizeInput(requestData.phone),
+      // Optional — captured so we can send a birthday surprise.
+      birthdate: requestData.birthdate ? sanitizeInput(requestData.birthdate) : undefined
     };
+
+    // Persist the birthday (opt-in) so the surprise mailer can find it later.
+    if (sanitizedData.birthdate && /^\d{4}-\d{2}-\d{2}$/.test(sanitizedData.birthdate)) {
+      try {
+        const [, mm, dd] = sanitizedData.birthdate.split('-').map((n) => parseInt(n, 10));
+        const nowIso = new Date().toISOString();
+        const existing = await db
+          .select({ id: birthdaySubscribers.id })
+          .from(birthdaySubscribers)
+          .where(eq(birthdaySubscribers.email, sanitizedData.email))
+          .limit(1);
+        if (existing[0]) {
+          await db
+            .update(birthdaySubscribers)
+            .set({ name: sanitizedData.name, phone: sanitizedData.phone || null, birthdate: sanitizedData.birthdate, birthMonth: mm, birthDay: dd })
+            .where(eq(birthdaySubscribers.id, existing[0].id));
+        } else {
+          await db.insert(birthdaySubscribers).values({
+            name: sanitizedData.name,
+            email: sanitizedData.email,
+            phone: sanitizedData.phone || null,
+            birthdate: sanitizedData.birthdate,
+            birthMonth: mm,
+            birthDay: dd,
+            createdAt: nowIso,
+          });
+        }
+      } catch (dbErr) {
+        // Non-fatal: signup still succeeds even if birthday persistence fails.
+        console.error('Birthday persistence error:', dbErr);
+      }
+    }
 
     // Log the signup data (replace with actual database storage in production)
     console.log('Newsletter Signup:', {
