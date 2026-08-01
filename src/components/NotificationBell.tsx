@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Bell } from "lucide-react";
 
 // Only show the bell inside the app (not on marketing pages).
-const APP_PREFIXES = ["/home", "/mail", "/calendar", "/orbit", "/meetings", "/life", "/fitness", "/together", "/discover", "/chat", "/crm", "/plans", "/notifications", "/insights", "/maintenance", "/deliverables", "/products"];
+const APP_PREFIXES = ["/home", "/mail", "/calendar", "/orbit", "/meetings", "/life", "/fitness", "/together", "/discover", "/chat", "/crm", "/plans", "/notifications", "/insights", "/maintenance", "/deliverables", "/products", "/moderation"];
 
 interface Note { id: number; type: string; title: string; body: string | null; link: string | null; readAt: string | null; createdAt: string; }
 

@@ -3,7 +3,7 @@ import { db } from '@/db';
 import { lifeProfiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getOrCreateProfile } from '@/lib/life';
-import { isAdultVerified, isScreenedClear, isEligibleForDiscovery } from '@/lib/safety';
+import { isAdultVerified, isScreenedClear, isSuspended } from '@/lib/safety';
 
 /**
  * GET /api/discovery/settings?email= -> my discovery settings + verified state.
@@ -38,6 +38,9 @@ export async function PUT(request: NextRequest) {
 
     if (typeof body.discoverable === 'boolean') {
       if (body.discoverable) {
+        if (await isSuspended(me.id)) {
+          return NextResponse.json({ error: 'suspended', message: 'Your account has been suspended by moderation and can’t be made discoverable.' }, { status: 403 });
+        }
         if (!(await isAdultVerified(me.id))) {
           return NextResponse.json({ error: 'identity_required', message: 'Verify your identity (18+, driver’s license + face match) before making your profile discoverable.' }, { status: 403 });
         }

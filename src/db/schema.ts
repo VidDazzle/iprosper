@@ -582,6 +582,8 @@ export const lifeProfiles = sqliteTable('life_profiles', {
   bio: text('bio'), // short, self-written intro shown on Discover
   // Orbit ⇄ Evolve business calendar sync (only usable with an Evolve subscription).
   syncEvolve: integer('sync_evolve', { mode: 'boolean' }).notNull().default(false),
+  // Suspended by moderation — removed from Discover, ineligible to tap/match.
+  suspended: integer('suspended', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });

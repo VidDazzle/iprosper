@@ -4,7 +4,7 @@
  */
 
 import { db } from '@/db';
-import { blocks, reports, taps, meetupRequests, identityVerifications } from '@/db/schema';
+import { blocks, reports, taps, meetupRequests, identityVerifications, lifeProfiles } from '@/db/schema';
 import { and, eq, or } from 'drizzle-orm';
 
 /** Age-assured identity: verified AND confirmed 18+. Gates all Discover actions. */
@@ -33,7 +33,20 @@ export async function isScreenedClear(profileId: number): Promise<boolean> {
  * discoverable, tap, or match.
  */
 export async function isEligibleForDiscovery(profileId: number): Promise<boolean> {
+  if (await isSuspended(profileId)) return false;
   return (await isAdultVerified(profileId)) && (await isScreenedClear(profileId));
+}
+
+export async function isSuspended(profileId: number): Promise<boolean> {
+  const rows = await db.select().from(lifeProfiles).where(eq(lifeProfiles.id, profileId)).limit(1);
+  return Boolean(rows[0]?.suspended);
+}
+
+/** Suspend/unsuspend a member. Suspending also pulls them from Discover. */
+export async function setSuspended(profileId: number, on: boolean): Promise<void> {
+  const patch: Record<string, unknown> = { suspended: on, updatedAt: new Date().toISOString() };
+  if (on) patch.discoverable = false;
+  await db.update(lifeProfiles).set(patch).where(eq(lifeProfiles.id, profileId));
 }
 
 /** Ids this person can't see / interact with (they blocked, or were blocked by). */
