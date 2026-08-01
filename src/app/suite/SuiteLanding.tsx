@@ -31,26 +31,7 @@ const CSS = `
     --r: 16px;
   }
 
-  @media (prefers-color-scheme: light) {
-    :root {
-      --ground: #F4F7FB;
-      --surface: #FFFFFF;
-      --surface-2: #EEF3F9;
-      --line: rgba(20, 40, 70, 0.10);
-      --line-strong: rgba(20, 40, 70, 0.18);
-      --ink: #0C1524;
-      --ink-dim: #33435A;
-      --muted: #5E7089;
-      --aqua: #0F9E88;
-      --amber: #C77D18;
-      --violet: #5B49D6;
-      --aqua-soft: rgba(15, 158, 136, 0.10);
-      --amber-soft: rgba(199, 125, 24, 0.12);
-      --violet-soft: rgba(91, 73, 214, 0.10);
-      --glow: 0 0 0 1px rgba(15,158,136,0.20), 0 24px 60px -24px rgba(15,158,136,0.28);
-    }
-  }
-  /* explicit toggle overrides media query in both directions */
+  /* Dark is the default. Light is opt-in via the theme toggle (data-theme). */
   :root[data-theme="dark"] {
     --ground: #070A10; --surface: #0E141E; --surface-2: #131C29;
     --line: rgba(150,175,205,0.12); --line-strong: rgba(150,175,205,0.22);
@@ -588,10 +569,8 @@ const SCRIPT = `
     var root = document.documentElement;
     var btn = document.getElementById('themeBtn');
     btn.addEventListener('click', function () {
-      var cur = root.getAttribute('data-theme');
-      if (!cur) {
-        cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
+      // Dark is the default when no explicit theme is set.
+      var cur = root.getAttribute('data-theme') || 'dark';
       root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
     });
   })();

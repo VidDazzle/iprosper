@@ -27,15 +27,7 @@ const CSS = `
     --maxw: 1160px;
     --r: 18px;
   }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --ground: #F5F8FC; --surface: #FFFFFF; --surface-2: #EEF3F9;
-      --line: rgba(20,40,70,0.10); --line-strong: rgba(20,40,70,0.18);
-      --ink: #0C1524; --ink-dim: #33435A; --muted: #5E7089;
-      --aqua: #12A88F; --sky: #1E86C7; --amber: #C77D18; --orange: #E06A1F; --rose: #D84A6C; --violet: #5B49D6;
-      --glow: 0 0 0 1px rgba(30,134,199,0.18), 0 24px 60px -28px rgba(30,134,199,0.30);
-    }
-  }
+  /* Dark is the default. Light is opt-in via the theme toggle (data-theme). */
   :root[data-theme="dark"]{ --ground:#070A10; --surface:#0E141E; --surface-2:#131C29; --line:rgba(150,175,205,0.12); --line-strong:rgba(150,175,205,0.22); --ink:#EAF1F8; --ink-dim:#B4C2D4; --muted:#8494A8; --aqua:#38E4C9; --sky:#5BC8FF; --amber:#FFC46B; --orange:#FF8A3D; --rose:#FF6B8A; --violet:#8B7BFF; --glow:0 0 0 1px rgba(56,228,201,0.22),0 24px 70px -26px rgba(91,200,255,0.40); }
   :root[data-theme="light"]{ --ground:#F5F8FC; --surface:#FFFFFF; --surface-2:#EEF3F9; --line:rgba(20,40,70,0.10); --line-strong:rgba(20,40,70,0.18); --ink:#0C1524; --ink-dim:#33435A; --muted:#5E7089; --aqua:#12A88F; --sky:#1E86C7; --amber:#C77D18; --orange:#E06A1F; --rose:#D84A6C; --violet:#5B49D6; --glow:0 0 0 1px rgba(30,134,199,0.18),0 24px 60px -28px rgba(30,134,199,0.30); }
 
@@ -412,8 +404,8 @@ const SCRIPT = `
     var root = document.documentElement;
     var btn = document.getElementById('obThemeBtn');
     if (btn) btn.addEventListener('click', function () {
-      var cur = root.getAttribute('data-theme');
-      if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      // Dark is the default when no explicit theme is set.
+      var cur = root.getAttribute('data-theme') || 'dark';
       root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
     });
   })();
