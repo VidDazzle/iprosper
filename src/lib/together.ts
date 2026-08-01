@@ -4,7 +4,7 @@
  */
 
 import { db } from '@/db';
-import { connections, calendarEvents, lifeProfiles, identityVerifications } from '@/db/schema';
+import { connections, personalEvents, lifeProfiles, identityVerifications } from '@/db/schema';
 import { and, eq, gte, lte, or, inArray } from 'drizzle-orm';
 import { findFreeSlots, type AvailabilityRule, type BusyEvent } from '@/lib/scheduling';
 
@@ -39,29 +39,27 @@ function personalRules(timezone: string): AvailabilityRule[] {
   }));
 }
 
-/** Events owned by a set of profiles (plus legacy owner-less events) in a window. */
-async function eventsFor(profileIds: number[], from: Date, to: Date): Promise<(typeof calendarEvents.$inferSelect)[]> {
+/** Personal (Orbit) events for a set of profiles in a window. */
+async function eventsFor(profileIds: number[], from: Date, to: Date): Promise<(typeof personalEvents.$inferSelect)[]> {
   return db
     .select()
-    .from(calendarEvents)
+    .from(personalEvents)
     .where(
       and(
-        gte(calendarEvents.startsAt, from.toISOString()),
-        lte(calendarEvents.startsAt, to.toISOString()),
-        inArray(calendarEvents.ownerProfileId, profileIds),
+        gte(personalEvents.startsAt, from.toISOString()),
+        lte(personalEvents.startsAt, to.toISOString()),
+        inArray(personalEvents.profileId, profileIds),
       ),
     );
 }
 
-/** A single profile's events for a given local day. */
+/** A single profile's Orbit events for a given local day. */
 export async function dailySchedule(profileId: number, dayIso: string) {
   const day = new Date(dayIso);
   const from = new Date(day); from.setHours(0, 0, 0, 0);
   const to = new Date(day); to.setHours(23, 59, 59, 999);
   const rows = await eventsFor([profileId], from, to);
-  return rows
-    .filter((e) => e.status !== 'cancelled')
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  return rows.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
 }
 
 /**
@@ -78,7 +76,7 @@ export async function mutualFreeSlots(
   const from = new Date();
   const to = new Date(from); to.setDate(to.getDate() + days);
   const events = await eventsFor([aId, bId], from, to);
-  const busy: BusyEvent[] = events.map((e) => ({ startsAt: e.startsAt, endsAt: e.endsAt, status: e.status }));
+  const busy: BusyEvent[] = events.map((e) => ({ startsAt: e.startsAt, endsAt: e.endsAt, status: 'confirmed' }));
   const slots = findFreeSlots(personalRules(timezone), busy, from, to, durationMin);
   // Prefer date-friendly times (>= 5pm) and cap the list.
   return slots

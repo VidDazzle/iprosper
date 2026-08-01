@@ -14,6 +14,7 @@ import { parseLifeIntent, type ParsedLifeIntent, type LifeIntentCategory } from 
 import { findPlaces, findMovies, findRecreation, reverseGeocode, type GeoPoint } from '@/lib/life-providers';
 import { outdoorsReport } from '@/lib/outdoors';
 import { getWorkoutPlan, workoutGoalFromText } from '@/lib/workouts';
+import { busyFor } from '@/lib/orbit';
 
 export interface ConciergeProfile {
   id: number;
@@ -88,11 +89,9 @@ function windowFor(timeframe: ParsedLifeIntent['timeframe']): { from: Date; to: 
 
 async function freeSlots(profile: ConciergeProfile, intent: ParsedLifeIntent): Promise<ConciergeResult['freeSlots']> {
   const { from, to } = windowFor(intent.timeframe);
-  const events = await db
-    .select()
-    .from(calendarEvents)
-    .where(and(gte(calendarEvents.startsAt, from.toISOString()), lte(calendarEvents.startsAt, to.toISOString())));
-  const busy: BusyEvent[] = events.map((e) => ({ startsAt: e.startsAt, endsAt: e.endsAt, status: e.status }));
+  // Personal availability comes from the Orbit calendar (not the business one),
+  // including the Evolve business calendar only when the owner has sync on.
+  const busy: BusyEvent[] = await busyFor(profile.id, from, to);
   const slots = findFreeSlots(personalRules(profile.timezone), busy, from, to, durationFor(intent.category));
 
   // For evening activities (movies, entertainment, dining out), prefer slots

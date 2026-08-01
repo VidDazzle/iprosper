@@ -280,6 +280,11 @@ function Plans({ onLogged }: { onLogged: () => void }) {
     try { await fetch("/api/life/fitness/start-plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal }) }); onLogged(); alert("Plan started — a goal was added to track it."); }
     finally { setTracking(false); }
   };
+  const schedule = async () => {
+    setTracking(true);
+    try { const d = await (await fetch("/api/life/fitness/schedule-plan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ goal, weeks: 4 }) })).json(); alert(`Added ${d.created} sessions to your Orbit calendar with reminders.`); }
+    finally { setTracking(false); }
+  };
   const logDay = async (focus: string) => {
     await fetch("/api/life/fitness/logs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "workout", label: `${plan?.goalLabel} — ${focus}` }) });
     onLogged();
@@ -295,7 +300,10 @@ function Plans({ onLogged }: { onLogged: () => void }) {
         <>
           <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
             <p className="text-sm text-slate-400 max-w-xl">{plan.summary}</p>
-            <button onClick={track} disabled={tracking} className="px-4 py-2 rounded-lg bg-emerald-400 text-black text-sm font-medium flex items-center gap-1.5 shrink-0">{tracking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Target className="w-4 h-4" />} Track this plan</button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={track} disabled={tracking} className="px-4 py-2 rounded-lg bg-emerald-400 text-black text-sm font-medium flex items-center gap-1.5">{tracking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Target className="w-4 h-4" />} Track this plan</button>
+              <button onClick={schedule} disabled={tracking} className="px-4 py-2 rounded-lg border border-white/15 text-slate-200 text-sm font-medium flex items-center gap-1.5">📅 Schedule to Orbit</button>
+            </div>
           </div>
           <div className="grid sm:grid-cols-2 gap-2">
             {plan.days.map((d) => (

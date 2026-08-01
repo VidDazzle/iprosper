@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { dateProposals, calendarEvents } from '@/db/schema';
+import { dateProposals } from '@/db/schema';
+import { createEvent } from '@/lib/orbit';
 import { and, eq, desc } from 'drizzle-orm';
 import { getOrCreateProfile } from '@/lib/life';
 import { activeConnectionFor, partnerIdOf } from '@/lib/together';
@@ -88,23 +89,20 @@ export async function PATCH(request: NextRequest) {
 
     if (body.action === 'accept') {
       await db.update(dateProposals).set({ status: 'confirmed', updatedAt: now }).where(eq(dateProposals.id, prop.id));
-      // Place the confirmed date on BOTH calendars.
+      // Place the confirmed date on BOTH partners' personal (Orbit) calendars.
       const partnerId = partnerIdOf(conn, me.id);
       const base = {
         title: `❤️ ${prop.activity}`,
-        description: prop.note,
-        location: prop.location,
+        description: prop.note || undefined,
+        location: prop.location || undefined,
         startsAt: prop.startsAt,
         endsAt: prop.endsAt,
-        status: 'confirmed' as const,
+        category: 'date',
         source: 'together',
-        createdAt: now,
-        updatedAt: now,
+        reminderMinutes: 120,
       };
-      await db.insert(calendarEvents).values([
-        { ...base, ownerProfileId: me.id },
-        ...(partnerId ? [{ ...base, ownerProfileId: partnerId }] : []),
-      ]);
+      await createEvent(me.id, base);
+      if (partnerId) await createEvent(partnerId, base);
       return NextResponse.json({ status: 'confirmed' }, { status: 200 });
     }
 

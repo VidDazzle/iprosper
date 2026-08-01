@@ -580,6 +580,8 @@ export const lifeProfiles = sqliteTable('life_profiles', {
   discoveryPhotoUrl: text('discovery_photo_url'),
   displayName: text('display_name'),
   bio: text('bio'), // short, self-written intro shown on Discover
+  // Orbit ⇄ Evolve business calendar sync (only usable with an Evolve subscription).
+  syncEvolve: integer('sync_evolve', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
@@ -833,4 +835,31 @@ export const fitnessLogs = sqliteTable('fitness_logs', {
   note: text('note'),
   loggedAt: text('logged_at').notNull(), // ISO
   createdAt: text('created_at').notNull(),
+});
+
+/**
+ * Orbit — the personal life calendar. Deliberately separate from the business
+ * `calendar_events` (Evolve). One row per personal event, owned by a Life
+ * profile. When synced to Evolve, `evolveEventId` points at the mirrored
+ * business event.
+ */
+export const personalEvents = sqliteTable('personal_events', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  profileId: integer('profile_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  location: text('location'),
+  startsAt: text('starts_at').notNull(), // ISO UTC
+  endsAt: text('ends_at').notNull(),
+  timezone: text('timezone').notNull().default('America/New_York'),
+  allDay: integer('all_day', { mode: 'boolean' }).notNull().default(false),
+  // personal | health | fitness | family | social | date | errand | other
+  category: text('category').notNull().default('personal'),
+  color: text('color'),
+  source: text('source').notNull().default('manual'), // manual | fitness | together | life | evolve
+  reminderMinutes: integer('reminder_minutes'),
+  reminderSent: integer('reminder_sent', { mode: 'boolean' }).notNull().default(false),
+  evolveEventId: integer('evolve_event_id'), // mirror in calendar_events when synced
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 });

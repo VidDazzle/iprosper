@@ -22,8 +22,8 @@ function timeOnly(iso: string, tz: string) { return new Date(iso).toLocaleString
 function when(iso: string, tz: string) { return new Date(iso).toLocaleString("en-US", { timeZone: tz, weekday: "short", hour: "numeric", minute: "2-digit" }); }
 
 const MODULES = [
+  { href: "/orbit", label: "Orbit", icon: CalendarClock, hue: "#FFC46B", desc: "Personal calendar" },
   { href: "/mail", label: "Mail", icon: Mail, hue: "#38E4C9", desc: "Encrypted inbox" },
-  { href: "/calendar/dashboard", label: "Calendar", icon: CalendarClock, hue: "#FFC46B", desc: "AI scheduling" },
   { href: "/meetings", label: "Meet", icon: Video, hue: "#8B7BFF", desc: "Video + webinars" },
   { href: "/life", label: "Life", icon: Sparkles, hue: "#38E4C9", desc: "Personal concierge" },
   { href: "/fitness", label: "Fitness", icon: Dumbbell, hue: "#FF8A3D", desc: "Goals + tracker" },
@@ -67,7 +67,7 @@ export default function HomePage() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-amber-300" /> Today</h3>
-                  <a href="/calendar/dashboard" className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1">Calendar <ArrowRight className="w-3 h-3" /></a>
+                  <a href="/orbit" className="text-xs text-slate-500 hover:text-slate-300 flex items-center gap-1">Orbit <ArrowRight className="w-3 h-3" /></a>
                 </div>
                 {data.todaysEvents.length === 0 ? <p className="text-sm text-slate-500">Nothing on the calendar today — wide open.</p>
                   : <div className="space-y-2">

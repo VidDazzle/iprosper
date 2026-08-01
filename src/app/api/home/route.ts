@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { calendarEvents, mailMessages, lifeReminders } from '@/db/schema';
+import { personalEvents, mailMessages, lifeReminders } from '@/db/schema';
 import { and, eq, gte, lte } from 'drizzle-orm';
 import { getOrCreateProfile } from '@/lib/life';
 import { unreadCount } from '@/lib/notifications';
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const soon = new Date(now.getTime() + 3 * 86400_000);
 
     const [events, unreadMailRows, reminderRows, notifUnread, conn, near, myMatches, myThreads] = await Promise.all([
-      db.select().from(calendarEvents).where(and(gte(calendarEvents.startsAt, dayStart.toISOString()), lte(calendarEvents.startsAt, dayEnd.toISOString()))),
+      db.select().from(personalEvents).where(and(eq(personalEvents.profileId, me.id), gte(personalEvents.startsAt, dayStart.toISOString()), lte(personalEvents.startsAt, dayEnd.toISOString()))),
       db.select().from(mailMessages).where(eq(mailMessages.status, 'unread')),
       db.select().from(lifeReminders).where(and(eq(lifeReminders.profileId, me.id), eq(lifeReminders.status, 'scheduled'), gte(lifeReminders.whenAt, now.toISOString()), lte(lifeReminders.whenAt, soon.toISOString()))),
       unreadCount(me.id),
@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
     ]);
 
     const todaysEvents = events
-      .filter((e) => e.status !== 'cancelled')
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
       .slice(0, 6)
       .map((e) => ({ id: e.id, title: e.title, startsAt: e.startsAt, location: e.location }));

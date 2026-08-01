@@ -5,6 +5,7 @@ import { runBirthdayGreetings } from '@/lib/birthday';
 import { runLeadFollowups } from '@/lib/crm-followups';
 import { runEventReminders } from '@/lib/reminders';
 import { runLifeReminders } from '@/lib/life-reminders';
+import { runPersonalEventReminders } from '@/lib/orbit';
 
 /**
  * GET /api/maintenance/cron
@@ -62,6 +63,14 @@ export async function GET(request: NextRequest) {
       console.error('Life reminder error during cron:', lErr);
     }
 
+    // Dispatch due Orbit (personal calendar) event reminders (best-effort).
+    let orbitReminders = null;
+    try {
+      orbitReminders = await runPersonalEventReminders();
+    } catch (oErr) {
+      console.error('Orbit reminder error during cron:', oErr);
+    }
+
     return NextResponse.json(
       {
         ranAt: new Date().toISOString(),
@@ -74,6 +83,7 @@ export async function GET(request: NextRequest) {
         followups,
         reminders,
         lifeReminders,
+        orbitReminders,
       },
       { status: 200 },
     );
