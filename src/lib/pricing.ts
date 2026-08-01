@@ -14,8 +14,8 @@
  *      provable and the audit can alarm if it ever thins (see security-audit).
  */
 
-export type Product = 'calendar' | 'email' | 'meet';
-export const PRODUCTS: Product[] = ['calendar', 'email', 'meet'];
+export type Product = 'calendar' | 'email' | 'meet' | 'orbit';
+export const PRODUCTS: Product[] = ['calendar', 'email', 'meet', 'orbit'];
 
 /** Minimum gross margin over cost (0.5 = 50% markup floor). Override with env. */
 export const MIN_MARGIN = Number(process.env.MIN_MARGIN || 0.5);
@@ -81,6 +81,24 @@ export const PRICING: Record<Product, ProductPricing> = {
       { tier: 'starter', name: 'Starter', monthlyPriceCents: 3900, includedUnits: 500 },
       { tier: 'pro', name: 'Pro', monthlyPriceCents: 9900, includedUnits: 2000 },
       { tier: 'business', name: 'Business', monthlyPriceCents: 29900, includedUnits: 6000 },
+    ],
+  },
+  // Orbit is the personal side (Life concierge, seasonal/local answers, etc.).
+  // Each AI concierge action is one unit. Same profit guarantee as the business
+  // products: monthly plan price and every credit clear cost × (1 + MIN_MARGIN).
+  orbit: {
+    label: 'Orbit',
+    unitLabel: 'AI concierge actions',
+    costCentsPerUnit: 4,
+    overagePriceCentsPerUnit: 12,
+    creditPacks: [
+      { units: 50, priceCents: 800 },
+      { units: 200, priceCents: 2800 },
+    ],
+    tiers: [
+      { tier: 'starter', name: 'Orbit', monthlyPriceCents: 900, includedUnits: 60 },
+      { tier: 'pro', name: 'Orbit Plus', monthlyPriceCents: 1900, includedUnits: 200 },
+      { tier: 'business', name: 'Orbit Max', monthlyPriceCents: 3900, includedUnits: 500 },
     ],
   },
 };

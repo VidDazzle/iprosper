@@ -21,15 +21,20 @@ function includedUnitPrice(product: Product, tier: string): number {
   return t.includedUnits > 0 ? t.monthlyPriceCents / t.includedUnits : 0;
 }
 
-/** Seed the plan catalog into the DB from the pricing config (idempotent). */
+/**
+ * Seed the plan catalog into the DB from the pricing config (idempotent).
+ * Seeds only rows that are missing, so adding a new product (e.g. Orbit) later
+ * back-fills its plans without disturbing existing ones.
+ */
 export async function ensurePlansSeeded(): Promise<void> {
-  const existing = await db.select({ id: plans.id }).from(plans).limit(1);
-  if (existing.length) return;
+  const existing = await db.select({ product: plans.product, tier: plans.tier }).from(plans);
+  const have = new Set(existing.map((r) => `${r.product}:${r.tier}`));
   const nowIso = new Date().toISOString();
   const rows: (typeof plans.$inferInsert)[] = [];
   for (const product of PRODUCTS) {
     const p = PRICING[product];
     for (const t of p.tiers) {
+      if (have.has(`${product}:${t.tier}`)) continue;
       rows.push({
         product,
         tier: t.tier,

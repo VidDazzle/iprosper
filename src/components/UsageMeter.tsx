@@ -4,16 +4,21 @@ import { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Gauge, X, Zap, ArrowUpRight, Loader2, ChevronUp, ChevronDown } from "lucide-react";
 
-// The usage meter tracks Evolve BUSINESS consumption. Keep it off the Orbit
-// (personal) app + all marketing/sales pages, where a billing bar is noise.
-const HIDE_PREFIXES = [
-  "/orbit", "/orbit-os", "/life", "/fitness", "/together", "/discover", "/chat", "/moderation",
-  "/suite", "/pricing", "/signin", "/signup", "/schedule-demo", "/solutions", "/company",
-  "/careers", "/blog", "/docs", "/team", "/agents",
+// Where the meter shows, and which product credits it shows there:
+//  - marketing/sales pages: hidden (a billing bar is noise there)
+//  - Orbit personal app: show the Orbit concierge credits only
+//  - everywhere else (business app): show the Evolve business credits
+const MARKETING_PREFIXES = [
+  "/orbit-os", "/suite", "/pricing", "/signin", "/signup", "/schedule-demo",
+  "/solutions", "/company", "/careers", "/blog", "/docs", "/team", "/agents",
 ];
+const ORBIT_PREFIXES = ["/orbit", "/life", "/fitness", "/together", "/discover", "/chat", "/moderation"];
+function matchesPrefix(prefixes: string[], path: string | null): boolean {
+  return !!path && prefixes.some((p) => path === p || path.startsWith(p + "/"));
+}
 
 interface Usage {
-  product: "calendar" | "email" | "meet";
+  product: "calendar" | "email" | "meet" | "orbit";
   label: string;
   unitLabel: string;
   tier: string;
@@ -37,7 +42,12 @@ export default function UsageMeter() {
   const [open, setOpen] = useState(true);
   const [hidden, setHidden] = useState(false);
   const [topUp, setTopUp] = useState<Usage | null>(null);
-  const suppressed = HIDE_PREFIXES.some((p) => pathname === p || pathname?.startsWith(p + "/")) || pathname === "/";
+
+  const isMarketing = pathname === "/" || matchesPrefix(MARKETING_PREFIXES, pathname);
+  const isOrbit = matchesPrefix(ORBIT_PREFIXES, pathname);
+  const visible = isOrbit
+    ? usage.filter((u) => u.product === "orbit")
+    : usage.filter((u) => u.product !== "orbit");
 
   const load = useCallback(async () => {
     try {
@@ -54,10 +64,10 @@ export default function UsageMeter() {
     return () => clearInterval(id);
   }, [load]);
 
-  if (suppressed || hidden || usage.length === 0) return null;
+  if (isMarketing || hidden || visible.length === 0) return null;
 
-  const anyCap = usage.some((u) => u.capReached);
-  const anyWarn = usage.some((u) => u.pctUsed >= 80);
+  const anyCap = visible.some((u) => u.capReached);
+  const anyWarn = visible.some((u) => u.pctUsed >= 80);
 
   function barColor(u: Usage) {
     if (u.capReached) return "bg-red-500";
@@ -83,7 +93,7 @@ export default function UsageMeter() {
 
         {open && (
           <div className="space-y-2.5 px-3 pb-3">
-            {usage.map((u) => (
+            {visible.map((u) => (
               <div key={u.product}>
                 <div className="mb-1 flex items-center justify-between text-[11px]">
                   <span className="text-gray-300">{u.label}</span>

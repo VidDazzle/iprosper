@@ -5,7 +5,7 @@ import Navigation from "@/components/sections/navigation";
 import {
   Sparkles, Loader2, Bell, Mail, MessageSquare, Smartphone, Phone,
   Clock, MapPin, Star, ExternalLink, Check, X, Film, Utensils,
-  Bike, Dumbbell, Music, ShoppingBag, CalendarClock, ChevronRight,
+  Bike, Dumbbell, Music, ShoppingBag, CalendarClock, ChevronRight, Zap, ArrowUpRight,
 } from "lucide-react";
 
 // ---- types ---------------------------------------------------------------
@@ -200,14 +200,31 @@ function Dashboard({ profile, prefs, reminders, onChange }: { profile: Profile; 
   const [text, setText] = useState("");
   const [asking, setAsking] = useState(false);
   const [result, setResult] = useState<ConciergeResult | null>(null);
+  const [capped, setCapped] = useState<string | null>(null);
+  const [buying, setBuying] = useState(false);
 
   const ask = async (preset?: string) => {
     const q = preset || text; if (!q.trim()) return;
-    setAsking(true); setResult(null);
+    setAsking(true); setResult(null); setCapped(null);
     try {
       const res = await fetch("/api/life/concierge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: q }) });
+      if (res.status === 402) {
+        const d = await res.json().catch(() => ({}));
+        setCapped(d.error || "You've used all your Orbit credits for this month.");
+        return;
+      }
       setResult(await res.json());
     } finally { setAsking(false); }
+  };
+
+  const buyCredits = async (units: number) => {
+    setBuying(true);
+    try {
+      const res = await fetch("/api/billing/credits/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ product: "orbit", units }) });
+      const d = await res.json();
+      if (d.checkoutUrl) { window.location.href = d.checkoutUrl; return; }
+      setCapped(d.note || "Order recorded — credits are granted once payment is confirmed.");
+    } finally { setBuying(false); }
   };
 
   const remind = async (title: string, whenAt?: string) => {
@@ -239,6 +256,24 @@ function Dashboard({ profile, prefs, reminders, onChange }: { profile: Profile; 
             ))}
           </div>
         </div>
+
+        {capped && (
+          <div className="rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] p-6">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-400/15 flex items-center justify-center shrink-0"><Zap className="w-5 h-5 text-amber-300" /></div>
+              <div className="min-w-0">
+                <div className="font-semibold text-amber-100">Out of Orbit credits</div>
+                <p className="text-sm text-slate-300 mt-1">{capped}</p>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <button onClick={() => buyCredits(50)} disabled={buying} className="px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-medium flex items-center gap-1.5 disabled:opacity-50">
+                    {buying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />} Buy 50 credits
+                  </button>
+                  <a href="/plans" className="px-4 py-2 rounded-lg border border-white/15 text-slate-200 text-sm flex items-center gap-1.5">Upgrade plan <ArrowUpRight className="w-4 h-4" /></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {result && (
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
