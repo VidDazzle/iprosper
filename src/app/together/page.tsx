@@ -49,7 +49,7 @@ export default function TogetherPage() {
   return (
     <div className="min-h-screen bg-[#070a10] text-white font-sans"><Navigation />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <div className="flex items-center gap-3 mb-2"><Heart className="w-6 h-6 text-rose-400" /><h1 className="text-3xl font-bold tracking-tight">Evolve Together</h1></div>
+        <div className="flex items-center gap-3 mb-2"><Heart className="w-6 h-6 text-rose-400" /><h1 className="text-3xl font-bold tracking-tight">Orbit Together</h1></div>
         <p className="text-slate-400 mb-6">Two people, two places — one shared view. See each other’s day and location, find when you’re both free, plan a date, and share private photos with consent.</p>
 
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 mb-6 flex items-center gap-3">

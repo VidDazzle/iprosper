@@ -21,15 +21,20 @@ interface Home {
 function timeOnly(iso: string, tz: string) { return new Date(iso).toLocaleString("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }); }
 function when(iso: string, tz: string) { return new Date(iso).toLocaleString("en-US", { timeZone: tz, weekday: "short", hour: "numeric", minute: "2-digit" }); }
 
-const MODULES = [
-  { href: "/orbit", label: "Orbit", icon: CalendarClock, hue: "#FFC46B", desc: "Personal calendar" },
-  { href: "/mail", label: "Mail", icon: Mail, hue: "#38E4C9", desc: "Encrypted inbox" },
-  { href: "/meetings", label: "Meet", icon: Video, hue: "#8B7BFF", desc: "Video + webinars" },
+// Orbit = your casual, personal side.
+const ORBIT_APPS = [
+  { href: "/orbit", label: "Calendar", icon: CalendarClock, hue: "#FFC46B", desc: "Your personal calendar" },
   { href: "/life", label: "Life", icon: Sparkles, hue: "#38E4C9", desc: "Personal concierge" },
   { href: "/fitness", label: "Fitness", icon: Dumbbell, hue: "#FF8A3D", desc: "Goals + tracker" },
   { href: "/together", label: "Together", icon: Heart, hue: "#FF6B8A", desc: "You + your partner" },
   { href: "/discover", label: "Discover", icon: Compass, hue: "#5BC8FF", desc: "Meet people nearby" },
   { href: "/chat", label: "Messages", icon: MessageSquare, hue: "#38E4C9", desc: "Chat" },
+];
+// Evolve = your business side (a separate subscription).
+const EVOLVE_APPS = [
+  { href: "/mail", label: "Mail", icon: Mail, hue: "#38E4C9", desc: "Encrypted inbox" },
+  { href: "/calendar/dashboard", label: "Calendar", icon: CalendarClock, hue: "#FFC46B", desc: "Business scheduling" },
+  { href: "/meetings", label: "Meet", icon: Video, hue: "#8B7BFF", desc: "Video + webinars" },
   { href: "/crm", label: "CRM", icon: Users2, hue: "#FFC46B", desc: "Pipeline + deals" },
 ];
 
@@ -49,7 +54,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#070a10] text-white font-sans"><Navigation />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <div className="flex items-center gap-2 mb-1"><LayoutGrid className="w-5 h-5 text-emerald-400" /><span className="text-xs font-mono uppercase tracking-widest text-slate-500">Evolve Home</span></div>
+        <div className="flex items-center gap-2 mb-1"><LayoutGrid className="w-5 h-5 text-emerald-400" /><span className="text-xs font-mono uppercase tracking-widest text-slate-500">Orbit</span></div>
         <h1 className="text-3xl font-bold tracking-tight mb-8">{greeting}{data?.me.name ? `, ${data.me.name.split("@")[0].split(" ")[0]}` : ""}.</h1>
 
         {loading || !data ? <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /></div> : (
@@ -108,11 +113,21 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* module launcher */}
+            {/* module launcher — Orbit (personal) + Evolve (business) */}
             <div>
-              <h3 className="font-semibold mb-4 text-slate-300">Your apps</h3>
+              <div className="flex items-center gap-2 mb-4"><h3 className="font-semibold text-slate-300">Orbit</h3><span className="text-xs text-slate-600">your personal apps</span></div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {MODULES.map((m) => (
+                {ORBIT_APPS.map((m) => (
+                  <a key={m.href} href={m.href} className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-white/25 transition">
+                    <div className="w-10 h-10 rounded-xl grid place-items-center mb-3" style={{ background: `${m.hue}22` }}><m.icon className="w-5 h-5" style={{ color: m.hue }} /></div>
+                    <div className="font-medium">{m.label}</div>
+                    <div className="text-xs text-slate-500">{m.desc}</div>
+                  </a>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-8 mb-4"><h3 className="font-semibold text-slate-300">Evolve</h3><span className="text-xs text-slate-600">your business apps · separate subscription</span></div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {EVOLVE_APPS.map((m) => (
                   <a key={m.href} href={m.href} className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-white/25 transition">
                     <div className="w-10 h-10 rounded-xl grid place-items-center mb-3" style={{ background: `${m.hue}22` }}><m.icon className="w-5 h-5" style={{ color: m.hue }} /></div>
                     <div className="font-medium">{m.label}</div>

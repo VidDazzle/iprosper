@@ -74,9 +74,9 @@ export default function LifePage() {
       <main className="max-w-5xl mx-auto px-5 py-10">
         <div className="flex items-center gap-3 mb-2">
           <Sparkles className="w-6 h-6 text-emerald-400" />
-          <h1 className="text-3xl font-bold tracking-tight">Evolve Life</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Orbit Life</h1>
         </div>
-        <p className="text-slate-400 mb-8">Your personal concierge — entertainment, food, recreation, health, and reminders, tuned to you. On your computer and your phone, always in sync.</p>
+        <p className="text-slate-400 mb-8">Your personal concierge — entertainment, food, recreation, health, and reminders, tuned to you. Part of Orbit, your casual life app; on your computer and your phone, always in sync.</p>
 
         {profile && !profile.onboarded
           ? <Onboarding questions={questions} initialPrefs={prefs} profile={profile} onDone={load} />
@@ -183,7 +183,7 @@ function Onboarding({ questions, initialPrefs, profile, onDone }: { questions: Q
           </button>
         ) : (
           <button onClick={finish} disabled={saving} className="px-6 py-2.5 rounded-lg bg-emerald-400 text-black font-medium flex items-center gap-2">
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />} Start using Evolve Life
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />} Start using Orbit
           </button>
         )}
       </div>

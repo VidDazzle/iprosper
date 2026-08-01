@@ -92,7 +92,7 @@ export default function DiscoverPage() {
   return (
     <div className="min-h-screen bg-[#070a10] text-white font-sans"><Navigation />
       <main className="max-w-5xl mx-auto px-5 py-10">
-        <div className="flex items-center gap-3 mb-2"><Compass className="w-6 h-6 text-cyan-400" /><h1 className="text-3xl font-bold tracking-tight">Evolve Discover</h1></div>
+        <div className="flex items-center gap-3 mb-2"><Compass className="w-6 h-6 text-cyan-400" /><h1 className="text-3xl font-bold tracking-tight">Orbit Discover</h1></div>
         <p className="text-slate-400 mb-6">Meet people near you who love the same things — fishing, hunting, ball games, whatever’s your thing. Your exact location is never shared; only a rough distance. Tap someone to reveal your photo to them — if they tap back, it’s a match.</p>
 
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 mb-6 flex items-center gap-3">
