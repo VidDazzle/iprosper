@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATOMICBOD — The Origin of Strong</title>
+</head>
+<body>
+<style>
+  /* ============ ATOMICBOD one-sheet — single-theme cinematic dark ============ */
+  :root{
+    --void:#05070f;          /* wall behind the poster */
+    --sky-deep:#0b0f24;      /* poster night sky */
+    --sky-core:#2a1b5e;      /* burst core violet */
+    --reactor:#e8172e;       /* reactor red */
+    --atomic:#ff6a00;        /* atomic orange */
+    --fusion:#2ee6ff;        /* fusion cyan */
+    --chrome:#ffd34d;        /* chrome gold */
+    --flash:#fff7e8;         /* flash white */
+    --display:Impact,'Haettenschweiler','Franklin Gothic Bold','Arial Black','Liberation Sans',sans-serif;
+    --cond:'Arial Narrow','Helvetica Neue','Liberation Sans Narrow','Liberation Sans',Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(120vmax 90vmax at 50% -10%, rgba(46,230,255,.06), transparent 55%),
+      radial-gradient(90vmax 70vmax at 50% 45%, rgba(255,106,0,.08), transparent 60%),
+      var(--void);
+    display:grid;place-items:center;
+    padding:4vmin 0 6vmin;
+    overflow-x:hidden;
+    font-family:var(--cond);
+    color:var(--flash);
+  }
+
+  .scene{perspective:1500px}
+  .tilt{transform-style:preserve-3d; transition:transform .18s ease-out; will-change:transform}
+
+  /* ---------------- the sheet itself ---------------- */
+  .poster{
+    position:relative;
+    width:min(94vw, 63vmin, 720px);
+    aspect-ratio:27/40;
+    transform-style:preserve-3d;
+    filter:drop-shadow(0 42px 70px rgba(0,0,0,.75));
+  }
+  .paper{
+    position:absolute;inset:0;border-radius:6px;overflow:hidden;
+    background:
+      radial-gradient(130% 90% at 50% 34%, var(--sky-core) 0%, #17123c 34%, var(--sky-deep) 66%, #060814 100%);
+    box-shadow:inset 0 0 0 2px rgba(255,211,77,.25);
+  }
+  /* radiating burst behind the heroes */
+  .paper::before{
+    content:"";position:absolute;inset:-45%;
+    background:repeating-conic-gradient(from 8deg at 50% 46%,
+      rgba(255,106,0,.16) 0deg 5deg, transparent 5deg 14deg);
+    animation:spin 90s linear infinite;
+  }
+  /* halftone print texture */
+  .paper::after{
+    content:"";position:absolute;inset:0;
+    background-image:radial-gradient(circle, rgba(255,247,232,.12) 1px, transparent 1.4px);
+    background-size:13px 13px;
+    -webkit-mask-image:radial-gradient(120% 90% at 50% 40%, #000 20%, transparent 78%);
+            mask-image:radial-gradient(120% 90% at 50% 40%, #000 20%, transparent 78%);
+    mix-blend-mode:screen;opacity:.5;pointer-events:none;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .vignette{position:absolute;inset:0;border-radius:6px;pointer-events:none;
+    background:radial-gradient(120% 105% at 50% 42%, transparent 55%, rgba(3,4,10,.78) 100%);}
+
+  /* inner printed frame the heroes break through */
+  .frame{
+    position:absolute;inset:3.2%;border:2px solid rgba(255,211,77,.55);border-radius:3px;
+    pointer-events:none;
+    box-shadow:0 0 22px rgba(255,211,77,.12), inset 0 0 22px rgba(255,211,77,.08);
+  }
+  .frame::after{content:"";position:absolute;inset:5px;border:1px solid rgba(46,230,255,.28);border-radius:2px}
+
+  .layer{position:absolute;pointer-events:none}
+  .layer svg{display:block;width:100%;height:100%;overflow:visible}
+
+  .skyline{inset:auto 0 0 0;height:34%;transform:translateZ(14px)}
+  .heroes {inset:-7% -9% -3% -9%; transform:translateZ(86px);
+           filter:drop-shadow(0 34px 30px rgba(0,0,0,.65)) drop-shadow(0 6px 14px rgba(0,0,0,.5));}
+  .masthead{top:2.8%;left:-2%;right:-2%;height:30%;transform:translateZ(56px);
+           filter:drop-shadow(0 16px 22px rgba(0,0,0,.6));}
+
+  /* -------- collector's badge -------- */
+  .badge{
+    position:absolute;top:4%;right:-5%;width:21%;aspect-ratio:1;transform:translateZ(110px) rotate(12deg);
+    filter:drop-shadow(0 12px 16px rgba(0,0,0,.6));
+  }
+  .badge svg{width:100%;height:100%;overflow:visible}
+  .badge text{font-family:var(--display);}
+
+  /* -------- billing block -------- */
+  .billing{
+    position:absolute;left:6%;right:6%;bottom:3.8%;text-align:center;transform:translateZ(30px);
+    text-transform:uppercase;color:#f3e6c8;
+  }
+  .billing .tag{
+    font-family:var(--display);
+    font-size:clamp(10px, 2.35vmin, 17px);letter-spacing:.12em;
+    font-weight:900;white-space:nowrap;margin-bottom:.9em;
+    color:var(--flash);
+    text-shadow:0 0 14px rgba(46,230,255,.65), 0 2px 0 rgba(0,0,0,.8);
+  }
+  .billing .tag b{color:var(--fusion);font-weight:inherit}
+  .billing .credits{
+    font-family:var(--cond);font-weight:700;
+    font-size:clamp(5.5px, 1.1vmin, 8.5px);
+    letter-spacing:.05em;line-height:1.55;
+    transform:scaleY(1.35);transform-origin:bottom;
+    opacity:.82;
+  }
+  .billing .credits .co{color:var(--chrome)}
+  .billing .strip{
+    margin-top:.9em;padding-top:.55em;border-top:1px solid rgba(255,211,77,.4);
+    display:flex;justify-content:space-between;gap:1em;
+    font-size:clamp(5.5px, 1.05vmin, 9px);font-weight:700;letter-spacing:.14em;color:var(--chrome);
+  }
+  .billing .strip span{white-space:nowrap}
+  .strip span:nth-child(2){color:var(--fusion)}
+
+  /* pulsing chest core + fist aura */
+  .pulse{animation:pulse 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.75}50%{opacity:1}}
+  .ring-anim{animation:ringspin 14s linear infinite;transform-origin:center;transform-box:fill-box}
+  @keyframes ringspin{to{transform:rotate(360deg)}}
+
+  @media (prefers-reduced-motion: reduce){
+    .paper::before,.pulse,.ring-anim{animation:none}
+    .tilt{transition:none}
+  }
+
+  .plate{margin-top:26px;text-align:center;font-weight:700;letter-spacing:.34em;
+    font-size:11px;color:rgba(243,230,200,.5);text-transform:uppercase}
+</style>
+
+<div class="scene" id="scene">
+  <div class="tilt" id="tilt">
+    <figure class="poster" style="margin:0">
+      <div class="paper"></div>
+
+      <!-- ======= city skyline ======= -->
+      <div class="layer skyline" aria-hidden="true">
+        <svg viewBox="0 0 1080 460" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="cityG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#131a3a"/><stop offset="1" stop-color="#060814"/>
+            </linearGradient>
+          </defs>
+          <path fill="url(#cityG)" d="M0,460 L0,300 L60,300 L60,240 L120,240 L120,300 L170,300 L170,180 L200,180 L200,150 L235,150 L235,300
+            L300,300 L300,220 L360,220 L360,300 L420,300 L420,130 L450,130 L450,100 L480,100 L480,130 L510,130 L510,300
+            L580,300 L580,250 L640,250 L640,300 L700,300 L700,170 L740,170 L740,140 L790,140 L790,300 L850,300 L850,230
+            L910,230 L910,300 L960,300 L960,190 L1010,190 L1010,300 L1080,300 L1080,460 Z"/>
+          <g fill="#ffd34d" opacity=".55">
+            <rect x="76" y="256" width="7" height="10"/><rect x="98" y="276" width="7" height="10"/>
+            <rect x="182" y="200" width="7" height="10"/><rect x="210" y="170" width="7" height="10"/>
+            <rect x="316" y="238" width="7" height="10"/><rect x="336" y="262" width="7" height="10"/>
+            <rect x="432" y="150" width="7" height="10"/><rect x="460" y="118" width="7" height="10"/>
+            <rect x="492" y="170" width="7" height="10"/><rect x="596" y="266" width="7" height="10"/>
+            <rect x="712" y="190" width="7" height="10"/><rect x="752" y="158" width="7" height="10"/>
+            <rect x="864" y="248" width="7" height="10"/><rect x="972" y="210" width="7" height="10"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="frame"></div>
+      <div class="vignette"></div>
+
+      <!-- ======= heroes, leaping past the frame ======= -->
+      <div class="layer heroes" aria-hidden="true">
+        <svg viewBox="0 0 1180 1560">
+          <defs>
+            <linearGradient id="suit" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff5a3c"/><stop offset=".45" stop-color="#e8172e"/><stop offset="1" stop-color="#7c0a1e"/>
+            </linearGradient>
+            <linearGradient id="suitDark" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#b31226"/><stop offset="1" stop-color="#560818"/>
+            </linearGradient>
+            <radialGradient id="glove" cx=".38" cy=".32" r="1">
+              <stop offset="0" stop-color="#ff8d66"/><stop offset=".45" stop-color="#e8172e"/><stop offset="1" stop-color="#5c0716"/>
+            </radialGradient>
+            <radialGradient id="core" cx=".5" cy=".5" r=".5">
+              <stop offset="0" stop-color="#fffdf2"/><stop offset=".45" stop-color="#ffd34d"/><stop offset="1" stop-color="rgba(255,106,0,0)"/>
+            </radialGradient>
+            <linearGradient id="flame" x1="1" y1="1" x2="0" y2="0">
+              <stop offset="0" stop-color="rgba(255,211,77,.9)"/><stop offset=".5" stop-color="rgba(255,106,0,.72)"/><stop offset="1" stop-color="rgba(232,23,46,0)"/>
+            </linearGradient>
+            <linearGradient id="cyanTrail" x1="1" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="rgba(46,230,255,.85)"/><stop offset="1" stop-color="rgba(46,230,255,0)"/>
+            </linearGradient>
+            <linearGradient id="orangeTrail" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="rgba(255,106,0,.85)"/><stop offset="1" stop-color="rgba(255,106,0,0)"/>
+            </linearGradient>
+            <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="10"/>
+            </filter>
+            <filter id="soft2" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="18"/>
+            </filter>
+          </defs>
+
+          <!-- ========== LEFT HERO — VELOCITY (sprinter, fusion cyan) ========== -->
+          <g transform="translate(110,980) scale(1.15)">
+            <path d="M40,-40 C-160,40 -260,140 -340,260 L-180,180 C-110,110 -30,40 60,0 Z" fill="url(#cyanTrail)" filter="url(#soft2)" opacity=".8"/>
+            <g stroke="#2ee6ff" stroke-width="26" stroke-linecap="round" fill="none" opacity=".55" filter="url(#soft)">
+              <path d="M2,8 L-14,96"/><path d="M-2,42 L44,66 L28,122"/><path d="M-2,42 L-56,70 L-40,16"/>
+              <path d="M-14,96 L58,128 L48,204"/><path d="M-14,96 L-66,148 L-124,116"/>
+            </g>
+            <g stroke="#0c1330" stroke-width="30" stroke-linecap="round" fill="none">
+              <path d="M2,8 L-14,96"/>
+              <path d="M-2,42 L44,66 L28,122"/>
+              <path d="M-2,42 L-56,70 L-40,16"/>
+              <path d="M-14,96 L58,128 L48,204"/>
+              <path d="M-14,96 L-66,148 L-124,116"/>
+            </g>
+            <g stroke="#2ee6ff" stroke-width="7" stroke-linecap="round" fill="none" opacity=".95">
+              <path d="M2,8 L-14,96"/>
+              <path d="M-2,42 L44,66 L28,122"/>
+              <path d="M-14,96 L58,128 L48,204"/>
+            </g>
+            <circle cx="8" cy="-16" r="28" fill="#0c1330" stroke="#2ee6ff" stroke-width="5"/>
+            <path d="M-8,-24 A28,28 0 0 1 26,-32" stroke="#9fefff" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <rect x="30" y="192" width="46" height="20" rx="10" fill="#2ee6ff"/>
+            <rect x="-146" y="102" width="44" height="20" rx="10" fill="#2ee6ff" transform="rotate(-18 -124 112)"/>
+          </g>
+
+          <!-- ========== RIGHT HERO — APEX (flying kick, atomic orange) ========== -->
+          <g transform="translate(1060,1020) scale(1.05)">
+            <path d="M-30,-60 C130,20 230,140 320,300 L160,200 C90,120 20,30 -40,-20 Z" fill="url(#orangeTrail)" filter="url(#soft2)" opacity=".85"/>
+            <g stroke="#ff6a00" stroke-width="26" stroke-linecap="round" fill="none" opacity=".5" filter="url(#soft)">
+              <path d="M-2,4 L26,88"/><path d="M6,34 L-52,52 L-46,118"/><path d="M6,34 L64,44 L104,-8"/>
+              <path d="M26,88 L-70,120 L-150,86"/><path d="M26,88 L74,158 L52,232"/>
+            </g>
+            <g stroke="#0c1330" stroke-width="30" stroke-linecap="round" fill="none">
+              <path d="M-2,4 L26,88"/>
+              <path d="M6,34 L-52,52 L-46,118"/>
+              <path d="M6,34 L64,44 L104,-8"/>
+              <path d="M26,88 L-70,120 L-150,86"/>   <!-- extended kicking leg -->
+              <path d="M26,88 L74,158 L52,232"/>     <!-- chambered leg -->
+            </g>
+            <g stroke="#ffb27a" stroke-width="7" stroke-linecap="round" fill="none" opacity=".95">
+              <path d="M-2,4 L26,88"/>
+              <path d="M26,88 L-70,120 L-150,86"/>
+              <path d="M6,34 L64,44 L104,-8"/>
+            </g>
+            <circle cx="-8" cy="-22" r="28" fill="#0c1330" stroke="#ff6a00" stroke-width="5"/>
+            <path d="M-24,-30 A28,28 0 0 1 8,-40" stroke="#ffd34d" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <rect x="-186" y="72" width="48" height="20" rx="10" fill="#ff6a00" transform="rotate(14 -162 82)"/>
+            <rect x="36" y="222" width="44" height="20" rx="10" fill="#ff6a00"/>
+          </g>
+
+          <!-- ========== CENTER HERO — ATOMICBOD PRIME ==========
+               Flying out of the sheet along the upper-left → lower-right diagonal:
+               trailing legs top-left, torso mid, giant fist punching at the viewer. -->
+          <g transform="translate(620,780)">
+            <!-- energy rings around the fist -->
+            <g class="ring-anim" opacity=".9">
+              <circle cx="40" cy="210" r="225" fill="none" stroke="#2ee6ff" stroke-width="5" stroke-dasharray="46 30" opacity=".6"/>
+              <circle cx="40" cy="210" r="262" fill="none" stroke="#ffd34d" stroke-width="3" stroke-dasharray="12 26" opacity=".45"/>
+            </g>
+            <circle cx="40" cy="210" r="185" fill="none" stroke="url(#flame)" stroke-width="16" filter="url(#soft)" opacity=".55"/>
+
+            <!-- rocket-flame contrail streaming off the boots, up and left -->
+            <path d="M-320,-40 C-460,-120 -560,-200 -700,-350 C-640,-220 -600,-160 -540,-100
+                     C-620,-160 -700,-210 -780,-240 C-670,-130 -550,-40 -410,20 Z"
+                  fill="url(#flame)" filter="url(#soft)" opacity=".9"/>
+
+            <!-- trailing legs -->
+            <g stroke="#7c0a1e" stroke-width="52" stroke-linecap="round" fill="none">
+              <path d="M-250,-46 L-370,-92 L-452,-168"/>
+              <path d="M-262,-6 L-352,16 L-444,-22"/>
+            </g>
+            <g stroke="#e8172e" stroke-width="34" stroke-linecap="round" fill="none">
+              <path d="M-250,-46 L-370,-92 L-452,-168"/>
+              <path d="M-262,-6 L-352,16 L-444,-22"/>
+            </g>
+            <!-- boots -->
+            <rect x="-506" y="-196" width="78" height="34" rx="16" fill="#ffd34d" transform="rotate(36 -467 -179)"/>
+            <rect x="-500" y="-40" width="78" height="34" rx="16" fill="#ffd34d" transform="rotate(20 -461 -23)"/>
+
+            <!-- torso, angled along the flight line -->
+            <ellipse cx="-210" cy="-90" rx="84" ry="102" fill="url(#suit)" transform="rotate(52 -210 -90)"/>
+            <ellipse cx="-236" cy="-62" rx="58" ry="74" fill="url(#suitDark)" opacity=".3" transform="rotate(52 -236 -62)"/>
+            <!-- atomic chest core -->
+            <g transform="translate(-196,-92)">
+              <circle r="52" fill="url(#core)" class="pulse"/>
+              <circle r="19" fill="#fffdf2"/>
+              <g fill="none" stroke="#2ee6ff" stroke-width="5" opacity=".95">
+                <ellipse rx="40" ry="15"/>
+                <ellipse rx="40" ry="15" transform="rotate(60)"/>
+                <ellipse rx="40" ry="15" transform="rotate(120)"/>
+              </g>
+              <circle cx="40" cy="0" r="5.5" fill="#9fefff"/>
+              <circle cx="-20" cy="12" r="5.5" fill="#9fefff"/>
+            </g>
+
+            <!-- head + helmet, tucked into the dive -->
+            <g transform="translate(-140,-172)">
+              <circle r="48" fill="url(#suit)"/>
+              <path d="M-46,-12 A48,48 0 0 1 46,-12 L40,8 L-40,8 Z" fill="#7c0a1e"/>
+              <rect x="-38" y="-6" width="76" height="24" rx="12" fill="#0c1330"/>
+              <rect x="-32" y="-1" width="64" height="13" rx="6.5" fill="#2ee6ff" class="pulse"/>
+              <path d="M-30,-34 L-52,-70 L-32,-72 L-14,-42 Z" fill="#ffd34d"/>
+            </g>
+
+            <!-- punching arm: shoulder → elbow → wrist -->
+            <g stroke="#7c0a1e" stroke-width="60" stroke-linecap="round" fill="none">
+              <path d="M-172,-66 L-70,30 L14,124"/>
+            </g>
+            <g stroke="url(#suit)" stroke-width="44" stroke-linecap="round" fill="none">
+              <path d="M-172,-66 L-70,30 L14,124"/>
+            </g>
+            <!-- gauntlet cuff -->
+            <rect x="-72" y="66" width="116" height="50" rx="24" fill="#ffd34d" transform="rotate(52 -14 91)"/>
+
+            <!-- THE FIST -->
+            <g transform="translate(40,210)">
+              <circle r="140" fill="rgba(255,211,77,.26)" filter="url(#soft2)"/>
+              <circle r="112" fill="url(#glove)" stroke="#3d0410" stroke-width="6"/>
+              <!-- knuckles -->
+              <g fill="#ff8d66" stroke="#7c0a1e" stroke-width="5">
+                <circle cx="-66" cy="-58" r="27"/>
+                <circle cx="-16" cy="-80" r="29"/>
+                <circle cx="38" cy="-72" r="28"/>
+                <circle cx="80" cy="-34" r="25"/>
+              </g>
+              <!-- finger creases -->
+              <g stroke="#7c0a1e" stroke-width="7" stroke-linecap="round" fill="none" opacity=".85">
+                <path d="M-66,-26 L-64,32"/><path d="M-14,-44 L-10,46"/><path d="M38,-38 L40,40"/><path d="M78,-4 L72,38"/>
+              </g>
+              <!-- thumb -->
+              <path d="M-100,20 C-118,42 -112,78 -84,86 C-58,93 -38,78 -36,56"
+                    fill="none" stroke="#e8172e" stroke-width="36" stroke-linecap="round"/>
+              <!-- impact sparks -->
+              <g stroke="#fffdf2" stroke-width="6" stroke-linecap="round">
+                <path d="M-138,-118 L-172,-152"/><path d="M136,-96 L172,-128"/>
+                <path d="M-152,58 L-190,70"/><path d="M146,78 L184,94"/>
+                <path d="M-36,-154 L-48,-196"/><path d="M88,136 L114,170"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ======= masthead ======= -->
+      <div class="layer masthead" aria-hidden="false" role="img" aria-label="ATOMICBOD — the origin of strong">
+        <svg viewBox="0 0 1080 420">
+          <defs>
+            <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fffdf2"/>
+              <stop offset=".38" stop-color="#ffd34d"/>
+              <stop offset=".52" stop-color="#ff9a1f"/>
+              <stop offset=".56" stop-color="#fff2c0"/>
+              <stop offset="1" stop-color="#c25a00"/>
+            </linearGradient>
+            <path id="arc" d="M60,240 Q540,150 1020,240"/>
+            <path id="arcSub" d="M140,302 Q540,232 940,302"/>
+            <filter id="mGlow" x="-20%" y="-40%" width="140%" height="200%">
+              <feGaussianBlur stdDeviation="14" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- eyebrow -->
+          <text x="540" y="84" text-anchor="middle" textLength="620" lengthAdjust="spacingAndGlyphs"
+                font-family="var(--cond)" font-weight="700" font-size="20" letter-spacing="4"
+                fill="#9fefff" opacity=".92">PERFORMANCE APPAREL &#183; TRAINING GEAR &#183; SUPERHUMAN STANDARD</text>
+
+          <!-- red 3-D extrusion, then chrome face -->
+          <g font-family="var(--display)" font-weight="900" font-size="112" letter-spacing="3" text-anchor="middle">
+            <g fill="#5c0716">
+              <text dy="16"><textPath href="#arc" startOffset="50%">ATOMICBOD</textPath></text>
+              <text dy="13"><textPath href="#arc" startOffset="50%">ATOMICBOD</textPath></text>
+              <text dy="10"><textPath href="#arc" startOffset="50%">ATOMICBOD</textPath></text>
+            </g>
+            <g fill="#e8172e">
+              <text dy="7"><textPath href="#arc" startOffset="50%">ATOMICBOD</textPath></text>
+              <text dy="4"><textPath href="#arc" startOffset="50%">ATOMICBOD</textPath></text>
+            </g>
+            <text fill="url(#chrome)" stroke="#3d0410" stroke-width="2.5" filter="url(#mGlow)">
+              <textPath href="#arc" startOffset="50%">ATOMICBOD</textPath>
+            </text>
+          </g>
+
+          <!-- sub-line -->
+          <text font-family="var(--display)" font-size="30" letter-spacing="11" text-anchor="middle"
+                fill="#fff7e8" opacity=".95">
+            <textPath href="#arcSub" startOffset="50%">THE&#160;ORIGIN&#160;OF&#160;STRONG</textPath>
+          </text>
+
+          <!-- lightning ticks flanking the sub-line -->
+          <g stroke="#2ee6ff" stroke-width="5" stroke-linecap="round" fill="none" opacity=".9">
+            <path d="M112,266 L90,290 L108,290 L86,316"/>
+            <path d="M968,266 L990,290 L972,290 L994,316"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ======= collector badge ======= -->
+      <div class="badge" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <radialGradient id="badgeG" cx=".4" cy=".35" r=".9">
+              <stop offset="0" stop-color="#ffe9a3"/><stop offset=".6" stop-color="#ffd34d"/><stop offset="1" stop-color="#c25a00"/>
+            </radialGradient>
+          </defs>
+          <path fill="url(#badgeG)" stroke="#7c0a1e" stroke-width="4" d="M100,4 L116,34 L148,16 L148,52 L184,46 L166,78 L198,92
+            L166,110 L186,142 L150,140 L154,176 L120,158 L104,192 L86,160 L54,178 L56,142 L20,148 L38,114 L4,100
+            L36,84 L16,52 L52,56 L48,20 L82,38 Z"/>
+          <text x="100" y="84" text-anchor="middle" font-size="26" fill="#7c0a1e" letter-spacing="1">ISSUE&#160;#1</text>
+          <text x="100" y="112" text-anchor="middle" font-size="16" font-weight="700" fill="#3d0410" letter-spacing="1">COLLECTOR'S</text>
+          <text x="100" y="132" text-anchor="middle" font-size="16" font-weight="700" fill="#3d0410" letter-spacing="1">EDITION</text>
+        </svg>
+      </div>
+
+      <!-- ======= billing ======= -->
+      <figcaption class="billing">
+        <div class="tag">EVERY REP WRITES YOUR <b>ORIGIN STORY</b></div>
+        <div class="credits">
+          <span class="co">ATOMICBOD ATHLETICS</span> PRESENTS &nbsp;A HEAVYWEIGHT PRODUCTION&nbsp; &ldquo;THE ORIGIN OF STRONG&rdquo;
+          STARRING <span class="co">YOUR NEXT PERSONAL RECORD</span> &nbsp;THE 5AM ALARM&nbsp; AND <span class="co">IRON WILL</span><br>
+          COSTUMES BY <span class="co">ATOMICBOD FLEX-ARMOR&trade; APPAREL</span> &nbsp;&middot;&nbsp; FOUR-WAY STRETCH &nbsp;&middot;&nbsp; SWEAT-WICKING &nbsp;&middot;&nbsp; SQUAT-PROOF
+          &nbsp;&middot;&nbsp; SPECIAL EFFECTS BY <span class="co">PURE ADRENALINE</span><br>
+          SUITS UP EVERY BODY &nbsp;&middot;&nbsp; RATED S FOR STRONG &nbsp;&middot;&nbsp; NO CAPES ON LEG DAY
+        </div>
+        <div class="strip">
+          <span>ATOMICBOD.COM</span>
+          <span>COMING SOON TO A GYM NEAR YOU</span>
+          <span>TRAIN&nbsp;&middot;&nbsp;WEAR&nbsp;&middot;&nbsp;BECOME</span>
+        </div>
+      </figcaption>
+    </figure>
+  </div>
+</div>
+
+<script>
+  (function(){
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    var scene = document.getElementById('scene');
+    var tilt = document.getElementById('tilt');
+    scene.addEventListener('pointermove', function(e){
+      var r = scene.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - .5;
+      var y = (e.clientY - r.top) / r.height - .5;
+      tilt.style.transform = 'rotateY(' + (x * 12) + 'deg) rotateX(' + (-y * 9) + 'deg)';
+    });
+    scene.addEventListener('pointerleave', function(){
+      tilt.style.transform = 'rotateY(0deg) rotateX(0deg)';
+    });
+  })();
+</script>
+
+</body>
+</html>
